@@ -8,9 +8,10 @@
   # Para rebuild: sudo nixos-rebuild switch --flake .#swal
   # ═══════════════════════════════════════════════════════════════════════════
 
-  imports = [
-    ./hardware-configuration.nix
-  ];
+  # imports = [
+  #   ./hardware-configuration.nix
+  # ];
+  # Nota: hardware-configuration.nix ya existe en /etc/nixos/
 
   # ─── Boot ────────────────────────────────────────────────────────────────
   boot.loader.systemd-boot.enable = true;
@@ -19,7 +20,7 @@
   boot.loader.timeout = 5;
   boot.loader.grub.enable = false;
   boot.supportedFilesystems = [ "ntfs" "ext4" "fat32" ];
-  boot.kernelModules = [ "kvm-amd" "amdgpu" ];
+  boot.kernelModules = [ "kvm-amd" ];
 
   # ─── Locales & Time ─────────────────────────────────────────────────────
   time.timeZone = "America/Bogota";
@@ -87,7 +88,8 @@
   services.udisks2.enable = true;
 
   # ─── Virtualization ────────────────────────────────────────────────────────
-  virtualisation.docker.enable = true;
+  # virtualisation.docker.enable = true;
+  # Deshabilitado en VM para evitar problemas
 
   # ─── Display: greetd → Hyprland ──────────────────────────────────────────
   services.greetd = {
@@ -112,10 +114,6 @@
     font-awesome
     fira-code
     fira-code-symbols
-    (pkgs.fetchurl {
-      url = "https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/FiraCode/Regular/complete/Fira%20Code%20Regular%20Nerd%20Font%20Complete.ttf";
-      sha256 = "0000000000000000000000000000000000000000000000000000000000000000";
-    })
   ];
 
   # ─── XDG Portals (screen sharing!) ───────────────────────────────────────
@@ -144,7 +142,6 @@
     kitty
     zsh
     starship
-    oh-my-zsh
     neovim
     vim
 
@@ -223,15 +220,6 @@
     # ── Monitoring ─────────────────────────────────────────────────────
     fastfetch
     nix-output-monitor
-
-    # ── OBS Studio ─────────────────────────────────────────────────────
-    (pkgs.wrapOBS {
-      plugins = with pkgs.obs-studio-plugins; [
-        wlrobs
-        obs-pipewire-audio-capture
-        obs-vaapi
-      ];
-    })
 
     # ── NixOS ───────────────────────────────────────────────────────────
     nix-output-monitor
