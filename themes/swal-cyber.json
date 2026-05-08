@@ -1,0 +1,24 @@
+{
+  "dark": {
+    "name": "SWAL Cyber",
+    "primary": "#00FF88",
+    "primaryText": "#000000",
+    "primaryContainer": "#00CC6E",
+    "secondary": "#9D4A14",
+    "surface": "#0D1117",
+    "surfaceText": "#E0FFE0",
+    "surfaceVariant": "#1A2F1A",
+    "surfaceVariantText": "#A0FFA0",
+    "surfaceTint": "#00FF88",
+    "surfaceContainer": "#151B22",
+    "surfaceContainerHigh": "#1E2630",
+    "surfaceContainerHighest": "#263040",
+    "background": "#0A0E12",
+    "backgroundText": "#00FF88",
+    "outline": "#00FF88",
+    "error": "#FF0066",
+    "warning": "#CCFF00",
+    "info": "#7DCFFF",
+    "matugen_type": "scheme-expressive"
+  }
+}
