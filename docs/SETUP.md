@@ -1,166 +1,127 @@
-# ⚡ SWAL Desktop — Guía de Setup
+# ⚡ SWAL Desktop — Setup Guide
 
-> Setup completo para NixOS + Hyprland en QEMU desde Windows
-
----
-
-## 📋 Índice
-
-1. [Prerrequisitos](#-prerrequisitos)
-2. [Descarga e Instalación](#-descarga-e-instalación)
-3. [Post-Instalación](#-post-instalación)
-4. [Configuración Hyprland](#-configuración-hyprland)
-5. [Solución de Problemas](#-solución-de-problemas)
+> Comprehensive guide for deploying the SWAL Desktop environment (NixOS + Hyprland).
 
 ---
 
-## 🔧 Prerrequisitos
+## 📋 Table of Contents
 
-### Windows
-```powershell
-# Instalar QEMU via scoop
-scoop install qemu
+1. [Prerequisites](#-prerequisites)
+2. [Installation](#-installation)
+3. [Post-Installation](#-post-installation)
+4. [Agent Configuration](#-agent-configuration)
+5. [Troubleshooting](#-troubleshooting)
 
-# Verificar instalación
-qemu-system-x86_64 --version
+---
+
+## 🔧 Prerequisites
+
+### Hardware Requirements
+- **Disk Space:** 40GB minimum (SSD recommended).
+- **RAM:** 8GB minimum (16GB+ recommended for AI agents).
+- **GPU:** Integrated or dedicated (Nvidia/AMD/Intel). Wayland support is required.
+
+### Network
+- A stable internet connection is required to fetch Nix flakes and packages.
+
+---
+
+## 📥 Installation
+
+### 1. Bare Metal Installation (Recommended)
+If you already have a basic NixOS installation or are running from the installer environment:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/iberi22/swal-desktop/main/scripts/install.sh | bash
 ```
 
-### Recursos
-- 40GB espacio disco
-- 8GB RAM mínimo
-- 4 CPUs disponibles
+**What this script does:**
+1. Detects your hardware and generates `hardware.nix`.
+2. Clones the `swal-desktop` repository.
+3. Configures Nix flakes and Home Manager.
+4. Performs a `nixos-rebuild switch`.
 
----
+### 2. VM Installation (Testing)
+If you are on Windows and want to test the environment using QEMU:
 
-## 📥 Descarga e Instalación
-
-### Paso 1: Descargar ISO
 ```powershell
+# In PowerShell (with QEMU installed)
 cd ~/swal-desktop
 .\swal-nixos.ps1 -DownloadISO
-```
-
-### Paso 2: Crear VM
-```powershell
 .\swal-nixos.ps1 -CreateVM
 ```
 
-Esto:
-- Crea imagen QCOW2 en `~/qemu/swal-nixos.qcow2`
-- Inicia QEMU con NixOS
-- SSH disponible en `localhost:2222`
-
-### Paso 3: Instalar NixOS
-1. Selecciona "NixOS install" en GRUB
-2. Espera a que cargue la terminal
-3. Conecta SSH:
-```powershell
-.\swal-nixos.ps1 -SSH
-```
-4. Ejecuta el script de instalación:
-```bash
-sudo bash /tmp/nixos-setup.sh
-```
-
 ---
 
-## 🔄 Post-Instalación
+## 🔄 Post-Installation
 
-### Conectar por SSH
-```powershell
-.\swal-nixos.ps1 -SSH
-```
-**Usuario:** `bela`
-**Password:** `swal123`
+### Default Credentials
+- **User:** `bela`
+- **Password:** `swal123` (Change this immediately using `passwd`)
+- **Keybinds:**
+    - `SUPER + D`: Toggle EWW Dashboard
+    - `SUPER + Enter`: Open Terminal (Kitty)
+    - `SUPER + Q`: Close Window
+    - `SUPER + M`: Exit Hyprland
 
-### Rebuild con Flake
+### Applying Changes
+Whenever you modify the configuration in `~/swal-desktop`:
 ```bash
-# Ir al repo
 cd ~/swal-desktop
-
-# Rebuild
 sudo nixos-rebuild switch --flake .#swal
 ```
 
-### Verificar Hyprland
-```bash
-# Verificar que greeter está activo
-systemctl status greetd
+---
 
-# Si hay errores
-journalctl -xe | grep hyprland
-```
+## 🤖 Agent Configuration
+
+To initialize the AI ecosystem (Hermes, Gemini, Codex):
+
+1. **Onboarding Script:**
+   ```bash
+   bash scripts/hermes-onboarding.sh
+   ```
+2. **API Keys:**
+   Define your API keys in `nixos/ai-agents.nix` or export them in your shell:
+   - `OPENCODE_API_KEY`
+   - `GEMINI_API_KEY`
+   - `DEEPSEEK_API_KEY`
 
 ---
 
-## 🎨 Configuración Hyprland
+## 🐛 Troubleshooting
 
-### Copiar config local
-```bash
-mkdir -p ~/.config/hypr
-cp ~/swal-desktop/hypr/hyprland.conf ~/.config/hypr/
-```
+### Hyprland Fails to Start
+- **Check logs:** `journalctl -xe | grep Hyprland`
+- **GPU Drivers:** Ensure `hardware.opengl.enable = true` is set in `configuration.nix`.
+- **Software Rendering:** If on a VM without 3D acceleration:
+  `export WLR_RENDERER_ALLOW_SOFTWARE=1`
 
-### Reiniciar Hyprland
-```bash
-hyprctl reload
-```
+### Package Collisions
+If you see errors regarding `gh` or `rustup`, ensure you haven't manually added them to `environment.systemPackages` as they are handled by the `ai-agents.nix` module.
 
----
-
-## 🐛 Solución de Problemas
-
-### Hyprland no muestra UI
-```bash
-# Ver logs
-journalctlxe | grep Hyprland
-
-# Verificar GPU
-lspci | grep -i vga
-
-# Software rendering
-export WLR_RENDERER_ALLOW_SOFTWARE=1
-hyprctl reload
-```
-
-### SSH no conecta
-```bash
-# Verificar SSH
-systemctl status sshd
-
-# Ver puertos
-ss -tlnp | grep 22
-```
-
-### Error de partición
-```bash
-# Ver discos
-lsblk
-
-# Re-particionar manualmente
-sudo fdisk /dev/vda
-```
+### EWW Dashboard Errors
+Run `eww logs` to see real-time error reporting for widgets.
 
 ---
 
-## 📞 Comandos Útiles
+## 📞 Useful Commands
 
-| Comando | Descripción |
+| Command | Description |
 |---------|-------------|
-| `systemctl status greetd` | Estado de greetd |
-| `hyprctl reload` | Recargar Hyprland |
-| `nixos-rebuild switch` | Aplicar config |
-| `journalctl -xe` | Ver logs |
-| `ip addr` | Ver IP |
+| `systemctl status greetd` | Check Display Manager status |
+| `hyprctl reload` | Reload Hyprland configuration |
+| `nix flake check` | Verify flake syntax |
+| `nix-collect-garbage -d` | Clean old Nix generations |
 
 ---
 
 ## 🔗 Links
 
-- [NixOS Manual](https://nixos.org/manual/nixos/stable/)
+- [NixOS Official Manual](https://nixos.org/manual/nixos/stable/)
 - [Hyprland Wiki](https://wiki.hypr.land/)
-- [Repo SWAL](https://github.com/iberi22/swal-desktop)
+- [SWAL GitHub Repository](https://github.com/iberi22/swal-desktop)
 
 ---
 
-*SouthWest AI Labs ⚡*
+*Created by SouthWest AI Labs ⚡*

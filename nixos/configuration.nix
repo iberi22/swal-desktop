@@ -1,4 +1,4 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, inputs, ... }:
 
 {
   # ═══════════════════════════════════════════════════════════════════════════
@@ -8,9 +8,10 @@
   # Para rebuild: sudo nixos-rebuild switch --flake .#swal
   # ═══════════════════════════════════════════════════════════════════════════
 
-  # imports = [
-  #   ./hardware-configuration.nix
-  # ];
+  imports = [
+    ./hardware.nix # Generado por el instalador
+    ./ai-agents.nix
+  ];
   # Nota: hardware-configuration.nix ya existe en /etc/nixos/
 
   # ─── Boot ────────────────────────────────────────────────────────────────
@@ -19,7 +20,7 @@
   boot.loader.efi.canTouchEfiVariables = true;
   boot.loader.timeout = 5;
   boot.loader.grub.enable = false;
-  boot.supportedFilesystems = [ "ntfs" "ext4" "fat32" ];
+  boot.supportedFilesystems = [ "ntfs" "ext4" "vfat" ];
   boot.kernelModules = [ "kvm-amd" ];
 
   # ─── Locales & Time ─────────────────────────────────────────────────────
@@ -43,8 +44,8 @@
   networking.firewall.allowedUDPPorts = [ ];
 
   # ─── Users ───────────────────────────────────────────────────────────────
-  users.users.root.hashedPassword = "";
-  users.mutableUsers = false;
+  users.users.root.hashedPassword = "!"; # Disabled
+  users.mutableUsers = true;
   users.users.bela = {
     isNormalUser = true;
     description = "Bela — SWAL";
@@ -55,7 +56,6 @@
       "video"
       "audio"
       "input"
-      "lookup"
     ];
     shell = pkgs.zsh;
     openssh.authorizedKeys.keys = [
@@ -106,6 +106,9 @@
     enable = true;
     withUWSM = false;
     xwayland.enable = true;
+    # plugins = [
+    #   inputs.hyprland-plugins.packages.${pkgs.system}.hyprtrails
+    # ];
   };
 
   # ─── Fonts ────────────────────────────────────────────────────────────────
@@ -148,7 +151,6 @@
     # ── Dev Tools ────────────────────────────────────────────────────────
     git
     gh
-    github-cli
     lazygit
     gitui
     delta
@@ -169,7 +171,6 @@
     nodePackages_latest.pnpm
     go
     rustup
-    cargo
     gcc
     gnumake
     cmake
@@ -222,9 +223,14 @@
     nix-output-monitor
 
     # ── NixOS ───────────────────────────────────────────────────────────
-    nix-output-monitor
     home-manager
     devenv
+    
+    # ── Appearance ─────────────────────────────────────────────────────
+    phinger-cursors
+    catppuccin-gtk
+    catppuccin-kvantum
+    # inputs.dank-material-shell.packages.${pkgs.system}.default  # Uncomment when flake input is enabled
   ];
 
   # ─── Nix Settings ─────────────────────────────────────────────────────────
@@ -236,6 +242,8 @@
     dates = "weekly";
     options = "--delete-older-than 7d";
   };
+
+  home-manager.users.bela = import ./home.nix;
 
   system.stateVersion = "25.05";
 }

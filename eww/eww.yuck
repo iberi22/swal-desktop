@@ -1,0 +1,90 @@
+(defwindow dashboard
+  :monitor 0
+  :geometry (geometry :x "10px"
+                      :y "50px"
+                      :width "350px"
+                      :height "800px"
+                      :anchor "top right")
+  :stacking "fg"
+  :windowtype "dock"
+  :wm-ignore false
+  (dashboard_layout))
+
+(defwidget dashboard_layout []
+  (box :class "dashboard" :orientation "v" :space-evenly false
+    (profile)
+    (sys_metrics)
+    (quick_controls)
+    (ai_status_card)
+    (clock_cal)))
+
+;; --- Profile Widget ---
+(defwidget profile []
+  (box :class "profile-box" :orientation "h" :space-evenly false
+    (box :class "profile-img" :style "background-image: url('assets/profile.png');")
+    (box :orientation "v" :space-evenly false
+      (label :text "Welcome, Bela" :class "welcome-text")
+      (label :text "SouthWest AI Labs ⚡" :class "company-text"))))
+
+;; --- System Metrics Widget ---
+(defwidget sys_metrics []
+  (box :class "metrics-box" :orientation "v" :space-evenly false
+    (label :text "System Resources" :class "section-title")
+    (metric_circle :label "CPU" :value {EWW_CPU.avg} :icon "")
+    (metric_circle :label "RAM" :value {EWW_RAM.used_perc} :icon "")
+    (metric_circle :label "DISK" :value {round(EWW_DISK["/"].used_perc, 0)} :icon "󰋊")))
+
+(defwidget metric_circle [label value icon]
+  (box :class "metric-item" :orientation "h" :space-evenly false
+    (label :text icon :class "metric-icon")
+    (box :orientation "v" :space-evenly false :hexpand true
+      (box :orientation "h" :space-evenly true
+        (label :text label :halign "start")
+        (label :text "${round(value, 0)}%" :halign "end"))
+      (scale :min 0 :max 101 :active false :value value :class "metric-scale"))))
+
+;; --- Quick Controls ---
+(defwidget quick_controls []
+  (box :class "controls-box" :orientation "v" :space-evenly false
+    (label :text "Quick Controls" :class "section-title")
+    (control_item :label "Volume" :value {volume} :icon {vol_icon} :onchange "pactl set-sink-volume @DEFAULT_SINK@ {}%")
+    (control_item :label "Brightness" :value {brightness} :icon "󰃠" :onchange "brightnessctl set {}%")))
+
+(defwidget control_item [label value icon onchange]
+  (box :class "control-item" :orientation "h" :space-evenly false
+    (label :text icon :class "control-icon")
+    (scale :min 0 :max 101 :active true :value value :onchange onchange :hexpand true :class "control-scale")))
+
+;; --- AI Status Card ---
+(defwidget ai_status_card []
+  (box :class "ai-box" :orientation "v" :space-evenly false
+    (label :text "AI Agents Status" :class "section-title")
+    (box :orientation "h" :space-evenly true
+      (agent_status :name "Hermes" :status {hermes_status})
+      (agent_status :name "Gemini" :status {gemini_status})
+      (agent_status :name "Codex" :status {codex_status}))))
+
+(defwidget agent_status [name status]
+  (box :class "agent-card" :orientation "v" :space-evenly false
+    (label :text {status == "Active" ? "󰚩" : "󱚧"} :class {status == "Active" ? "agent-icon-active" : "agent-icon-inactive"})
+    (label :text name :class "agent-name")
+    (label :text status :class "agent-status-text")))
+
+;; --- Clock & Calendar ---
+(defwidget clock_cal []
+  (box :class "clock-box" :orientation "v" :space-evenly false
+    (label :text {time} :class "clock-text")
+    (label :text {date} :class "date-text")
+    (calendar :class "cal-widget" :show-details true)))
+
+;; --- Variables & Polls ---
+(defpoll time :interval "1s" "date +'%H:%M:%S'")
+(defpoll date :interval "1m" "date +'%A, %d %B'")
+
+(defpoll volume :interval "1s" "./scripts/sys_info.sh vol")
+(defpoll vol_icon :interval "1s" "./scripts/sys_info.sh vol_icon")
+(defpoll brightness :interval "1s" "./scripts/sys_info.sh bright")
+
+(defpoll hermes_status :interval "5s" "./scripts/ai_status.sh hermes")
+(defpoll gemini_status :interval "5s" "./scripts/ai_status.sh gemini")
+(defpoll codex_status :interval "5s" "./scripts/ai_status.sh codex")

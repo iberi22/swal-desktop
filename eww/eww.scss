@@ -1,0 +1,194 @@
+// SWAL Cyber Palette
+$bg: #0D1117;
+$bg-alt: #151B22;
+$fg: #E0FFE0;
+$accent: #00FF88;
+$blue: #7DCFFF;
+$red: #FF0066;
+$inactive: #444c56;
+
+* {
+  all: unset;
+  font-family: "Fira Code", "Font Awesome 6 Free";
+}
+
+.dashboard {
+  background-color: rgba($bg, 0.95);
+  border: 1px solid $accent;
+  border-radius: 12px;
+  padding: 20px;
+  color: $fg;
+}
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: $blue;
+  margin-bottom: 15px;
+  margin-top: 10px;
+}
+
+// --- Profile ---
+.profile-box {
+  margin-bottom: 25px;
+  background-color: $bg-alt;
+  padding: 15px;
+  border-radius: 10px;
+  
+  .profile-img {
+    min-width: 60px;
+    min-height: 60px;
+    border-radius: 50%;
+    margin-right: 15px;
+    background-size: cover;
+    border: 2px solid $accent;
+  }
+  
+  .welcome-text {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: $accent;
+  }
+  
+  .company-text {
+    font-size: 0.8rem;
+    color: $blue;
+  }
+}
+
+// --- Metrics ---
+.metrics-box {
+  margin-bottom: 25px;
+  
+  .metric-item {
+    margin-bottom: 12px;
+    
+    .metric-icon {
+      font-size: 1.2rem;
+      color: $accent;
+      margin-right: 15px;
+    }
+    
+    .metric-scale {
+      trough {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 5px;
+        min-height: 8px;
+      }
+      highlight {
+        background-color: $accent;
+        border-radius: 5px;
+      }
+    }
+  }
+}
+
+// --- Controls ---
+.controls-box {
+  margin-bottom: 25px;
+  
+  .control-item {
+    margin-bottom: 10px;
+    
+    .control-icon {
+      font-size: 1.2rem;
+      color: $blue;
+      margin-right: 15px;
+      min-width: 25px;
+    }
+    
+    .control-scale {
+      trough {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        min-height: 12px;
+      }
+      highlight {
+        background-color: $blue;
+        border-radius: 10px;
+      }
+      slider {
+        background-color: $fg;
+        border-radius: 50%;
+        min-height: 16px;
+        min-width: 16px;
+      }
+    }
+  }
+}
+
+// --- AI Status ---
+.ai-box {
+  margin-bottom: 25px;
+  
+  .agent-card {
+    background-color: $bg-alt;
+    padding: 10px;
+    border-radius: 8px;
+    margin: 0 5px;
+    border: 1px solid rgba($accent, 0.2);
+    
+    .agent-icon-active {
+      font-size: 1.5rem;
+      color: $accent;
+      margin-bottom: 5px;
+    }
+    
+    .agent-icon-inactive {
+      font-size: 1.5rem;
+      color: $inactive;
+      margin-bottom: 5px;
+    }
+    
+    .agent-name {
+      font-size: 0.9rem;
+      font-weight: bold;
+    }
+    
+    .agent-status-text {
+      font-size: 0.7rem;
+      color: rgba($fg, 0.6);
+    }
+  }
+}
+
+// --- Clock & Calendar ---
+.clock-box {
+  padding: 15px;
+  background-color: rgba($accent, 0.05);
+  border-radius: 10px;
+  
+  .clock-text {
+    font-size: 2.2rem;
+    font-weight: bold;
+    color: $accent;
+    text-align: center;
+  }
+  
+  .date-text {
+    font-size: 0.9rem;
+    color: $blue;
+    text-align: center;
+    margin-bottom: 15px;
+  }
+  
+  .cal-widget {
+    background-color: transparent;
+    color: $fg;
+    
+    header {
+      color: $accent;
+      font-weight: bold;
+    }
+    
+    button:hover {
+      color: $accent;
+    }
+    
+    :selected {
+      color: $bg;
+      background-color: $accent;
+      border-radius: 4px;
+    }
+  }
+}
