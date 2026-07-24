@@ -111,6 +111,9 @@
     # ];
   };
 
+  # ─── Niri Compositor (Archcraft Style & Fallback) ──────────────────────
+  programs.niri.enable = true;
+
   # ─── Fonts ────────────────────────────────────────────────────────────────
   fonts.packages = with pkgs; [
     noto-fonts
@@ -188,6 +191,8 @@
 
     # ── Hyprland & WM ────────────────────────────────────────────────────
     hyprland
+    niri
+    fuzzel
     hyprpaper
     hyprlock
     hypridle
