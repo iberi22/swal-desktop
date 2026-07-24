@@ -31,6 +31,9 @@ in
     enable = true;
   };
 
+  # ─── Niri Config Symlink ────────────────────────────────────────────────
+  xdg.configFile."niri/config.kdl".source = ../niri/config.kdl;
+
   # ─── Git ───────────────────────────────────────────────────────────────
   programs.git = {
     enable = true;

@@ -1,5 +1,15 @@
 { config, pkgs, lib, inputs, ... }:
 
+let
+  swal-config-menu = pkgs.writeShellScriptBin "swal-config-menu" ''
+    export PATH=${lib.makeBinPath (with pkgs; [ rofi libnotify hyprland niri eww findutils swww hyprpaper ghostty kitty curl jq procps systemd utillinux coreutils bash ])}:$PATH
+    exec ${pkgs.bash}/bin/bash ${../scripts/swal-config-menu.sh} "$@"
+  '';
+  swal-session = pkgs.writeShellScriptBin "swal-session" ''
+    export PATH=${lib.makeBinPath (with pkgs; [ hyprland niri libnotify bash coreutils ])}:$PATH
+    exec ${pkgs.bash}/bin/bash ${../scripts/swal-session.sh} "$@"
+  '';
+in
 {
   # ═══════════════════════════════════════════════════════════════════════════
   # ⚡ SWAL NixOS Configuration — SouthWest AI Labs
@@ -96,7 +106,7 @@
     enable = true;
     settings = {
       default_session = {
-        command = "${pkgs.hyprland}/bin/Hyprland";
+        command = "${swal-session}/bin/swal-session";
         user = "bela";
       };
     };
@@ -146,6 +156,7 @@
   environment.systemPackages = with pkgs; [
     # ── Shell & Terminal ──────────────────────────────────────────────────
     kitty
+    ghostty
     zsh
     starship
     neovim
@@ -204,6 +215,9 @@
     wl-clipboard
     wlogout
     swww
+    eww
+    swal-config-menu
+    swal-session
 
     # ── Utilities ────────────────────────────────────────────────────────
     polkit_gnome
