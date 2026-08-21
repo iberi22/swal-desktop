@@ -2,19 +2,24 @@
 # ⚡ SWAL Desktop Configuration & Environment Menu
 # SouthWest AI Labs
 
-ROFI_CMD="rofi -dmenu -i -p ⚡ SWAL Desktop -theme-str window{width:500px;} listview{lines:8;}"
+ROFI_CMD="rofi -dmenu -i -p ⚡ SWAL Desktop -theme-str window{width:520px;} listview{lines:9;}"
 
-OPTIONS="󰕮  1. Iniciar / Cambiar a Hyprland
-󰍹  2. Iniciar / Cambiar a Niri (Archcraft Style)
-🎨  3. Estilo: Activar Noctalia Shell / Eww Bar
-🖼️  4. Cambiar Fondo de Pantalla (SWAL Wallpapers)
-⚙️  5. Reconstruir NixOS (sudo nixos-rebuild switch)
-🤖  6. Verificar Estado de Xavier Core & Hermes
-🚪  7. Cerrar Sesión / Salir"
+OPTIONS="🎨  1. Cambiar Tema Visual (Hive Dark, Cyber Neon, Nord)
+󰕮  2. Iniciar / Cambiar a Hyprland
+󰍹  3. Iniciar / Cambiar a Niri (Archcraft Style)
+📊  4. Alternar SWAL Dashboard Lateral
+🖼️  5. Cambiar Fondo de Pantalla (SWAL Wallpapers)
+🩺  6. Ejecutar SWAL Doctor (Linter & Diagnóstico)
+⚙️  7. Reconstruir NixOS (sudo nixos-rebuild switch)
+🤖  8. Verificar Estado de Xavier Core & Hermes
+🚪  9. Cerrar Sesión / Salir"
 
 CHOSEN=$(echo -e "$OPTIONS" | $ROFI_CMD)
 
 case "$CHOSEN" in
+    *Tema*)
+        swal-theme picker
+        ;;
     *Hyprland*)
         notify-send "SWAL Desktop" "Cambiando a Hyprland..."
         hyprctl dispatch exit || pkill -9 hyprland
@@ -24,9 +29,11 @@ case "$CHOSEN" in
         pkill -9 Hyprland || true
         niri &
         ;;
-    *Noctalia*)
-        notify-send "SWAL Desktop" "Alternando Noctalia Shell / Eww..."
-        eww open --toggle dashboard || true
+    *Dashboard*)
+        ~/.config/eww/scripts/toggle_dashboard.sh toggle
+        ;;
+    *Doctor*)
+        ghostty -e "swal-doctor; read -p 'Presiona Enter para cerrar...'" &
         ;;
     *Fondo*)
         WALLPAPER=$(find ~/Wallpapers -type f \( -name "*.png" -o -name "*.jpg" \) 2>/dev/null | rofi -dmenu -i -p "Seleccionar Wallpaper:")
