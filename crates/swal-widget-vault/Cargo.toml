@@ -1,0 +1,18 @@
+[package]
+name = "swal-widget-vault"
+version = "0.1.0"
+edition = "2021"
+authors = ["SouthWest AI Labs <agent@southwest-ai-labs.com>"]
+description = "Agent Widget Vault & Addon Inventory Manager for SWAL Desktop"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+notify = "6.1"
+dirs = "5.0"
+tokio = { version = "1.0", features = ["full"] }
+tar = "0.4"
+flate2 = "1.0"
+
+[dev-dependencies]
+tempfile = "3.8"
