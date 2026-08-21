@@ -1,0 +1,11 @@
+{
+  "id": "feat-swal-14",
+  "name": "Xavier & Edge-Mesh Rust IPC Bridge",
+  "wave": "wave-2",
+  "status": "planned",
+  "completion_percentage": 0,
+  "assigned": "Jules-14",
+  "files": [
+    "crates/swal-node-daemon/"
+  ]
+}

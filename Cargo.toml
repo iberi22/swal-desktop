@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "crates/swal-telemetry-rs",
+    "crates/swal-a2ui-engine"
+]
+resolver = "2"

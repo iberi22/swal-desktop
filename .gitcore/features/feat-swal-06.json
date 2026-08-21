@@ -1,0 +1,12 @@
+{
+  "id": "feat-swal-06",
+  "name": "Declarative A2UI Widget Schema",
+  "wave": "wave-1",
+  "status": "completed",
+  "completion_percentage": 100,
+  "assigned": "Jules-06",
+  "files": [
+    "schemas/widget.schema.json",
+    "widgets/"
+  ]
+}

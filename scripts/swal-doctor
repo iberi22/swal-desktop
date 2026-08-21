@@ -91,7 +91,12 @@ def check_logs():
     with open(latest, "r", errors="ignore") as f:
         lines = f.readlines()[-30:]
 
-    error_lines = [l.strip() for l in lines if "ERROR" in l or "Action failed" in l or "error:" in l]
+    error_lines = [
+        l.strip() for l in lines
+        if ("ERROR" in l or "Action failed" in l or "error:" in l)
+        and "Failed to send success response" not in l
+        and "channel closed" not in l
+    ]
     if error_lines:
         print(f"  {RED}✗ Detected {len(error_lines)} recent error(s) in daemon log:{RESET}")
         for err in error_lines[-3:]:

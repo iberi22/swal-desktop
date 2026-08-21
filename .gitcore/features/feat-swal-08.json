@@ -1,0 +1,12 @@
+{
+  "id": "feat-swal-08",
+  "name": "Process Monitor with Kill Action",
+  "wave": "wave-1",
+  "status": "completed",
+  "completion_percentage": 100,
+  "assigned": "Jules-08",
+  "files": [
+    "eww/scripts/ram_panel.py",
+    "eww/scripts/ram_kill.sh"
+  ]
+}

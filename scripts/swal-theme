@@ -583,8 +583,9 @@ def apply_theme(theme_id):
     if "inactive_border" in hypr:
         subprocess.run(["hyprctl", "keyword", "general:col.inactive_border", hypr["inactive_border"]], capture_output=True)
 
-    subprocess.run(["eww", "reload"], capture_output=True)
-    subprocess.run(["notify-send", "SWAL Theme Switcher", f"Tema aplicado: {theme.get('name', theme_id)}"], capture_output=True)
+    # Non-blocking reload to prevent IPC deadlock when invoked from inside an Eww button
+    subprocess.Popen(["eww", "reload"])
+    subprocess.Popen(["notify-send", "SWAL Theme Switcher", f"Tema aplicado: {theme.get('name', theme_id)}"])
     print(f"✓ Theme successfully switched to: {theme.get('name', theme_id)} ({theme_id})")
     return True
 

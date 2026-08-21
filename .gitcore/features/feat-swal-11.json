@@ -1,0 +1,11 @@
+{
+  "id": "feat-swal-11",
+  "name": "Rust Telemetry Core (swal-telemetry-rs)",
+  "wave": "wave-2",
+  "status": "in_progress",
+  "completion_percentage": 25,
+  "assigned": "Jules-11",
+  "files": [
+    "crates/swal-telemetry-rs/"
+  ]
+}

@@ -1,22 +1,194 @@
 {
   "project": "swal-desktop",
-  "version": "1.1.0",
+  "version": "1.2.0",
+  "gitcore_protocol_version": "3.8.0",
+  "total_features": 15,
+  "completed_features": 10,
   "waves": [
     {
       "id": "wave-1",
       "name": "SWAL Node Kit & Unified Theme Engine",
+      "status": "completed",
+      "progress": 100
+    },
+    {
+      "id": "wave-2",
+      "name": "Rust Core Engine & Declarative A2UI Runtime",
       "status": "in_progress",
-      "issues": [
-        { "id": 1, "key": "SWAL-01", "title": "Dynamic JSON theme engine and swal-theme CLI", "status": "completed" },
-        { "id": 2, "key": "SWAL-02", "title": "Canonical Hive Dark design tokens port from @swal/ui", "status": "completed" },
-        { "id": 3, "key": "SWAL-03", "title": "Cyber Neon legacy theme and Nord Frost theme schemas", "status": "completed" },
-        { "id": 4, "key": "SWAL-04", "title": "SWAL Node NixOS module with Xavier and Edge-Mesh services", "status": "completed" },
-        { "id": 5, "key": "SWAL-05", "title": "swal-theme-creator agent skill for autonomous generation", "status": "completed" },
-        { "id": 6, "key": "SWAL-06", "title": "Declarative JSON A2UI widget schema and storage vault", "status": "completed" },
-        { "id": 7, "key": "SWAL-07", "title": "Dashboard dynamic palette reactivity and theme indicator", "status": "completed" },
-        { "id": 8, "key": "SWAL-08", "title": "Unified system & memory monitor with kill and mode selector", "status": "completed" },
-        { "id": 9, "key": "SWAL-09", "title": "Node installation bootstrap script for machine deployment", "status": "completed" },
-        { "id": 10, "key": "SWAL-10", "title": "End-to-end test suite for theme switching and daemon health", "status": "completed" }
+      "progress": 25
+    }
+  ],
+  "features": [
+    {
+      "id": "feat-swal-01",
+      "name": "Dynamic Theme Engine & CLI",
+      "wave": "wave-1",
+      "status": "completed",
+      "completion_percentage": 100,
+      "assigned": "Jules-01",
+      "files": [
+        "scripts/swal-theme",
+        "schemas/theme.schema.json"
+      ]
+    },
+    {
+      "id": "feat-swal-02",
+      "name": "Hive Dark Tokens @swal/ui",
+      "wave": "wave-1",
+      "status": "completed",
+      "completion_percentage": 100,
+      "assigned": "Jules-02",
+      "files": [
+        "themes/hive-dark.json"
+      ]
+    },
+    {
+      "id": "feat-swal-03",
+      "name": "Cyber Neon & Nord Themes",
+      "wave": "wave-1",
+      "status": "completed",
+      "completion_percentage": 100,
+      "assigned": "Jules-03",
+      "files": [
+        "themes/cyber-neon.json",
+        "themes/nord-swal.json"
+      ]
+    },
+    {
+      "id": "feat-swal-04",
+      "name": "SWAL Node NixOS Module",
+      "wave": "wave-1",
+      "status": "completed",
+      "completion_percentage": 100,
+      "assigned": "Jules-04",
+      "files": [
+        "nixos/swal-node.nix",
+        "nixos/configuration.nix"
+      ]
+    },
+    {
+      "id": "feat-swal-05",
+      "name": "Agent Skill swal-theme-creator",
+      "wave": "wave-1",
+      "status": "completed",
+      "completion_percentage": 100,
+      "assigned": "Jules-05",
+      "files": [
+        ".agents/skills/swal-theme-creator/SKILL.md"
+      ]
+    },
+    {
+      "id": "feat-swal-06",
+      "name": "Declarative A2UI Widget Schema",
+      "wave": "wave-1",
+      "status": "completed",
+      "completion_percentage": 100,
+      "assigned": "Jules-06",
+      "files": [
+        "schemas/widget.schema.json",
+        "widgets/"
+      ]
+    },
+    {
+      "id": "feat-swal-07",
+      "name": "Dashboard SCSS Reactivity",
+      "wave": "wave-1",
+      "status": "completed",
+      "completion_percentage": 100,
+      "assigned": "Jules-07",
+      "files": [
+        "eww/eww.scss",
+        "eww/eww.yuck"
+      ]
+    },
+    {
+      "id": "feat-swal-08",
+      "name": "Process Monitor with Kill Action",
+      "wave": "wave-1",
+      "status": "completed",
+      "completion_percentage": 100,
+      "assigned": "Jules-08",
+      "files": [
+        "eww/scripts/ram_panel.py",
+        "eww/scripts/ram_kill.sh"
+      ]
+    },
+    {
+      "id": "feat-swal-09",
+      "name": "Node Universal Install Kit",
+      "wave": "wave-1",
+      "status": "completed",
+      "completion_percentage": 100,
+      "assigned": "Jules-09",
+      "files": [
+        "scripts/install.sh"
+      ]
+    },
+    {
+      "id": "feat-swal-10",
+      "name": "SWAL Doctor Linter & E2E Suite",
+      "wave": "wave-1",
+      "status": "completed",
+      "completion_percentage": 100,
+      "assigned": "Jules-10",
+      "files": [
+        "scripts/swal-doctor",
+        "tests/test_theme_engine.py"
+      ]
+    },
+    {
+      "id": "feat-swal-11",
+      "name": "Rust Telemetry Core (swal-telemetry-rs)",
+      "wave": "wave-2",
+      "status": "in_progress",
+      "completion_percentage": 25,
+      "assigned": "Jules-11",
+      "files": [
+        "crates/swal-telemetry-rs/"
+      ]
+    },
+    {
+      "id": "feat-swal-12",
+      "name": "Rust A2UI Parser (swal-a2ui-engine)",
+      "wave": "wave-2",
+      "status": "planned",
+      "completion_percentage": 10,
+      "assigned": "Jules-12",
+      "files": [
+        "crates/swal-a2ui-engine/"
+      ]
+    },
+    {
+      "id": "feat-swal-13",
+      "name": "Ambient Voice Orb Shader Surface",
+      "wave": "wave-2",
+      "status": "planned",
+      "completion_percentage": 0,
+      "assigned": "Jules-13",
+      "files": [
+        "crates/swal-ambient-orb/"
+      ]
+    },
+    {
+      "id": "feat-swal-14",
+      "name": "Xavier & Edge-Mesh Rust IPC Bridge",
+      "wave": "wave-2",
+      "status": "planned",
+      "completion_percentage": 0,
+      "assigned": "Jules-14",
+      "files": [
+        "crates/swal-node-daemon/"
+      ]
+    },
+    {
+      "id": "feat-swal-15",
+      "name": "Widget Vault Inventory Manager",
+      "wave": "wave-2",
+      "status": "planned",
+      "completion_percentage": 0,
+      "assigned": "Jules-15",
+      "files": [
+        "crates/swal-widget-vault/"
       ]
     }
   ]

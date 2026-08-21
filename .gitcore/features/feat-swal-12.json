@@ -1,0 +1,11 @@
+{
+  "id": "feat-swal-12",
+  "name": "Rust A2UI Parser (swal-a2ui-engine)",
+  "wave": "wave-2",
+  "status": "planned",
+  "completion_percentage": 10,
+  "assigned": "Jules-12",
+  "files": [
+    "crates/swal-a2ui-engine/"
+  ]
+}

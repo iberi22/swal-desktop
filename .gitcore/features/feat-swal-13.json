@@ -1,0 +1,11 @@
+{
+  "id": "feat-swal-13",
+  "name": "Ambient Voice Orb Shader Surface",
+  "wave": "wave-2",
+  "status": "planned",
+  "completion_percentage": 0,
+  "assigned": "Jules-13",
+  "files": [
+    "crates/swal-ambient-orb/"
+  ]
+}

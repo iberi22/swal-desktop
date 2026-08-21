@@ -1,0 +1,36 @@
+{
+  "session_id": "swal-desktop-session-20260820",
+  "active_wave": "wave-2",
+  "tasks": [
+    {
+      "id": "task-w2-01",
+      "key": "SWAL-11",
+      "title": "Scaffold Cargo workspace for crates/swal-telemetry-rs",
+      "status": "in_progress"
+    },
+    {
+      "id": "task-w2-02",
+      "key": "SWAL-12",
+      "title": "Implement JSON to native component AST parser",
+      "status": "planned"
+    },
+    {
+      "id": "task-w2-03",
+      "key": "SWAL-13",
+      "title": "Build GLSL fragment shader ambient orb surface",
+      "status": "planned"
+    },
+    {
+      "id": "task-w2-04",
+      "key": "SWAL-14",
+      "title": "Connect Xavier HTTP :8006 and MCP socket in Rust",
+      "status": "planned"
+    },
+    {
+      "id": "task-w2-05",
+      "key": "SWAL-15",
+      "title": "Persist and pin dynamic agent widgets to desktop vault",
+      "status": "planned"
+    }
+  ]
+}

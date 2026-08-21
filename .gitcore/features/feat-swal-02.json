@@ -1,0 +1,11 @@
+{
+  "id": "feat-swal-02",
+  "name": "Hive Dark Tokens @swal/ui",
+  "wave": "wave-1",
+  "status": "completed",
+  "completion_percentage": 100,
+  "assigned": "Jules-02",
+  "files": [
+    "themes/hive-dark.json"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "id": "feat-swal-04",
+  "name": "SWAL Node NixOS Module",
+  "wave": "wave-1",
+  "status": "completed",
+  "completion_percentage": 100,
+  "assigned": "Jules-04",
+  "files": [
+    "nixos/swal-node.nix",
+    "nixos/configuration.nix"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "id": "feat-swal-10",
+  "name": "SWAL Doctor Linter & E2E Suite",
+  "wave": "wave-1",
+  "status": "completed",
+  "completion_percentage": 100,
+  "assigned": "Jules-10",
+  "files": [
+    "scripts/swal-doctor",
+    "tests/test_theme_engine.py"
+  ]
+}

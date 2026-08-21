@@ -1,0 +1,12 @@
+{
+  "id": "feat-swal-01",
+  "name": "Dynamic Theme Engine & CLI",
+  "wave": "wave-1",
+  "status": "completed",
+  "completion_percentage": 100,
+  "assigned": "Jules-01",
+  "files": [
+    "scripts/swal-theme",
+    "schemas/theme.schema.json"
+  ]
+}

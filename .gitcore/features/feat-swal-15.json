@@ -1,0 +1,11 @@
+{
+  "id": "feat-swal-15",
+  "name": "Widget Vault Inventory Manager",
+  "wave": "wave-2",
+  "status": "planned",
+  "completion_percentage": 0,
+  "assigned": "Jules-15",
+  "files": [
+    "crates/swal-widget-vault/"
+  ]
+}

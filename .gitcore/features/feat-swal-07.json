@@ -1,0 +1,12 @@
+{
+  "id": "feat-swal-07",
+  "name": "Dashboard SCSS Reactivity",
+  "wave": "wave-1",
+  "status": "completed",
+  "completion_percentage": 100,
+  "assigned": "Jules-07",
+  "files": [
+    "eww/eww.scss",
+    "eww/eww.yuck"
+  ]
+}
