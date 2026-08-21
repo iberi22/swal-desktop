@@ -42,7 +42,7 @@
 
 (defwindow swal_settings
   :monitor 0
-  :geometry (geometry :x "0%" :y "0%" :width "660px" :height "560px" :anchor "center")
+  :geometry (geometry :x "0%" :y "0%" :width "680px" :height "320px" :anchor "center")
   :stacking "overlay"
   :wm-type "dialog"
   :exclusive false
@@ -697,15 +697,30 @@
         (button :onclick "swal-theme switch hive-dark" :class "act" :vexpand false
           (box :orientation "v" :spacing 2 :space-evenly false
             (label :text "🟢 SWAL Hive Dark" :style "font-weight:bold;color:#06b6d4;")
-            (label :text "Design System @swal/ui" :style "font-size:9px;color:#94a3b8;")))
+            (label :text "Tokens @swal/ui (Slate-950/Cyan)" :style "font-size:9px;color:#94a3b8;")))
         (button :onclick "swal-theme switch cyber-neon" :class "act" :vexpand false
           (box :orientation "v" :spacing 2 :space-evenly false
             (label :text "⚡ Cyber Neon" :style "font-weight:bold;color:#00ff88;")
-            (label :text "Tema Clásico Matrix" :style "font-size:9px;color:#94a3b8;")))
+            (label :text "Tema Matrix Verde Neón" :style "font-size:9px;color:#94a3b8;")))
         (button :onclick "swal-theme switch nord-swal" :class "act" :vexpand false
           (box :orientation "v" :spacing 2 :space-evenly false
             (label :text "❄ Nord Frost" :style "font-weight:bold;color:#88c0d0;")
-            (label :text "Estilo Nórdico Azul" :style "font-size:9px;color:#94a3b8;"))))
+            (label :text "Estilo Ártico Azul Hielo" :style "font-size:9px;color:#94a3b8;"))))
+
+      (box :class "swatch-card" :orientation "v" :spacing 4 :space-evenly false :vexpand false
+        (box :orientation "h" :space-evenly false :valign "center"
+          (label :text "🎨 Paleta Activa & Rieles de Diseño" :style "font-size:10.5px;font-weight:bold;color:#06b6d4;")
+          (box :hexpand true)
+          (label :text "Tipografía: JetBrainsMono Nerd Font" :style "font-size:9px;color:#94a3b8;"))
+        (box :orientation "h" :spacing 6 :space-evenly true
+          (box :class "stat-pill" :orientation "h" :spacing 4 :space-evenly false
+            (label :text "● Primario" :style "color:#06b6d4;font-size:9px;font-weight:bold;"))
+          (box :class "stat-pill" :orientation "h" :spacing 4 :space-evenly false
+            (label :text "● Secundario" :style "color:#f97316;font-size:9px;font-weight:bold;"))
+          (box :class "stat-pill" :orientation "h" :spacing 4 :space-evenly false
+            (label :text "● Superficie" :style "color:#94a3b8;font-size:9px;font-weight:bold;"))
+          (box :class "stat-pill" :orientation "h" :spacing 4 :space-evenly false
+            (label :text "● Estado OK" :style "color:#10b981;font-size:9px;font-weight:bold;"))))
 
       (label :text "Fondo de Pantalla & Ventanas" :class "section-title" :halign "start")
       (box :orientation "h" :spacing 6 :space-evenly true :vexpand false

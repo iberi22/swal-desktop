@@ -1,0 +1,12 @@
+[package]
+name = "swal-render-pipeline"
+version = "0.1.0"
+edition = "2021"
+authors = ["SouthWest AI Labs <agent@southwest-ai-labs.com>"]
+description = "High-refresh 200Hz+ lock-free Wayland layer shell compositor and render loop for SWAL Desktop"
+
+[dependencies]
+tokio = { version = "1.0", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+crossbeam-channel = "0.5"
