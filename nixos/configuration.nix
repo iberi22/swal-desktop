@@ -21,6 +21,7 @@ in
   imports = [
     ./hardware.nix # Generado por el instalador
     ./ai-agents.nix
+    ./swal-node.nix
   ];
   # Nota: hardware-configuration.nix ya existe en /etc/nixos/
 

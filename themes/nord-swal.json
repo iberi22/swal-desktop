@@ -1,0 +1,25 @@
+{
+  "id": "nord-swal",
+  "name": "SWAL Nord Frost",
+  "author": "SouthWest AI Labs",
+  "version": "1.0.0",
+  "colors": {
+    "bg": "rgba(46, 52, 64, 0.97)",
+    "elevated": "rgba(59, 66, 82, 0.85)",
+    "elevated_850": "rgba(67, 76, 94, 0.90)",
+    "void": "#242933",
+    "accent_primary": "#88c0d0",
+    "accent_secondary": "#81a1c1",
+    "text_primary": "#eceff4",
+    "text_secondary": "#d8dee9",
+    "success": "#a3be8c",
+    "warning": "#ebcb8b",
+    "danger": "#bf616a",
+    "border_active": "rgba(136, 192, 208, 0.40)",
+    "border_subtle": "rgba(255, 255, 255, 0.08)"
+  },
+  "hyprland": {
+    "active_border": "rgba(88c0d0ff) rgba(81a1c1ff) 45deg",
+    "inactive_border": "rgba(3b4252ff)"
+  }
+}

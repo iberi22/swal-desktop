@@ -1,0 +1,25 @@
+{
+  "id": "hive-dark",
+  "name": "SWAL Hive Dark (@swal/ui)",
+  "author": "SouthWest AI Labs",
+  "version": "1.0.0",
+  "colors": {
+    "bg": "rgba(2, 6, 23, 0.97)",
+    "elevated": "rgba(15, 23, 42, 0.85)",
+    "elevated_850": "rgba(21, 30, 46, 0.90)",
+    "void": "#000000",
+    "accent_primary": "#06b6d4",
+    "accent_secondary": "#f97316",
+    "text_primary": "#f1f5f9",
+    "text_secondary": "#94a3b8",
+    "success": "#10b981",
+    "warning": "#f59e0b",
+    "danger": "#ef4444",
+    "border_active": "rgba(6, 182, 212, 0.40)",
+    "border_subtle": "rgba(255, 255, 255, 0.08)"
+  },
+  "hyprland": {
+    "active_border": "rgba(06b6d4ff) rgba(f97316ff) 45deg",
+    "inactive_border": "rgba(0f172aff)"
+  }
+}

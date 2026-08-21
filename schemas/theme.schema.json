@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SWAL Theme Specification",
+  "description": "Standard theme definition for SWAL Desktop, Eww, Hyprland, and SWAL Apps",
+  "type": "object",
+  "required": ["id", "name", "colors"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9-_]+$",
+      "description": "Unique identifier for the theme (e.g. hive-dark, cyber-neon)"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human readable name of the theme"
+    },
+    "author": {
+      "type": "string",
+      "default": "SWAL Agent"
+    },
+    "version": {
+      "type": "string",
+      "default": "1.0.0"
+    },
+    "colors": {
+      "type": "object",
+      "required": [
+        "bg", "elevated", "void", "accent_primary", "accent_secondary",
+        "text_primary", "text_secondary", "success", "warning", "danger"
+      ],
+      "properties": {
+        "bg": { "type": "string", "description": "Main window background (hex or rgba)" },
+        "elevated": { "type": "string", "description": "Card / panel elevated surface" },
+        "elevated_850": { "type": "string", "description": "Deep elevated card surface" },
+        "void": { "type": "string", "description": "Terminal void black" },
+        "accent_primary": { "type": "string", "description": "Primary highlight color" },
+        "accent_secondary": { "type": "string", "description": "Secondary accent color" },
+        "text_primary": { "type": "string", "description": "Primary readable text" },
+        "text_secondary": { "type": "string", "description": "Muted / subtitle text" },
+        "success": { "type": "string", "description": "Healthy / OK status" },
+        "warning": { "type": "string", "description": "Warning status" },
+        "danger": { "type": "string", "description": "Critical / error status" },
+        "border_active": { "type": "string", "description": "Active window / card border" },
+        "border_subtle": { "type": "string", "description": "Subtle container border" }
+      }
+    },
+    "hyprland": {
+      "type": "object",
+      "properties": {
+        "active_border": { "type": "string" },
+        "inactive_border": { "type": "string" }
+      }
+    }
+  }
+}

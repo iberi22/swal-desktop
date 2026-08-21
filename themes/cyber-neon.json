@@ -1,0 +1,25 @@
+{
+  "id": "cyber-neon",
+  "name": "SWAL Cyber Neon",
+  "author": "SouthWest AI Labs",
+  "version": "1.0.0",
+  "colors": {
+    "bg": "rgba(13, 17, 23, 0.97)",
+    "elevated": "rgba(22, 27, 34, 0.85)",
+    "elevated_850": "rgba(33, 38, 45, 0.90)",
+    "void": "#0a0e12",
+    "accent_primary": "#00ff88",
+    "accent_secondary": "#00ccff",
+    "text_primary": "#e6edf3",
+    "text_secondary": "#8b949e",
+    "success": "#00ff88",
+    "warning": "#e3b341",
+    "danger": "#f85149",
+    "border_active": "rgba(0, 255, 136, 0.40)",
+    "border_subtle": "rgba(255, 255, 255, 0.07)"
+  },
+  "hyprland": {
+    "active_border": "rgba(00ff88ff) rgba(00ccffff) 45deg",
+    "inactive_border": "rgba(161b22ff)"
+  }
+}

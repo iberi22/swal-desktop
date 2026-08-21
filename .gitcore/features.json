@@ -1,0 +1,23 @@
+{
+  "project": "swal-desktop",
+  "version": "1.1.0",
+  "waves": [
+    {
+      "id": "wave-1",
+      "name": "SWAL Node Kit & Unified Theme Engine",
+      "status": "in_progress",
+      "issues": [
+        { "id": 1, "key": "SWAL-01", "title": "Dynamic JSON theme engine and swal-theme CLI", "status": "completed" },
+        { "id": 2, "key": "SWAL-02", "title": "Canonical Hive Dark design tokens port from @swal/ui", "status": "completed" },
+        { "id": 3, "key": "SWAL-03", "title": "Cyber Neon legacy theme and Nord Frost theme schemas", "status": "completed" },
+        { "id": 4, "key": "SWAL-04", "title": "SWAL Node NixOS module with Xavier and Edge-Mesh services", "status": "completed" },
+        { "id": 5, "key": "SWAL-05", "title": "swal-theme-creator agent skill for autonomous generation", "status": "completed" },
+        { "id": 6, "key": "SWAL-06", "title": "Declarative JSON A2UI widget schema and storage vault", "status": "completed" },
+        { "id": 7, "key": "SWAL-07", "title": "Dashboard dynamic palette reactivity and theme indicator", "status": "completed" },
+        { "id": 8, "key": "SWAL-08", "title": "Unified system & memory monitor with kill and mode selector", "status": "completed" },
+        { "id": 9, "key": "SWAL-09", "title": "Node installation bootstrap script for machine deployment", "status": "completed" },
+        { "id": 10, "key": "SWAL-10", "title": "End-to-end test suite for theme switching and daemon health", "status": "completed" }
+      ]
+    }
+  ]
+}
