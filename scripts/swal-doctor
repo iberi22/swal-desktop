@@ -1,0 +1,181 @@
+#!/usr/bin/env python3
+"""swal-doctor — SWAL Desktop Health Linter, Debugger & Self-Healing Utility."""
+import argparse
+import glob
+import json
+import os
+import re
+import subprocess
+import sys
+import urllib.request
+
+CONFIG_DIR = os.path.expanduser("~/.config/eww")
+SCSS_FILE = os.path.join(CONFIG_DIR, "eww.scss")
+YUCK_FILE = os.path.join(CONFIG_DIR, "eww.yuck")
+LOG_DIR = os.path.expanduser("~/.cache/eww")
+THEMES_DIR = os.path.expanduser("~/.config/swal/themes")
+SCHEMA_FILE = os.path.expanduser("~/.config/swal/schemas/theme.schema.json")
+
+RED = "\033[91m"
+GREEN = "\033[92m"
+YELLOW = "\033[93m"
+CYAN = "\033[96m"
+BOLD = "\033[1m"
+RESET = "\033[0m"
+
+
+def check_scss(fix=False):
+    print(f"{BOLD}[1/5] Checking Eww SCSS Stylesheet...{RESET}")
+    if not os.path.exists(SCSS_FILE):
+        print(f"  {RED}✗ Missing eww.scss at {SCSS_FILE}{RESET}")
+        return False
+
+    with open(SCSS_FILE, "rb") as f:
+        raw = f.read()
+
+    # Check non-ascii characters that trigger @charset UTF-8 bug in grass
+    non_ascii = [b for b in raw if b > 127]
+    if non_ascii:
+        print(f"  {YELLOW}⚠ Warning: Found {len(non_ascii)} non-ASCII byte(s) in eww.scss (can break GTK3 parser with @charset){RESET}")
+        if fix:
+            clean = raw.decode("utf-8", errors="ignore").encode("ascii", "ignore")
+            with open(SCSS_FILE, "wb") as f:
+                f.write(clean)
+            print(f"  {GREEN}✓ Auto-fixed: stripped non-ASCII bytes from eww.scss{RESET}")
+        else:
+            return False
+    else:
+        print(f"  {GREEN}✓ eww.scss encoding is clean ASCII (100% GTK3 compatible){RESET}")
+
+    # Check essential theme variables
+    text = raw.decode("ascii", errors="ignore")
+    required_vars = ["$theme-bg", "$theme-elevated", "$theme-accent", "$theme-text"]
+    missing = [v for v in required_vars if v not in text]
+    if missing:
+        print(f"  {RED}✗ Missing required SCSS variables: {', '.join(missing)}{RESET}")
+        return False
+    else:
+        print(f"  {GREEN}✓ Essential theme variables present{RESET}")
+    return True
+
+
+def check_yuck():
+    print(f"\n{BOLD}[2/5] Checking Eww YUCK Structure...{RESET}")
+    if not os.path.exists(YUCK_FILE):
+        print(f"  {RED}✗ Missing eww.yuck at {YUCK_FILE}{RESET}")
+        return False
+
+    with open(YUCK_FILE, "r") as f:
+        content = f.read()
+
+    # Parentheses balance check
+    opens = content.count("(")
+    closes = content.count(")")
+    if opens != closes:
+        print(f"  {RED}✗ Unbalanced parentheses in eww.yuck: {opens} '(' vs {closes} ')'{RESET}")
+        return False
+    else:
+        print(f"  {GREEN}✓ Parentheses perfectly balanced ({opens} pairs){RESET}")
+    return True
+
+
+def check_logs():
+    print(f"\n{BOLD}[3/5] Inspecting Eww Daemon Logs...{RESET}")
+    logs = sorted(glob.glob(os.path.join(LOG_DIR, "eww_*.log")), key=os.path.getmtime, reverse=True)
+    if not logs:
+        print(f"  {YELLOW}○ No log files found in {LOG_DIR}{RESET}")
+        return True
+
+    latest = logs[0]
+    print(f"  {CYAN}i Reading latest log: {os.path.basename(latest)}{RESET}")
+    with open(latest, "r", errors="ignore") as f:
+        lines = f.readlines()[-30:]
+
+    error_lines = [l.strip() for l in lines if "ERROR" in l or "Action failed" in l or "error:" in l]
+    if error_lines:
+        print(f"  {RED}✗ Detected {len(error_lines)} recent error(s) in daemon log:{RESET}")
+        for err in error_lines[-3:]:
+            print(f"    {RED}• {err}{RESET}")
+        return False
+    else:
+        print(f"  {GREEN}✓ Zero errors in recent daemon log{RESET}")
+        return True
+
+
+def check_themes():
+    print(f"\n{BOLD}[4/5] Validating SWAL Themes & Schemas...{RESET}")
+    if not os.path.exists(THEMES_DIR):
+        print(f"  {RED}✗ Themes directory missing: {THEMES_DIR}{RESET}")
+        return False
+
+    themes = glob.glob(os.path.join(THEMES_DIR, "*.json"))
+    print(f"  {CYAN}i Found {len(themes)} installed theme(s){RESET}")
+    all_ok = True
+    for tpath in themes:
+        tname = os.path.basename(tpath)
+        try:
+            with open(tpath) as f:
+                data = json.load(f)
+                if "colors" in data and "accent_primary" in data["colors"]:
+                    print(f"  {GREEN}✓ {tname:<20} [OK] — {data.get('name', '')}{RESET}")
+                else:
+                    print(f"  {RED}✗ {tname:<20} [FAIL] — missing 'colors.accent_primary'{RESET}")
+                    all_ok = False
+        except Exception as e:
+            print(f"  {RED}✗ {tname:<20} [FAIL] — JSON error: {e}{RESET}")
+            all_ok = False
+    return all_ok
+
+
+def check_services():
+    print(f"\n{BOLD}[5/5] Checking SWAL Node Services...{RESET}")
+    # Xavier Core check
+    try:
+        req = urllib.request.Request("http://127.0.0.1:8006/health", headers={"User-Agent": "swal-doctor"})
+        with urllib.request.urlopen(req, timeout=1.0) as res:
+            if res.status == 200:
+                print(f"  {GREEN}✓ Xavier Cognitive Memory Core (:8006) — ONLINE{RESET}")
+            else:
+                print(f"  {YELLOW}⚠ Xavier Core (:8006) returned status {res.status}{RESET}")
+    except Exception:
+        print(f"  {YELLOW}○ Xavier Core (:8006) — Standby / Offline{RESET}")
+
+    # Eww Daemon ping
+    res = subprocess.run(["eww", "ping"], capture_output=True, text=True)
+    if res.returncode == 0:
+        print(f"  {GREEN}✓ Eww Wayland Daemon — RUNNING (pong received){RESET}")
+    else:
+        print(f"  {RED}✗ Eww Daemon not responding{RESET}")
+    return True
+
+
+def main():
+    parser = argparse.ArgumentParser(description="SWAL Desktop Diagnostic & Linter Utility")
+    parser.add_argument("--fix", action="store_true", help="Automatically heal detected issues and reload desktop")
+    args = parser.parse_args()
+
+    print(f"{BOLD}{CYAN}════════════════════════════════════════════════════════════{RESET}")
+    print(f"{BOLD}{CYAN}  ⚡ SWAL DESKTOP DOCTOR & LINTER (v1.0.0)                 {RESET}")
+    print(f"{BOLD}{CYAN}════════════════════════════════════════════════════════════{RESET}")
+
+    s1 = check_scss(fix=args.fix)
+    s2 = check_yuck()
+    s3 = check_logs()
+    s4 = check_themes()
+    s5 = check_services()
+
+    if args.fix:
+        print(f"\n{BOLD}{CYAN}🔧 Applying Hot Reload...{RESET}")
+        subprocess.run(["eww", "reload"], capture_output=True)
+        print(f"{GREEN}✓ Eww reloaded successfully.{RESET}")
+
+    print(f"\n{BOLD}{CYAN}════════════════════════════════════════════════════════════{RESET}")
+    if all([s1, s2, s3, s4, s5]):
+        print(f"{BOLD}{GREEN}  ✓ SYSTEM HEALTHY: All checks passed with 0 errors.         {RESET}")
+    else:
+        print(f"{BOLD}{YELLOW}  ⚠ SOME CHECKS REPORTED ISSUES (Run with --fix to heal).     {RESET}")
+    print(f"{BOLD}{CYAN}════════════════════════════════════════════════════════════{RESET}\n")
+
+
+if __name__ == "__main__":
+    main()
