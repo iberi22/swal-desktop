@@ -2,9 +2,9 @@
 
 use std::path::PathBuf;
 use swal_files::config::FileManagerConfig;
-use swal_files::entry::FileEntry;
 use swal_files::omnibar::{parse_omnibar_input, OmnibarIntent};
 use swal_files::scanner::{scan_directory, ScanOptions, SortBy};
+use swal_files::storage::scan_mounted_drives;
 
 fn print_usage() {
     println!("⚡ SWAL Files — Modern Minimalist Agentic File Manager (v0.1.0)");
@@ -12,6 +12,7 @@ fn print_usage() {
     println!("  swal-files ls [path]           List directory contents with metadata & git status");
     println!("  swal-files search <query>      Sub-millisecond fast directory & tag search");
     println!("  swal-files omnibar <input>     Parse omnibar command (@agent, >cmd, ?search, /path)");
+    println!("  swal-files drives              Display mounted storage drives and disk usage");
     println!("  swal-files config [path]       Show or init declarative configuration");
 }
 
@@ -100,6 +101,23 @@ fn main() {
                 OmnibarIntent::SearchQuery(q) => println!("🔍 SEARCH -> '{}'", q),
                 OmnibarIntent::AgentPrompt(p) => println!("🤖 AGENT PROMPT -> \"{}\"", p),
                 OmnibarIntent::Command(c) => println!("⚡ COMMAND EXEC -> `{}`", c),
+            }
+        }
+        "drives" => {
+            let drives = scan_mounted_drives();
+            println!("💾 Mounted Storage Drives ({} found):", drives.len());
+            println!("{:<16} {:<10} {:<10} {:<10} {:<10} {:<8}", "Mount", "FS", "Total", "Available", "Used", "Used %");
+            println!("{:-<70}", "");
+            for d in drives {
+                println!(
+                    "{:<16} {:<10} {:<10} {:<10} {:<10} {:.1}%",
+                    d.mount_point,
+                    d.filesystem,
+                    d.formatted_total(),
+                    d.formatted_available(),
+                    d.formatted_used(),
+                    d.used_percentage
+                );
             }
         }
         "config" => {
