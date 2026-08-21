@@ -1,0 +1,10 @@
+[package]
+name = "swal-ambient-orb"
+version = "0.1.0"
+edition = "2021"
+authors = ["SouthWest AI Labs <agent@southwest-ai-labs.com>"]
+description = "Ambient Voice & Thought Reactive Orb Surface for SWAL Desktop"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+crossbeam-channel = "0.5"
