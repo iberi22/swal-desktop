@@ -975,6 +975,7 @@ dependencies = [
 ]
 
 [[package]]
+<<<<<<< HEAD
 name = "swal-node-daemon"
 version = "0.1.0"
 dependencies = [
@@ -982,6 +983,13 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+=======
+name = "swal-ambient-orb"
+version = "0.1.0"
+dependencies = [
+ "crossbeam-channel",
+ "serde",
+>>>>>>> origin/main
 ]
 
 [[package]]
