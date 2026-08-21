@@ -1660,6 +1660,7 @@ dependencies = [
  "reqwest",
  "serde",
  "serde_json",
+ "swal-a2ui-engine",
  "tokio",
 ]
 
