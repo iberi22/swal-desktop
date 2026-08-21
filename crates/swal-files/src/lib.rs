@@ -10,7 +10,14 @@ pub mod scanner;
 use config::FileManagerConfig;
 use entry::FileEntry;
 use scanner::{scan_directory, ScanOptions};
+use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum PaneFocus {
+    Primary,
+    Secondary,
+}
 
 #[derive(Debug, Clone)]
 pub struct FileTab {
@@ -69,6 +76,7 @@ pub struct FileManagerSession {
     pub active_tab_idx: usize,
     pub dual_pane_active: bool,
     pub dual_pane_path: Option<PathBuf>,
+    pub active_pane: PaneFocus,
 }
 
 impl FileManagerSession {
@@ -80,7 +88,97 @@ impl FileManagerSession {
             active_tab_idx: 0,
             dual_pane_active: false,
             dual_pane_path: None,
+            active_pane: PaneFocus::Primary,
         }
+    }
+
+    pub fn is_dual_pane(&self) -> bool {
+        self.dual_pane_active
+    }
+
+    pub fn split_dual_pane(&mut self, secondary_path: Option<PathBuf>) {
+        self.dual_pane_active = true;
+        let path = secondary_path.unwrap_or_else(|| self.active_tab().current_path.clone());
+        self.dual_pane_path = Some(path);
+    }
+
+    pub fn close_dual_pane(&mut self) {
+        self.dual_pane_active = false;
+        self.active_pane = PaneFocus::Primary;
+    }
+
+    pub fn switch_pane_focus(&mut self) {
+        if self.dual_pane_active {
+            self.active_pane = match self.active_pane {
+                PaneFocus::Primary => PaneFocus::Secondary,
+                PaneFocus::Secondary => PaneFocus::Primary,
+            };
+        }
+    }
+
+    pub fn set_pane_focus(&mut self, focus: PaneFocus) {
+        self.active_pane = focus;
+    }
+
+    pub fn active_pane(&self) -> PaneFocus {
+        self.active_pane
+    }
+
+    pub fn sync_dual_pane_paths(&mut self) {
+        if !self.dual_pane_active {
+            return;
+        }
+        match self.active_pane {
+            PaneFocus::Primary => {
+                self.dual_pane_path = Some(self.active_tab().current_path.clone());
+            }
+            PaneFocus::Secondary => {
+                if let Some(ref sec_path) = self.dual_pane_path {
+                    let sec_path_cloned = sec_path.clone();
+                    self.active_tab_mut().navigate_to(sec_path_cloned);
+                }
+            }
+        }
+    }
+
+    pub fn duplicate_tab(&mut self, idx: usize) -> Option<usize> {
+        let target_idx = if idx < self.tabs.len() {
+            idx
+        } else {
+            self.active_tab_idx
+        };
+
+        if let Some(tab_to_dup) = self.tabs.get(target_idx).cloned() {
+            let next_id = self.tabs.iter().map(|t| t.id).max().unwrap_or(0) + 1;
+            let mut dup = tab_to_dup;
+            dup.id = next_id;
+            self.tabs.insert(target_idx + 1, dup);
+            self.active_tab_idx = target_idx + 1;
+            Some(self.active_tab_idx)
+        } else {
+            None
+        }
+    }
+
+    pub fn reorder_tab(&mut self, from_idx: usize, to_idx: usize) -> bool {
+        if from_idx >= self.tabs.len() || to_idx >= self.tabs.len() {
+            return false;
+        }
+        if from_idx == to_idx {
+            return true;
+        }
+
+        let tab = self.tabs.remove(from_idx);
+        self.tabs.insert(to_idx, tab);
+
+        if self.active_tab_idx == from_idx {
+            self.active_tab_idx = to_idx;
+        } else if from_idx < self.active_tab_idx && to_idx >= self.active_tab_idx {
+            self.active_tab_idx -= 1;
+        } else if from_idx > self.active_tab_idx && to_idx <= self.active_tab_idx {
+            self.active_tab_idx += 1;
+        }
+        true
     }
 
     pub fn active_tab(&self) -> &FileTab {

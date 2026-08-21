@@ -2,7 +2,6 @@
 
 use std::path::PathBuf;
 use swal_files::config::FileManagerConfig;
-use swal_files::entry::FileEntry;
 use swal_files::omnibar::{parse_omnibar_input, OmnibarIntent};
 use swal_files::scanner::{scan_directory, ScanOptions, SortBy};
 

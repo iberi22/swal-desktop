@@ -1,7 +1,99 @@
 //! High-performance async directory scanner & filter
 
 use crate::entry::{FileEntry, GitStatus};
-use std::path::Path;
+use serde::{Deserialize, Serialize};
+use std::fs::File;
+use std::io::{BufRead, BufReader};
+use std::path::{Path, PathBuf};
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct DiskUsage {
+    pub mount_point: PathBuf,
+    pub fs_type: String,
+    pub total_bytes: u64,
+    pub used_bytes: u64,
+    pub available_bytes: u64,
+    pub usage_pct: f32,
+}
+
+pub fn scan_disk_usage(path: &Path) -> Result<DiskUsage, std::io::Error> {
+    match rustix::fs::statvfs(path) {
+        Ok(stat) => {
+            let block_size = if stat.f_frsize > 0 { stat.f_frsize } else { stat.f_bsize };
+            let total_bytes = stat.f_blocks.saturating_mul(block_size);
+            let free_bytes = stat.f_bfree.saturating_mul(block_size);
+            let available_bytes = stat.f_bavail.saturating_mul(block_size);
+            let used_bytes = total_bytes.saturating_sub(free_bytes);
+
+            let usage_pct = if total_bytes > 0 {
+                ((used_bytes as f64 / total_bytes as f64) * 100.0) as f32
+            } else {
+                0.0
+            };
+
+            Ok(DiskUsage {
+                mount_point: path.to_path_buf(),
+                fs_type: "ext4".to_string(),
+                total_bytes,
+                used_bytes,
+                available_bytes,
+                usage_pct,
+            })
+        }
+        Err(err) => Err(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            format!("statvfs failed for path {:?}: {}", path, err),
+        )),
+    }
+}
+
+pub fn scan_mounts() -> Result<Vec<DiskUsage>, std::io::Error> {
+    let mut results = Vec::new();
+    let mut seen_mounts = std::collections::HashSet::new();
+
+    if let Ok(file) = File::open("/proc/mounts") {
+        let reader = BufReader::new(file);
+        for line_res in reader.lines() {
+            if let Ok(line) = line_res {
+                let parts: Vec<&str> = line.split_whitespace().collect();
+                if parts.len() >= 3 {
+                    let mount_str = parts[1];
+                    let fs_type = parts[2];
+
+                    if fs_type.starts_with("proc")
+                        || fs_type.starts_with("sysfs")
+                        || fs_type.starts_with("devtmpfs")
+                        || fs_type.starts_with("cgroup")
+                        || fs_type == "tmpfs"
+                        || (fs_type == "overlay" && mount_str.contains("docker"))
+                        || mount_str.starts_with("/dev")
+                        || mount_str.starts_with("/sys")
+                        || mount_str.starts_with("/proc")
+                    {
+                        continue;
+                    }
+
+                    let mount_path = PathBuf::from(mount_str);
+                    if seen_mounts.insert(mount_path.clone()) {
+                        if let Ok(mut usage) = scan_disk_usage(&mount_path) {
+                            usage.fs_type = fs_type.to_string();
+                            results.push(usage);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    let root_path = PathBuf::from("/");
+    if !seen_mounts.contains(&root_path) {
+        if let Ok(usage) = scan_disk_usage(&root_path) {
+            results.push(usage);
+        }
+    }
+
+    Ok(results)
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SortBy {
