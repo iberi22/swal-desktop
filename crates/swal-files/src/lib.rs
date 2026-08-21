@@ -3,6 +3,7 @@
 
 pub mod agent;
 pub mod config;
+pub mod dual_pane;
 pub mod entry;
 pub mod omnibar;
 pub mod scanner;
