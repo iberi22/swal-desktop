@@ -4,6 +4,7 @@
 //! and shader compiler/pipeline bindings for ambient visual states.
 
 pub mod shaders;
+pub mod socket;
 
 use serde::{Deserialize, Serialize};
 use std::sync::atomic::{AtomicU32, Ordering};
