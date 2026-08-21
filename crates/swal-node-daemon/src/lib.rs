@@ -1,3 +1,4 @@
+pub mod agent_config_ipc;
 pub mod native_shell;
 pub mod xavier;
 
