@@ -1,0 +1,12 @@
+[package]
+name = "swal-node-daemon"
+version = "0.1.0"
+edition = "2021"
+authors = ["SouthWest AI Labs <agent@southwest-ai-labs.com>"]
+description = "Async Tokio Coordinator & Xavier Bridge Node Daemon for SWAL Desktop"
+
+[dependencies]
+tokio = { version = "1.0", features = ["full"] }
+reqwest = { version = "0.12", features = ["json"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
