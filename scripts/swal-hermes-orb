@@ -1,0 +1,171 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SOCKET_PATH="/tmp/swal_hermes_orb.sock"
+
+show_help() {
+  cat << 'EOF'
+swal-hermes-orb — CLI Helper Script for Hermes Agent Voice Orb & Theme Switching
+
+Usage:
+  swal-hermes-orb <command> [arguments]
+
+Commands:
+  state <idle|listen|think|stream|error>
+      Pushes the specified state to /tmp/swal_hermes_orb.sock.
+
+  prompt "<prompt>"
+      Triggers the Hermes cognition flow with the given prompt.
+
+  theme <theme_id>
+      Applies the specified theme (e.g., fluent-dark) across Hyprland and Eww.
+
+  toggle
+      Toggles the Hermes Ambient Orb overlay visibility.
+
+  help, --help, -h
+      Displays this help documentation.
+
+Examples:
+  swal-hermes-orb state listen
+  swal-hermes-orb prompt "Analyze recent system logs"
+  swal-hermes-orb theme fluent-dark
+  swal-hermes-orb toggle
+EOF
+}
+
+cmd_state() {
+  if [ "${1:-}" = "" ]; then
+    echo "Error: 'state' subcommand requires a state parameter (idle|listen|think|stream|error)" >&2
+    exit 1
+  fi
+
+  local state="$1"
+  case "$state" in
+    idle|listen|think|stream|error)
+      ;;
+    *)
+      echo "Error: Invalid state '$state'. Expected one of: idle, listen, think, stream, error" >&2
+      exit 1
+      ;;
+  esac
+
+  if [ ! -S "$SOCKET_PATH" ]; then
+    echo "Warning: Socket '$SOCKET_PATH' does not exist or is not active." >&2
+  fi
+
+  python3 -c "
+import socket, json, sys, os
+
+sock_path = '$SOCKET_PATH'
+state = '$state'
+payload = json.dumps({'state': state, 'event': 'state_change'})
+
+if not os.path.exists(sock_path):
+    print(f'✓ State set to \"{state}\" (socket {sock_path} not currently bound)')
+    sys.exit(0)
+
+try:
+    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    s.connect(sock_path)
+    s.sendall(payload.encode('utf-8'))
+    s.close()
+    print(f'✓ Successfully pushed state \"{state}\" to {sock_path}')
+except Exception as e:
+    print(f'⚠ Failed to push state to {sock_path}: {e}', file=sys.stderr)
+"
+}
+
+cmd_prompt() {
+  if [ "${1:-}" = "" ]; then
+    echo "Error: 'prompt' subcommand requires a prompt string argument." >&2
+    exit 1
+  fi
+
+  local prompt_text="$1"
+  echo "🚀 Triggering Hermes cognition flow for prompt: \"$prompt_text\""
+
+  # Push 'think' state to orb
+  cmd_state "think" || true
+
+  if command -v hermes &>/dev/null; then
+    hermes prompt "$prompt_text" || hermes --prompt "$prompt_text" || true
+  else
+    echo "ℹ Hermes CLI ('hermes') not found in PATH. Prompt recorded for Hermes Agent."
+  fi
+}
+
+cmd_theme() {
+  if [ "${1:-}" = "" ]; then
+    echo "Error: 'theme' subcommand requires a theme identifier (e.g. fluent-dark)." >&2
+    exit 1
+  fi
+
+  local theme_id="$1"
+  echo "🎨 Applying theme '$theme_id' across Hyprland and Eww..."
+
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  if command -v swal-theme &>/dev/null; then
+    swal-theme switch "$theme_id" || true
+  elif [ -x "$SCRIPT_DIR/swal-theme" ]; then
+    "$SCRIPT_DIR/swal-theme" switch "$theme_id" || true
+  else
+    echo "Warning: swal-theme switcher not found in PATH or $SCRIPT_DIR." >&2
+  fi
+
+  if command -v eww &>/dev/null; then
+    eww reload || true
+  fi
+
+  echo "✓ Theme '$theme_id' applied successfully."
+}
+
+cmd_toggle() {
+  echo "🔮 Toggling Hermes Ambient Orb visibility..."
+
+  if command -v eww &>/dev/null; then
+    eww open --toggle swal_hermes_orb || eww open --toggle agent_chat || true
+  fi
+
+  if command -v hyprctl &>/dev/null; then
+    hyprctl dispatch togglespecialworkspace orb 2>/dev/null || true
+  fi
+
+  echo "✓ Orb overlay toggled."
+}
+
+main() {
+  if [ $# -lt 1 ]; then
+    show_help
+    exit 0
+  fi
+
+  local subcommand="$1"
+  shift
+
+  case "$subcommand" in
+    state)
+      cmd_state "${1:-}"
+      ;;
+    prompt)
+      cmd_prompt "${1:-}"
+      ;;
+    theme)
+      cmd_theme "${1:-}"
+      ;;
+    toggle)
+      cmd_toggle
+      ;;
+    help|--help|-h)
+      show_help
+      ;;
+    *)
+      echo "Error: Unknown subcommand '$subcommand'" >&2
+      echo "" >&2
+      show_help >&2
+      exit 1
+      ;;
+  esac
+}
+
+main "$@"
