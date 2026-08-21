@@ -1177,6 +1177,8 @@ dependencies = [
  "crossbeam-channel",
  "serde",
  "serde_json",
+ "swal-a2ui-engine",
+ "swal-ambient-orb",
  "tokio",
 ]
 
