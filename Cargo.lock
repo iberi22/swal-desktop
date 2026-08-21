@@ -1155,6 +1155,7 @@ dependencies = [
  "libc",
  "serde",
  "serde_json",
+ "swal-a2ui-engine",
  "tempfile",
  "tokio",
  "walkdir",
