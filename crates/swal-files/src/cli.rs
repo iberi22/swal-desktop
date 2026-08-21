@@ -9,9 +9,133 @@ use crate::omnibar::{parse_omnibar_input, OmnibarIntent};
 use crate::preview::{generate_preview_for_path, load_editor_state, save_editor_state};
 use crate::session::{load_session, save_session, SessionState, TabState};
 
+const PID_FILE: &str = "/tmp/swal-files.pid";
+const EWWSOCK: &str = "/tmp/eww.sock";
+
+/// Check if an existing swal-files instance is running via PID file
+fn is_instance_running() -> bool {
+    if let Ok(content) = fs::read_to_string(PID_FILE) {
+        if let Ok(pid) = content.trim().parse::<u32>() {
+            // Check if process is still alive (kill signal 0)
+            let alive = unsafe { libc::kill(pid as i32, 0) == 0 };
+            if alive {
+                return true;
+            }
+            // Stale PID file — clean it up
+            let _ = fs::remove_file(PID_FILE);
+        }
+    }
+    false
+}
+
+/// Write our PID to the lock file
+fn write_pid_file() {
+    let _ = fs::write(PID_FILE, std::process::id().to_string());
+}
+
+/// Remove PID file on clean exit
+fn remove_pid_file() {
+    let _ = fs::remove_file(PID_FILE);
+}
+
+/// Check if EWW daemon is responsive by looking for its unix socket
+fn eww_daemon_alive() -> bool {
+    // Check if eww daemon process exists (use -o for oldest, returns just PID)
+    let eww_pid = Command::new("pgrep")
+        .args(["-o", "eww"])
+        .output()
+        .ok()
+        .and_then(|o| {
+            if o.status.success() {
+                String::from_utf8(o.stdout)
+                    .ok()
+                    .and_then(|s| s.trim().lines().next()?.parse::<u32>().ok())
+            } else {
+                None
+            }
+        });
+
+    match eww_pid {
+        Some(pid) => {
+            // Verify it's actually responding (not a zombie)
+            let alive = unsafe { libc::kill(pid as i32, 0) == 0 };
+            if !alive {
+                eprintln!("⚠ EWW daemon PID {} is zombie, restarting...", pid);
+                let _ = Command::new("kill").arg("-9").arg(pid.to_string()).status();
+                start_eww_daemon();
+            }
+            alive
+        }
+        None => {
+            eprintln!("⚠ EWW daemon not running, starting...");
+            start_eww_daemon();
+            true
+        }
+    }
+}
+
+/// Start EWW daemon in background
+fn start_eww_daemon() {
+    let _ = Command::new("eww").arg("daemon").status();
+    // Give it a moment to initialize
+    std::thread::sleep(std::time::Duration::from_millis(500));
+}
+
+/// Send notification (works on Linux with notify-send, silent on other platforms)
+fn send_notification(summary: &str, body: &str) {
+    #[cfg(target_os = "linux")]
+    {
+        let _ = Command::new("notify-send")
+            .args([
+                "--icon=folder-open",
+                "--app-name=SWAL Files",
+                "-t",
+                "2000",
+                summary,
+                body,
+            ])
+            .status();
+    }
+}
+
+/// Kill orphan EWW layer shells that linger after daemon crashes.
+/// These are gtk-layer-shell surfaces at overlay level that no daemon tracks.
+fn kill_orphan_layer_shells() {
+    #[cfg(target_os = "linux")]
+    {
+        if let Ok(out) = Command::new("hyprctl").arg("layers").output() {
+            let text = String::from_utf8_lossy(&out.stdout);
+            // Find all gtk-layer-shell PIDs in overlay level
+            for line in text.lines() {
+                if line.contains("gtk-layer-shell") && line.contains("pid:") {
+                    if let Some(pid_str) = line.split("pid:").nth(1) {
+                        if let Ok(pid) = pid_str.trim().parse::<u32>() {
+                            // Check if this PID is NOT the current eww daemon
+                            let current_daemon = Command::new("pgrep")
+                                .args(["-o", "eww"])
+                                .output()
+                                .ok()
+                                .and_then(|o| String::from_utf8(o.stdout).ok())
+                                .and_then(|s| s.trim().parse::<u32>().ok());
+
+                            if Some(pid) != current_daemon {
+                                eprintln!("🧹 Killing orphan layer shell PID {}", pid);
+                                let _ = Command::new("kill")
+                                    .args(["-9", &pid.to_string()])
+                                    .status();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 pub fn open_gui(target_path: Option<&str>) {
     let mut session = load_session();
 
+    // Handle target path — add as new tab or switch to existing tab
     if let Some(target) = target_path {
         let p = PathBuf::from(target);
         if let Ok(canon) = fs::canonicalize(&p) {
@@ -21,6 +145,7 @@ pub fn open_gui(target_path: Option<&str>) {
                 .map(|n| n.to_string_lossy().to_string())
                 .unwrap_or_else(|| "/".to_string());
 
+            // Check if this path already has a tab
             let mut found = false;
             for t in session.tabs.iter_mut() {
                 if t.path == path_str {
@@ -45,18 +170,30 @@ pub fn open_gui(target_path: Option<&str>) {
 
     save_session(&session);
 
-    let active_win = Command::new("eww").arg("active-windows").output();
-    let is_open = if let Ok(out) = active_win {
-        let text = String::from_utf8_lossy(&out.stdout);
-        text.contains("swal_files")
-    } else {
-        false
-    };
+    // Kill any orphan layer shells from previous daemon crashes
+    kill_orphan_layer_shells();
 
-    if is_open {
+    // Ensure EWW daemon is alive before doing anything
+    eww_daemon_alive();
+
+    // Check if another swal-files instance is already managing the window
+    let already_running = is_instance_running();
+
+    if already_running {
+        // Another instance is handling it — just update data
+        if let Some(target) = target_path {
+            let display = Path::new(target)
+                .file_name()
+                .map(|n| n.to_string_lossy().to_string())
+                .unwrap_or_else(|| target.to_string());
+            send_notification("📂 SWAL Files", &format!("Abriendo en nueva pestaña: {}", display));
+        }
         let payload = build_gui_payload(&session);
         notify_eww_update(&payload);
     } else {
+        // We are the primary instance — claim the PID file and open the window
+        write_pid_file();
+
         let target_win = if session.is_maximized {
             "swal_files_maximized"
         } else {
