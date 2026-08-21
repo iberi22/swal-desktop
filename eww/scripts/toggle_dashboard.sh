@@ -4,7 +4,7 @@ ACTION="${1:-toggle}"
 close_all() {
     for win in dashboard ram_panel agent_admin keybinds_panel agent_chat swal_settings; do
         if eww active-windows | grep -q "$win"; then
-            eww close "$win" 2>/dev/null || true
+            eww close "$win" 2>/dev/null &
         fi
     done
 }
