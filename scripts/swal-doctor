@@ -97,6 +97,7 @@ def check_logs():
         and "Failed to send success response" not in l
         and "channel closed" not in l
         and "sending response" not in l
+        and "Tried to close window with id" not in l
     ]
     if error_lines:
         print(f"  {RED}✗ Detected {len(error_lines)} recent error(s) in daemon log:{RESET}")

@@ -611,123 +611,225 @@ button.settings-tab.active label {{ color: $theme-accent; font-weight: bold; }}
   padding: 6px 8px;
 }}
 
-/* SWAL Files Agentic Explorer */
-.files-container {{
-  background-color: $theme-bg;
-  border: 1px solid $theme-border-active;
-  border-radius: 10px;
-  padding: 10px;
+/* SWAL Files Fluent & Mica Acrylic Glassmorphism */
+.files-app-window {{
+  background-color: rgba(10, 15, 29, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 12px;
   color: $theme-text;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
 }}
-.files-header {{
-  padding-bottom: 6px;
-  border-bottom: 1px solid $theme-border-subtle;
+
+/* 1. TOP TAB STRIP */
+.files-tab-strip {{
+  background-color: rgba(0, 0, 0, 0.35);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 6px 10px 0px 10px;
 }}
-.files-icon {{ font-size: 14px; margin-right: 6px; }}
-.files-title {{
-  font-family: "JetBrainsMono Nerd Font", monospace;
-  font-weight: bold;
-  color: $theme-accent;
-  font-size: 12px;
+.files-tab {{
+  border-radius: 8px 8px 0px 0px;
+  padding: 4px 10px;
+  margin-right: 2px;
 }}
-button.files-close {{
+.files-tab.active {{
+  background-color: rgba(15, 23, 42, 0.90);
+  border-top: 2px solid $theme-accent;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}}
+.files-tab.inactive {{
+  background-color: transparent;
+  opacity: 0.70;
+}}
+.files-tab.inactive:hover {{
   background-color: rgba(255, 255, 255, 0.04);
-  border: 1px solid $theme-border-subtle;
-  border-radius: 4px;
-  padding: 1px 6px;
+  opacity: 0.95;
+}}
+.files-tab-btn {{
+  background: transparent;
+  border: none;
+  padding: 0;
+}}
+.files-tab-icon {{ font-size: 13px; color: $theme-accent; }}
+.files-tab-title {{
+  font-size: 11px;
+  font-weight: bold;
   color: $theme-text;
 }}
-button.files-close:hover {{
+button.files-tab-close {{
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  padding: 1px 4px;
+  font-size: 9px;
+  color: $theme-text-sec;
+}}
+button.files-tab-close:hover {{
   background-color: $theme-danger;
   color: #ffffff;
 }}
-.files-omnibar-box {{
-  margin-top: 6px;
-  margin-bottom: 6px;
-  background-color: $theme-elevated;
-  border: 1px solid $theme-border-subtle;
+button.files-new-tab-btn {{
+  background-color: transparent;
+  border: none;
   border-radius: 6px;
-  padding: 3px 6px;
+  padding: 2px 8px;
+  font-size: 14px;
+  color: $theme-text-sec;
 }}
-button.files-nav-btn {{
-  background-color: rgba(255, 255, 255, 0.03);
-  border: 1px solid $theme-border-subtle;
-  border-radius: 4px;
-  padding: 2px 6px;
-  font-size: 10.5px;
-  color: $theme-text;
-}}
-button.files-nav-btn.agent {{
-  background-color: rgba(6, 182, 212, 0.12);
-  border-color: $theme-accent;
+button.files-new-tab-btn:hover {{
+  background-color: rgba(255, 255, 255, 0.08);
   color: $theme-accent;
-  font-weight: bold;
 }}
-.files-path-label {{
-  font-family: "JetBrainsMono Nerd Font", monospace;
+button.files-win-btn {{
+  background-color: transparent;
+  border: none;
+  border-radius: 4px;
+  padding: 2px 8px;
   font-size: 11px;
   color: $theme-text-sec;
-  padding: 0 6px;
 }}
-.files-sidebar {{
-  min-width: 170px;
-  background-color: $theme-elevated;
-  border: 1px solid $theme-border-subtle;
+button.files-win-btn:hover {{
+  background-color: rgba(255, 255, 255, 0.08);
+  color: $theme-text;
+}}
+button.files-win-btn.close:hover {{
+  background-color: $theme-danger;
+  color: #ffffff;
+}}
+
+/* 2. COMMAND TOOLBAR & OMNIBAR */
+.files-toolbar {{
+  background-color: rgba(15, 23, 42, 0.60);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 6px 10px;
+}}
+.files-nav-cluster {{
+  background-color: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 6px;
-  padding: 6px;
-  margin-right: 6px;
+  padding: 2px;
 }}
-.sidebar-heading {{
-  font-size: 9.5px;
-  font-weight: bold;
-  color: $theme-text-sec;
-  margin-top: 4px;
-  margin-bottom: 2px;
-}}
-button.sidebar-item {{
+button.files-tool-btn {{
   background-color: transparent;
   border: none;
   border-radius: 4px;
-  padding: 3px 4px;
-  color: $theme-text;
-  font-size: 10.5px;
-  margin-bottom: 2px;
+  padding: 3px 7px;
+  font-size: 11px;
+  color: $theme-text-sec;
 }}
-button.sidebar-item:hover {{
-  background-color: rgba(255, 255, 255, 0.05);
+button.files-tool-btn:hover {{
+  background-color: rgba(255, 255, 255, 0.08);
   color: $theme-accent;
 }}
-.sidebar-tag {{
-  font-size: 10px;
-  padding: 1px 3px;
-  color: $theme-text-sec;
-}}
-.files-scroll {{
-  background-color: $theme-elevated;
-  border: 1px solid $theme-border-subtle;
+button.files-tool-btn.agent {{
+  background-color: rgba(6, 182, 212, 0.12);
+  border: 1px solid rgba(6, 182, 212, 0.40);
   border-radius: 6px;
-  padding: 4px;
+  color: $theme-accent;
+  font-weight: bold;
+  padding: 3px 8px;
 }}
-button.file-row-btn {{
+.files-address-bar {{
+  background-color: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 2px 6px;
+}}
+button.files-crumb-pill {{
+  background-color: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 11px;
+  color: $theme-text;
+}}
+button.files-crumb-pill:hover {{
+  background-color: rgba(6, 182, 212, 0.15);
+  border-color: $theme-accent;
+  color: $theme-accent;
+}}
+.files-crumb-sep {{
+  color: $theme-text-sec;
+  font-size: 11px;
+  padding: 0 2px;
+}}
+
+/* 3. MAIN WORKSPACE (SIDEBAR + FILE LIST) */
+.files-fluent-sidebar {{
+  min-width: 190px;
+  background-color: rgba(8, 12, 23, 0.75);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 8px 6px;
+}}
+.files-side-header {{
+  font-size: 9px;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  color: $theme-text-sec;
+  padding: 6px 8px 2px 8px;
+}}
+button.files-side-btn {{
   background-color: transparent;
   border: none;
-  border-radius: 4px;
-  padding: 3px 4px;
+  border-radius: 6px;
+  padding: 4px 8px;
+  color: $theme-text;
+  font-size: 11px;
   margin-bottom: 1px;
 }}
-button.file-row-btn:hover {{
-  background-color: rgba(255, 255, 255, 0.05);
+button.files-side-btn:hover {{
+  background-color: rgba(255, 255, 255, 0.06);
+  color: $theme-accent;
 }}
-.file-row-icon {{ font-size: 13px; margin-right: 6px; }}
-.file-row-name {{ font-size: 11px; color: $theme-text; }}
-.file-row-size {{ font-size: 10px; color: $theme-text-sec; }}
-.files-footer {{
-  margin-top: 6px;
-  padding-top: 4px;
-  border-top: 1px solid $theme-border-subtle;
-  font-size: 9.5px;
+.side-ico {{ font-size: 13px; min-width: 16px; }}
+.files-side-tag {{
+  padding: 3px 8px;
+  font-size: 10.5px;
+  color: $theme-text-sec;
 }}
-.footer-info {{ color: $theme-text-sec; }}
+.tag-lbl {{ color: $theme-text; font-size: 10.5px; }}
+
+.files-content-pane {{
+  background-color: rgba(15, 23, 42, 0.45);
+  padding: 6px 8px;
+}}
+.files-col-header {{
+  padding: 4px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 4px;
+}}
+.col-name {{ color: $theme-text-sec; font-size: 10.5px; font-weight: bold; }}
+.col-date {{ color: $theme-text-sec; font-size: 10.5px; min-width: 140px; }}
+.col-type {{ color: $theme-text-sec; font-size: 10.5px; min-width: 150px; }}
+.col-size {{ color: $theme-text-sec; font-size: 10.5px; min-width: 80px; }}
+
+button.files-row-btn {{
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 3px 6px;
+  margin-bottom: 2px;
+}}
+button.files-row-btn:hover {{
+  background-color: rgba(255, 255, 255, 0.04);
+  border-color: rgba(6, 182, 212, 0.30);
+}}
+.item-ico {{ font-size: 14px; min-width: 18px; }}
+.item-txt {{ font-size: 11px; color: $theme-text; }}
+.col-date-cell {{ color: $theme-text-sec; font-size: 10px; min-width: 140px; }}
+.col-type-cell {{ color: $theme-text-sec; font-size: 10px; min-width: 150px; }}
+.col-size-cell {{ color: $theme-accent; font-size: 10px; min-width: 80px; }}
+
+/* 4. STATUS BAR */
+.files-status-bar {{
+  background-color: rgba(0, 0, 0, 0.40);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 4px 12px;
+  font-size: 10px;
+}}
+.stat-left {{ color: $theme-text-sec; }}
+.stat-agent {{ color: $theme-accent; font-weight: bold; }}
+
 .footer-status {{ color: $theme-success; font-weight: bold; }}
 """
 

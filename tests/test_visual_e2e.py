@@ -50,6 +50,13 @@ def capture_and_crop(window_name, crop_geometry, output_filename):
     return None
 
 
+def safe_close_all():
+    out, _, _ = run_cmd(["eww", "active-windows"])
+    for win in ["swal_settings", "dashboard", "ram_panel", "keybinds_panel", "agent_chat", "swal_files"]:
+        if win in out:
+            run_cmd(["eww", "close", win])
+
+
 class TestSWALVisualE2E(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -61,10 +68,8 @@ class TestSWALVisualE2E(unittest.TestCase):
             time.sleep(1)
 
     def tearDown(self):
-        # Close open test windows safely
-        for win in ["swal_settings", "ram_panel", "keybinds_panel", "agent_chat"]:
-            run_cmd(["eww", "close", win])
-        time.sleep(0.5)
+        safe_close_all()
+        time.sleep(0.3)
 
     def test_01_dashboard_visual_layout(self):
         """Verify dashboard renders with header, gear button, and storage meters."""
@@ -114,9 +119,8 @@ class TestSWALVisualE2E(unittest.TestCase):
 
     def test_03_ram_panel_visual_layout(self):
         """Verify process monitor panel renders with process list and metrics."""
-        for win in ["swal_settings", "dashboard", "keybinds_panel", "agent_chat"]:
-            run_cmd(["eww", "close", win])
-        time.sleep(1)
+        safe_close_all()
+        time.sleep(0.5)
 
         run_cmd(["eww", "open", "ram_panel"])
         time.sleep(1.2)
@@ -125,22 +129,21 @@ class TestSWALVisualE2E(unittest.TestCase):
         self.assertIsNotNone(art_ram)
         self.assertGreater(os.path.getsize(art_ram), 10000)
         print(f"  ✓ RAM Panel captured: {art_ram}")
-        run_cmd(["eww", "close", "ram_panel"])
+        safe_close_all()
 
     def test_04_swal_files_visual_layout(self):
         """Verify SWAL Files agentic file manager renders with sidebar and breadcrumbs."""
-        for win in ["swal_settings", "dashboard", "ram_panel", "keybinds_panel", "agent_chat"]:
-            run_cmd(["eww", "close", win])
+        safe_close_all()
         time.sleep(0.5)
 
         run_cmd(["eww", "open", "swal_files"])
         time.sleep(1.2)
 
-        art_files = capture_and_crop("swal_files", "782x562+569+280", "e2e_swal_files_verified.png")
+        art_files = capture_and_crop("swal_files", "922x622+499+250", "e2e_swal_files_verified.png")
         self.assertIsNotNone(art_files)
         self.assertGreater(os.path.getsize(art_files), 10000)
         print(f"  ✓ SWAL Files captured: {art_files}")
-        run_cmd(["eww", "close", "swal_files"])
+        safe_close_all()
 
     def test_05_system_stability_after_visual_runs(self):
         """Run swal-doctor after visual test suite to verify 0 errors in logs."""
