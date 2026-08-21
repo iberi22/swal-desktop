@@ -1,8 +1,10 @@
 //! swal-a2ui-engine
 //! Declarative A2UI schema compiler and validator
 
+pub mod hermes_streamer;
 pub mod schema;
 
+pub use hermes_streamer::HermesA2uiStreamer;
 use serde::{Deserialize, Serialize};
 pub use schema::{compile_widget, validate_widget_json, SchemaValidationError, ThemePalette};
 
