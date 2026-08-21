@@ -1,6 +1,14 @@
 //! swal-render-pipeline
 //! High-refresh (200Hz - 240Hz) lock-free render coordinator for SWAL Desktop
 
+pub mod events;
+pub mod layershell;
+pub mod mica_shader;
+pub mod orb_surface;
+pub mod text;
+pub mod wgpu_context;
+
+
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant};

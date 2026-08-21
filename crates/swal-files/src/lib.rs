@@ -8,7 +8,9 @@ pub mod dual_pane;
 pub mod entry;
 pub mod git;
 pub mod gui;
+pub mod native_window;
 pub mod omnibar;
+
 pub mod preview;
 pub mod scanner;
 pub mod session;

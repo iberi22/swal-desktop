@@ -1,4 +1,6 @@
+pub mod native_shell;
 pub mod xavier;
+
 
 use serde::{Deserialize, Serialize};
 use std::sync::atomic::{AtomicBool, Ordering};

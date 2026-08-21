@@ -2,7 +2,9 @@
 //! Declarative A2UI schema compiler and validator
 
 pub mod hermes_streamer;
+pub mod native_render;
 pub mod schema;
+
 
 
 use serde::{Deserialize, Serialize};
