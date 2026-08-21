@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+python3 /home/belal/proyectosSWAL/periferia/swal-desktop/tests/test_visual_e2e.py
