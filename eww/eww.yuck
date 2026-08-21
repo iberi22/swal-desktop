@@ -1,90 +1,797 @@
+;; SWAL Dashboard v26.4 - Unified Dashboard & Process Monitor
+;; Open: SUPER + Escape
+
 (defwindow dashboard
   :monitor 0
-  :geometry (geometry :x "10px"
-                      :y "50px"
-                      :width "350px"
-                      :height "800px"
-                      :anchor "top right")
-  :stacking "fg"
-  :windowtype "dock"
-  :wm-ignore false
-  (dashboard_layout))
+  :geometry (geometry :x "12px" :y "48px" :width "360px" :height "920px" :anchor "top right")
+  :stacking "overlay"
+  :wm-type "dock"
+  :exclusive false
+  :focusable false
+  (scroll :vscroll true :hscroll false :vexpand true :class "dash-scroll"
+    (main_container)))
 
-(defwidget dashboard_layout []
-  (box :class "dashboard" :orientation "v" :space-evenly false
-    (profile)
-    (sys_metrics)
-    (quick_controls)
-    (ai_status_card)
-    (clock_cal)))
+(defwindow agent_admin
+  :monitor 0
+  :geometry (geometry :x "14px" :y "24px" :width "580px" :height "78%" :anchor "top right")
+  :stacking "overlay" :wm-type "dock" :exclusive false :focusable false
+  (agent_admin_container))
 
-;; --- Profile Widget ---
-(defwidget profile []
-  (box :class "profile-box" :orientation "h" :space-evenly false
-    (box :class "profile-img" :style "background-image: url('assets/profile.png');")
+(defwindow osd
+  :monitor 0
+  :geometry (geometry :x "50%" :y "88%" :width "220px" :anchor "center")
+  :stacking "overlay" :wm-type "normal" :exclusive false :windowtype "menu"
+  (osd_container))
+
+(defwindow keybinds_panel
+  :monitor 0
+  :geometry (geometry :x "0%" :y "0%" :width "640px" :height "520px" :anchor "center")
+  :stacking "overlay"
+  :wm-type "dialog"
+  :focusable true
+  (keybinds_container))
+
+(defwindow agent_chat
+  :monitor 0
+  :geometry (geometry :x "0%" :y "0%" :width "660px" :height "540px" :anchor "center")
+  :stacking "overlay"
+  :wm-type "dock"
+  :exclusive false
+  :focusable true
+  (agent_chat_container))
+
+(defwindow swal_settings
+  :monitor 0
+  :geometry (geometry :x "0%" :y "0%" :width "660px" :height "560px" :anchor "center")
+  :stacking "overlay"
+  :wm-type "dialog"
+  :exclusive false
+  :focusable true
+  (swal_settings_container))
+
+(defwindow ram_panel
+  :monitor 0
+  :geometry (geometry :x "0%" :y "0%" :width "660px" :height "580px" :anchor "center")
+  :stacking "overlay"
+  :wm-type "dialog"
+  :exclusive false
+  :focusable true
+  (ram_panel_container))
+
+(defwidget chip [label icon onclick active tooltip]
+  (button :onclick onclick :tooltip tooltip :class {active ? "chip on" : "chip"} :hexpand true :vexpand false
+          :style "padding:1px 2px;min-height:0px;"
+    (box :orientation "h" :spacing 2 :halign "center" :valign "center" :space-evenly false
+      (label :text icon :class "chip-ico")
+      (label :text label :class "chip-lbl"))))
+
+(defwidget act_btn [label onclick class]
+  (button :onclick onclick :class "act ${class}" :hexpand true :vexpand false
+          :style "padding:1px 2px;min-height:0px;"
+    (label :text label :class "act-lbl" :halign "center")))
+
+(defvar show_sensors false)
+(defvar show_agent_workspace false)
+
+(defwidget main_container []
+  (box :class "main-container" :orientation "v" :space-evenly false :spacing 3 :vexpand false :hexpand false
+
+    ;; --- Header bar ---
+    (box :orientation "h" :space-evenly false :valign "center" :vexpand false
+      (label :text "SWAL DESKTOP" :style "color:#00FF88;font-size:10px;font-weight:bold;")
+      (box :hexpand true)
+      (button :onclick "eww open --toggle ram_panel" :class "icon-btn" :vexpand false :tooltip "Monitor de Sistema y Procesos"
+        (label :text "󰍛" :style "color:#00FF88;font-size:13px;margin-right:2px;"))
+      (button :onclick "eww open --toggle agent_chat" :class "icon-btn" :vexpand false :tooltip "Chat con Hermes / Xavier"
+        (label :text "💬" :style "color:#00CCFF;font-size:12.5px;margin-right:2px;"))
+      (button :onclick "eww open --toggle keybinds_panel" :class "icon-btn" :vexpand false :tooltip "Atajos de teclado"
+        (label :text "⌨" :style "color:#00FF88;font-size:12.5px;margin-right:2px;"))
+      (button :onclick "~/.config/hypr/scripts/layout.sh" :class "icon-btn" :vexpand false :tooltip "Distribución de ventanas"
+        (label :text "󰌌" :style "color:rgba(255,255,255,0.7);font-size:12.5px;margin-right:2px;"))
+      (button :onclick "eww open --toggle swal_settings" :class "icon-btn" :vexpand false :tooltip "Configuración Manual del Sistema (SWAL Settings)"
+        (label :text "⚙" :style "color:#f97316;font-size:13.5px;margin-right:3px;"))
+      (button :onclick "/home/belal/.config/eww/scripts/toggle_dashboard.sh close" :class "close-btn" :vexpand false :tooltip "Cerrar Dashboard"
+        (label :text "󰅖" :class "close-lbl")))
+
+    ;; --- Toggles rápidos ---
+    (box :class "card-sm" :orientation "h" :space-evenly true :spacing 2 :vexpand false
+      (chip :label "Net" :icon "󰖩" :tooltip "Red WiFi" :onclick "/home/belal/.config/eww/scripts/toggles.sh network toggle" :active {net_active == "true"})
+      (chip :label "BT" :icon "󰂯" :tooltip "Bluetooth" :onclick "/home/belal/.config/eww/scripts/toggles.sh bt toggle" :active {bt_active == "true"})
+      (chip :label "Night" :icon "󰖨" :tooltip "Luz nocturna" :onclick "/home/belal/.config/eww/scripts/toggles.sh nightlight toggle" :active {night_active == "true"})
+      (chip :label "Dark" :icon "󰔎" :tooltip "Modo oscuro" :onclick "/home/belal/.config/eww/scripts/toggles.sh darkmode toggle" :active {dark_active == "true"})
+      (chip :label "DND" :icon "󰂛" :tooltip "No molestar" :onclick "/home/belal/.config/eww/scripts/toggles.sh dnd toggle" :active {dnd_active == "true"}))
+
+    ;; --- HARDWARE, RED & SENSORES ---
+    (box :class "card hw-grid" :orientation "v" :spacing 2 :space-evenly false :vexpand false
+      ;; Fila 1: CPU, RAM, GPU + Botón Sensores
+      (box :orientation "h" :space-evenly false :spacing 2 :valign "center" :vexpand false
+        (box :orientation "h" :spacing 2 :hexpand true :space-evenly false :valign "center"
+          (label :text "CPU" :class "hw-tag")
+          (label :text "${round(EWW_SYS_STATS.cpu.avg, 0)}%" :class "hw-val")
+          (label :text "${EWW_SYS_STATS.cpu.temp_str}" :class "hw-temp"))
+        (box :orientation "h" :spacing 2 :hexpand true :space-evenly false :valign "center"
+          (label :text "RAM" :class "hw-tag")
+          (label :text "${round(EWW_SYS_STATS.ram.used_mem_perc, 0)}%" :class "hw-val")
+          (label :text "${EWW_SYS_STATS.ram.temp_str}" :class "hw-temp"))
+        (box :orientation "h" :spacing 2 :hexpand true :space-evenly false :valign "center"
+          (label :text "GPU" :class "hw-tag")
+          (label :text "${EWW_SYS_STATS.gpu.load}%" :class "hw-val")
+          (label :text "${EWW_SYS_STATS.gpu.temp_str}" :class "hw-temp"))
+        (button :onclick "eww update show_sensors=${!show_sensors}" :class "icon-btn" :tooltip "Ver todos los sensores de temperatura" :vexpand false
+          (label :text {show_sensors ? "󰔏 ▲" : "󰔏 ▼"} :style "color:#00CCFF;font-size:9.5px;font-weight:bold;")))
+
+      ;; Panel de Sensores Expandible
+      (box :visible {show_sensors} :class "sensors-box" :orientation "v" :spacing 2 :space-evenly false :vexpand false
+        (box :orientation "h" :space-evenly true :spacing 2 :vexpand false
+          (box :class "sensor-cell" :orientation "h" :space-evenly false :spacing 2
+            (label :text "VRM:" :class "sensor-lbl")
+            (box :hexpand true)
+            (label :text "${EWW_SYS_STATS.sensors.mb_vrm}" :class "sensor-val"))
+          (box :class "sensor-cell" :orientation "h" :space-evenly false :spacing 2
+            (label :text "PCH:" :class "sensor-lbl")
+            (box :hexpand true)
+            (label :text "${EWW_SYS_STATS.sensors.mb_chipset}" :class "sensor-val"))
+          (box :class "sensor-cell" :orientation "h" :space-evenly false :spacing 2
+            (label :text "VSOC:" :class "sensor-lbl")
+            (box :hexpand true)
+            (label :text "${EWW_SYS_STATS.sensors.mb_vsoc}" :class "sensor-val")))
+        (box :orientation "h" :space-evenly true :spacing 2 :vexpand false
+          (box :class "sensor-cell" :orientation "h" :space-evenly false :spacing 2
+            (label :text "Socket:" :class "sensor-lbl")
+            (box :hexpand true)
+            (label :text "${EWW_SYS_STATS.sensors.cpu_socket}" :class "sensor-val"))
+          (box :class "sensor-cell" :orientation "h" :space-evenly false :spacing 2
+            (label :text "GPU-Junc:" :class "sensor-lbl")
+            (box :hexpand true)
+            (label :text "${EWW_SYS_STATS.sensors.gpu_junction}" :class "sensor-val"))
+          (box :class "sensor-cell" :orientation "h" :space-evenly false :spacing 2
+            (label :text "GPU-Mem:" :class "sensor-lbl")
+            (box :hexpand true)
+            (label :text "${EWW_SYS_STATS.sensors.gpu_mem}" :class "sensor-val"))))
+
+      ;; Fila 2: Tráfico de Red y Conexiones
+      (box :orientation "h" :space-evenly false :spacing 4 :vexpand false :valign "center"
+        (label :text "󰛳" :style "color:#00CCFF;font-size:9.5px;")
+        (label :text "${EWW_SYS_STATS.net.combined}" :class "net-badge" :hexpand true :xalign 0)
+        (label :text "Conexiones: ${EWW_SYS_STATS.conns.summary}" :class "conns-badge" :xalign 1)))
+
+    ;; --- DISCOS GRID 2x2 COMPACTO ---
+    (box :class "card" :orientation "v" :spacing 2 :space-evenly false :vexpand false
+      (box :orientation "h" :space-evenly false :vexpand false
+        (label :text "ALMACENAMIENTO (2x2)" :class "section-title" :xalign 0)
+        (box :hexpand true)
+        (label :text "Nemo" :style "color:rgba(255,255,255,0.4);font-size:8px;"))
+
+      ;; Fila 1: Disco 0 y 1
+      (box :orientation "h" :space-evenly true :spacing 3 :vexpand false
+        (for d in {jq(disks_list, ".[0:2]")}
+          (box :class "disk-card-mini" :orientation "v" :spacing 1 :space-evenly false :vexpand false
+            (box :orientation "h" :space-evenly false :spacing 2 :valign "center" :vexpand false
+              (label :text "${d.icon} ${d.name}" :class "disk-name-mini" :xalign 0 :limit-width 10 :show-truncated true)
+              (box :hexpand true)
+              (label :text "${d.temp}" :class "disk-temp-mini ${d.temp_class}")
+              (button :onclick "nemo '${d.mount}' &" :class "disk-open-mini" :tooltip "Abrir ${d.mount} en Nemo" :vexpand false
+                (label :text "󰉋" :class "disk-open-ico")))
+            (box :orientation "h" :space-evenly false :spacing 3 :valign "center" :vexpand false
+              (progress :value {d.pct} :hexpand true :class "disk-prog ${d.pct_class}")
+              (label :text "${d.pct}%" :class "disk-pct-mini ${d.pct_class}"))
+            (label :text "${d.used}/${d.total}" :class "disk-sub-mini" :xalign 0))))
+
+      ;; Fila 2: Disco 2 y 3
+      (box :orientation "h" :space-evenly true :spacing 3 :vexpand false
+        (for d in {jq(disks_list, ".[2:4]")}
+          (box :class "disk-card-mini" :orientation "v" :spacing 1 :space-evenly false :vexpand false
+            (box :orientation "h" :space-evenly false :spacing 2 :valign "center" :vexpand false
+              (label :text "${d.icon} ${d.name}" :class "disk-name-mini" :xalign 0 :limit-width 10 :show-truncated true)
+              (box :hexpand true)
+              (label :text "${d.temp}" :class "disk-temp-mini ${d.temp_class}")
+              (button :onclick "nemo '${d.mount}' &" :class "disk-open-mini" :tooltip "Abrir ${d.mount} en Nemo" :vexpand false
+                (label :text "󰉋" :class "disk-open-ico")))
+            (box :orientation "h" :space-evenly false :spacing 3 :valign "center" :vexpand false
+              (progress :value {d.pct} :hexpand true :class "disk-prog ${d.pct_class}")
+              (label :text "${d.pct}%" :class "disk-pct-mini ${d.pct_class}"))
+            (label :text "${d.used}/${d.total}" :class "disk-sub-mini" :xalign 0)))))
+
+    ;; --- CALENDARIO CENTRADO (IBERI22) ---
+    (box :class "card calendar-card" :orientation "v" :spacing 2 :space-evenly false :vexpand false
+      (box :orientation "h" :space-evenly false :vexpand false
+        (label :text "CALENDARIO & AGENDA" :class "section-title" :xalign 0)
+        (box :hexpand true)
+        (button :onclick "python3 /home/belal/.config/eww/scripts/gcalendar_sync.py sync; eww update calendar_markup=\"$(python3 /home/belal/.config/eww/scripts/calendar_gen.py)\" &"
+                :class "icon-btn" :tooltip "Sincronizar Google Calendar (iberi22)" :vexpand false
+          (label :text "󰑓 Sinc" :style "color:#00CCFF;font-size:9px;")))
+      (box :class "calendar-wrap" :orientation "v" :halign "center" :vexpand false
+        (label :markup calendar_markup :class "calendar" :xalign 0.5 :yalign 0 :vexpand false)))
+
+    ;; --- HERMES AI HUB & AGENTES ---
+    (box :class "card" :orientation "v" :spacing 2 :space-evenly false :vexpand false
+      (box :orientation "h" :space-evenly false :valign "center" :vexpand false
+        (label :text "HERMES AI HUB" :class "section-title")
+        (box :hexpand true)
+        (label :markup ag_active :style "font-size:8.5px;"))
+
+      ;; Sesión activa principal
+      (box :orientation "v" :spacing 1 :space-evenly false :vexpand false
+        (for item in {jq(agents_data, ".sessions | map(select(.open == true)) | .[0:1]")}
+          (box :class "agent-session-card ${item.status}" :orientation "v" :spacing 1 :space-evenly false :vexpand false
+            (box :orientation "h" :space-evenly false :spacing 2 :valign "center" :vexpand false
+              (label :text "${item.title}" :class "agent-sess-title" :hexpand true :xalign 0 :limit-width 22 :show-truncated true)
+              (label :text "${item.model}" :class "agent-sess-model" :limit-width 9 :show-truncated true)
+              (label :text "${item.status_desc}" :class "badge ${item.status}")
+              (button :onclick "eww close dashboard; ${item.terminal_cmd}" :class "term-btn" :tooltip "Abrir en Terminal Ghostty" :vexpand false
+                (label :text "󰆍 Terminal" :class "term-btn-lbl")))
+            (box :orientation "h" :space-evenly false :spacing 3 :valign "center" :vexpand false
+              (label :text "${item.running_action}" :class "agent-activity-lbl" :hexpand true :xalign 0 :limit-width 28 :show-truncated true)
+              (label :text "${item.duration}" :class "agent-time-lbl")))))
+
+      ;; Botón para desplegar espacio de trabajo & Xavier
+      (box :orientation "h" :space-evenly true :spacing 3 :vexpand false
+        (button :onclick "eww update show_agent_workspace=${!show_agent_workspace}" :class "expand-btn" :vexpand false
+          (box :orientation "h" :spacing 3 :halign "center" :space-evenly false
+            (label :text "󱚤" :style "color:#00FF88;font-size:9.5px;")
+            (label :text {show_agent_workspace ? "Ocultar Espacio Hermes & Xavier ▲" : "Espacio Hermes & Xavier ▼"} :style "color:#E6EDF3;font-size:9px;font-weight:bold;"))))
+
+      ;; Panel Extendido de Agentes & Xavier
+      (box :visible {show_agent_workspace} :orientation "v" :spacing 2 :space-evenly false :vexpand false
+        ;; Tarjeta Xavier
+        (box :class "xavier-card" :orientation "v" :spacing 1 :space-evenly false :vexpand false
+          (box :orientation "h" :space-evenly false :valign "center"
+            (label :text "🟢 Xavier Memory Core" :class "xavier-title")
+            (box :hexpand true)
+            (label :text "qwen3-coder" :style "color:#00FF88;font-size:8px;"))
+          (label :text "VectorDB: sqlite-vec · Embeddings: embeddinggemma · TGD: 31/32" :class "xavier-detail" :xalign 0))
+
+        ;; Sesión activa secundaria
+        (for item in {jq(agents_data, ".sessions | map(select(.open == true)) | .[1:2]")}
+          (box :class "agent-session-card ${item.status}" :orientation "v" :spacing 1 :space-evenly false :vexpand false
+            (box :orientation "h" :space-evenly false :spacing 2 :valign "center" :vexpand false
+              (label :text "${item.title}" :class "agent-sess-title" :hexpand true :xalign 0 :limit-width 22 :show-truncated true)
+              (label :text "${item.model}" :class "agent-sess-model" :limit-width 9 :show-truncated true)
+              (button :onclick "eww close dashboard; ${item.terminal_cmd}" :class "term-btn" :vexpand false
+                (label :text "󰆍 Terminal" :class "term-btn-lbl")))
+            (box :orientation "h" :space-evenly false :spacing 3 :valign "center" :vexpand false
+              (label :text "${item.running_action}" :class "agent-activity-lbl" :hexpand true :xalign 0 :limit-width 28 :show-truncated true)
+              (label :text "${item.duration}" :class "agent-time-lbl"))))
+
+        ;; Acciones rápidas de control
+        (box :orientation "h" :space-evenly true :spacing 2 :vexpand false
+          (act_btn :label "Monitor" :class "" :onclick "eww open --toggle agent_admin")
+          (act_btn :label "Web Dash" :class "" :onclick "bash -c 'hermes dashboard --no-open >/tmp/hermes-dash.log 2>&1 & sleep 1.2; xdg-open http://127.0.0.1:9119 &'")
+          (act_btn :label "Limpiar" :class "warn" :onclick "bash -c 'python3 /home/belal/.config/eww/scripts/agent_control.py close-stale 2; eww update agents_data=\"$(python3 /home/belal/.config/eww/scripts/agent_control.py json)\" ag_live=\"$(python3 /home/belal/.config/eww/scripts/agent_control.py get stats.active_count)\" ag_stale=\"$(python3 /home/belal/.config/eww/scripts/agent_control.py get stats.stale_count)\"' &")))
+
+      ;; Contadores
+      (box :orientation "h" :spacing 4 :space-evenly false :vexpand false :halign "fill"
+        (label :markup "<span foreground='#8B949E'>Agentes:</span> <span foreground='#00FF88'>${ag_live}</span>" :style "font-size:8px;")
+        (label :markup "<span foreground='#8B949E'>Subagentes:</span> <span foreground='#00CCFF'>${ag_sub}</span>" :style "font-size:8px;")
+        (label :markup "<span foreground='#8B949E'>Stale:</span> <span foreground='#F85149'>${ag_stale}</span>" :style "font-size:8px;")
+        (label :markup "<span foreground='#8B949E'>GW:</span> <span foreground='#00CCFF'>${ag_gw}</span>" :style "font-size:8px;")
+        (box :hexpand true)))
+
+    ;; --- PERFIL DE SISTEMA ---
+    (box :class "card-sm" :orientation "v" :spacing 1 :space-evenly false :vexpand false
+      (box :orientation "h" :space-evenly false :vexpand false
+        (label :text "PERFIL" :class "section-title")
+        (box :hexpand true)
+        (label :text "󰀻" :style "font-size:12px;color:#00FF88;"))
+      (box :orientation "h" :space-evenly true :spacing 2 :vexpand false
+        (chip :label "Def" :icon "󰒓" :tooltip "Perfil default" :onclick "sudo /home/belal/.config/system-profiles/profile-manager.sh switch default" :active {system_profile == "default"})
+        (chip :label "Game" :icon "󰊴" :tooltip "Perfil gaming" :onclick "sudo /home/belal/.config/system-profiles/profile-manager.sh switch gaming" :active {system_profile == "gaming"})
+        (chip :label "AI" :icon "󰚩" :tooltip "Perfil AI (GPU libre)" :onclick "sudo /home/belal/.config/system-profiles/profile-manager.sh switch ai" :active {system_profile == "ai"})
+        (chip :label "Zen" :icon "󰋖" :tooltip "Perfil zen" :onclick "sudo /home/belal/.config/system-profiles/profile-manager.sh switch sen" :active {system_profile == "sen"})))
+
+    ;; --- POMODORO ---
+    (box :class "card-sm" :orientation "v" :spacing 1 :space-evenly false :vexpand false
+      (box :orientation "h" :space-evenly false :vexpand false
+        (label :text "POMODORO" :class "section-title" :xalign 0)
+        (box :hexpand true)
+        (label :text pomo_state :style "font-family:monospace;font-size:10px;color:#00FF88;" :halign "end"))
+      (box :orientation "h" :space-evenly true :spacing 2 :vexpand false
+        (act_btn :label "Iniciar" :class "" :onclick "bash -c 'python3 /home/belal/.config/eww/scripts/pomodoro.py start; eww update pomo_state=\"$(python3 /home/belal/.config/eww/scripts/pomodoro.py status)\"' &")
+        (act_btn :label "Pausa" :class "warn" :onclick "bash -c 'python3 /home/belal/.config/eww/scripts/pomodoro.py stop; eww update pomo_state=\"$(python3 /home/belal/.config/eww/scripts/pomodoro.py status)\"' &")
+        (act_btn :label "Reset" :class "" :onclick "bash -c 'python3 /home/belal/.config/eww/scripts/pomodoro.py reset; eww update pomo_state=\"$(python3 /home/belal/.config/eww/scripts/pomodoro.py status)\"' &")))
+
+    ;; --- AUDIO & MULTIMEDIA ---
+    (box :class "card-sm" :orientation "v" :spacing 1 :space-evenly false :vexpand false
+      (box :orientation "h" :spacing 2 :space-evenly false :valign "center" :vexpand false
+        (button :onclick "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle" :class "icon-btn" :vexpand false
+          (label :text vol_icon :style "color:#00FF88;font-size:10px;"))
+        (scale :min 0 :max 100 :active true :value {vol_pct != "" ? vol_pct : 0}
+               :onchange "wpctl set-volume @DEFAULT_AUDIO_SINK@ {}%"
+               :hexpand true :style "min-height:8px;")
+        (label :text "⚡" :style "color:#E3B341;font-size:9.5px;")
+        (label :text power_cost :style "color:#E6EDF3;font-size:9px;" :tooltip "Consumo de energía de esta sesión"))
+      (box :orientation "h" :spacing 2 :space-evenly false :valign "center" :vexpand false
+        (label :text {media_info.title} :style "color:#E6EDF3;font-size:8.5px;" :halign "start" :hexpand true :limit-width 18 :show-truncated true)
+        (button :onclick "playerctl previous" :class "icon-btn" :vexpand false (label :text "<" :style "color:#E6EDF3;font-size:9px;"))
+        (button :onclick "playerctl play-pause" :class "icon-btn" :vexpand false
+          (label :text {media_info.status == "Playing" ? "||" : ">"} :style "color:#00FF88;font-size:9px;"))
+        (button :onclick "playerctl next" :class "icon-btn" :vexpand false (label :text ">" :style "color:#E6EDF3;font-size:9px;"))))
+
+  ))
+
+;; ════════════════════════════════════════════════════════════
+;; MONITOR DE SISTEMA & PROCESOS INTERACTIVO (RAM PANEL)
+;; ════════════════════════════════════════════════════════════
+(defwidget ram_panel_container []
+  (box :class "ram-container" :orientation "v" :spacing 5 :space-evenly false
+    ;; Encabezado: Título + Modo + Memoria + Botón Cerrar
+    (box :orientation "h" :class "ram-header" :space-evenly false :valign "center" :vexpand false
+      (box :orientation "h" :spacing 6 :valign "center" :space-evenly false
+        (label :text "󰍛" :style "color:#00FF88;font-size:16px;font-weight:bold;")
+        (label :text "MONITOR DE SISTEMA & PROCESOS" :style "color:#E6EDF3;font-size:12.5px;font-weight:bold;"))
+      (box :hexpand true)
+      (box :class "stat-pill hl" :orientation "h" :spacing 4 :valign "center" :space-evenly false
+        (label :text "MODO:" :style "color:rgba(255,255,255,0.45);font-size:8.5px;")
+        (label :text "${RAM_PANEL.profile.icon} ${RAM_PANEL.profile.label}" :style "color:#00FF88;font-size:10px;font-weight:bold;"))
+      (box :class "stat-pill" :orientation "h" :spacing 4 :valign "center" :space-evenly false :style "margin-left:6px;"
+        (label :text "RAM:" :style "color:rgba(255,255,255,0.45);font-size:8.5px;")
+        (label :text "${RAM_PANEL.used} / ${RAM_PANEL.total}" :style "color:#00CCFF;font-size:10px;font-weight:bold;"))
+      (button :onclick "eww close ram_panel" :class "close-btn" :style "margin-left:8px;" :tooltip "Cerrar Monitor"
+        (label :text "󰅖" :class "close-lbl")))
+
+    ;; Selector de Perfiles de Rendimiento
+    (box :class "card-sm" :orientation "h" :space-evenly true :spacing 4 :vexpand false
+      (chip :label "Default" :icon "󰒓" :tooltip "Modo equilibrado"
+            :onclick "sudo /home/belal/.config/system-profiles/profile-manager.sh switch default; eww update RAM_PANEL=\"$(python3 /home/belal/.config/eww/scripts/ram_panel.py)\""
+            :active {RAM_PANEL.profile.name == "default"})
+      (chip :label "Gaming" :icon "󰊴" :tooltip "Modo gaming prioritario"
+            :onclick "sudo /home/belal/.config/system-profiles/profile-manager.sh switch gaming; eww update RAM_PANEL=\"$(python3 /home/belal/.config/eww/scripts/ram_panel.py)\""
+            :active {RAM_PANEL.profile.name == "gaming" || RAM_PANEL.profile.name == "game"})
+      (chip :label "AI Hub" :icon "󰚩" :tooltip "Modo para agentes y LLMs"
+            :onclick "sudo /home/belal/.config/system-profiles/profile-manager.sh switch ai; eww update RAM_PANEL=\"$(python3 /home/belal/.config/eww/scripts/ram_panel.py)\""
+            :active {RAM_PANEL.profile.name == "ai"})
+      (chip :label "Zen" :icon "󰋖" :tooltip "Modo silencioso de bajo consumo"
+            :onclick "sudo /home/belal/.config/system-profiles/profile-manager.sh switch sen; eww update RAM_PANEL=\"$(python3 /home/belal/.config/eww/scripts/ram_panel.py)\""
+            :active {RAM_PANEL.profile.name == "sen" || RAM_PANEL.profile.name == "zen"}))
+
+    ;; Métricas de Rendimiento (CPU, GPU, RAM, SWAP)
+    (box :class "card" :orientation "h" :space-evenly true :spacing 6 :vexpand false
+      ;; CPU
+      (box :class "ram-metric-card" :orientation "v" :spacing 2 :space-evenly false
+        (box :orientation "h" :space-evenly false
+          (label :text "CPU" :class "hw-tag")
+          (box :hexpand true)
+          (label :text "${RAM_PANEL.cpu.pct}% · ${RAM_PANEL.cpu.temp_str}" :class "hw-val"))
+        (progress :value {RAM_PANEL.cpu.pct} :hexpand true :class "disk-prog"))
+
+      ;; GPU
+      (box :class "ram-metric-card" :orientation "v" :spacing 2 :space-evenly false
+        (box :orientation "h" :space-evenly false
+          (label :text "GPU (${RAM_PANEL.gpu.power})" :class "hw-tag")
+          (box :hexpand true)
+          (label :text "${RAM_PANEL.gpu.load}% · ${RAM_PANEL.gpu.temp_str}" :class "hw-val"))
+        (progress :value {RAM_PANEL.gpu.load} :hexpand true :class "disk-prog"))
+
+      ;; RAM
+      (box :class "ram-metric-card" :orientation "v" :spacing 2 :space-evenly false
+        (box :orientation "h" :space-evenly false
+          (label :text "RAM (${RAM_PANEL.available} libre)" :class "hw-tag")
+          (box :hexpand true)
+          (label :text "${RAM_PANEL.used_pct}%" :class "hw-val"))
+        (progress :value {RAM_PANEL.used_pct} :hexpand true :class "disk-prog ${RAM_PANEL.used_pct > 85 ? 'high' : (RAM_PANEL.used_pct > 70 ? 'medium' : 'low')}"))
+
+      ;; SWAP
+      (box :class "ram-metric-card" :orientation "v" :spacing 2 :space-evenly false
+        (box :orientation "h" :space-evenly false
+          (label :text "SWAP (${RAM_PANEL.swap_used})" :class "hw-tag")
+          (box :hexpand true)
+          (label :text "${RAM_PANEL.swap_pct}%" :class "hw-val"))
+        (progress :value {RAM_PANEL.swap_pct} :hexpand true :class "disk-prog ${RAM_PANEL.swap_pct > 80 ? 'high' : 'low'}")))
+
+    ;; Encabezado de Procesos
+    (box :orientation "h" :space-evenly false :valign "center" :vexpand false :style "margin-top:2px;"
+      (label :text "PROCESOS ACTIVOS (TOP CONSUMO DE MEMORIA)" :class "section-title")
+      (box :hexpand true)
+      (button :onclick "eww update RAM_PANEL=\"$(python3 /home/belal/.config/eww/scripts/ram_panel.py)\"" :class "icon-btn" :tooltip "Refrescar procesos"
+        (label :text "󰑓 Refrescar" :style "color:#00CCFF;font-size:9.5px;")))
+
+    ;; Lista Interactiva de Procesos con Scroll
+    (scroll :vscroll true :hscroll false :vexpand true :class "ram-proc-scroll"
+      (box :orientation "v" :spacing 3 :space-evenly false
+        (for p in {jq(RAM_PANEL, ".procs")}
+          (box :class "proc-row" :orientation "h" :spacing 6 :space-evenly false :valign "center"
+            (label :text {p.icon} :class "proc-ico")
+            (box :orientation "v" :spacing 1 :hexpand true :space-evenly false
+              (box :orientation "h" :spacing 4 :space-evenly false :valign "center"
+                (label :text {p.name} :class "proc-name" :limit-width 18 :show-truncated true)
+                (label :text "PID ${p.pid}" :class "proc-pid")
+                (box :hexpand true)
+                (label :text "${p.rss} (${p.pct}%)" :class "proc-ram-badge"))
+              (label :text {p.cmd} :class "proc-cmd" :limit-width 64 :show-truncated true :tooltip {p.cmd} :xalign 0))
+            (button :onclick "bash -c 'bash /home/belal/.config/eww/scripts/ram_kill.sh ${p.pid}; sleep 0.5; eww update RAM_PANEL=\"$(python3 /home/belal/.config/eww/scripts/ram_panel.py)\"' &"
+                    :class "proc-kill-btn" :tooltip "Finalizar proceso PID ${p.pid} (${p.name})" :vexpand false
+              (box :orientation "h" :spacing 3 :space-evenly false :valign "center"
+                (label :text "󰆴" :style "font-size:9.5px;color:#F85149;")
+                (label :text "Matar" :class "proc-kill-lbl")))))))
+
+    ;; Pie de Acciones Rápidas
+    (box :class "ram-footer" :orientation "h" :spacing 6 :space-evenly false :valign "center" :vexpand false
+      (button :onclick "bash -c 'bash /home/belal/.config/eww/scripts/ram_optimize.sh; sleep 0.5; eww update RAM_PANEL=\"$(python3 /home/belal/.config/eww/scripts/ram_panel.py)\"' &"
+              :class "act send-btn" :hexpand true :vexpand false
+        (label :text "󰃢 Limpiar Caché" :class "act-lbl"))
+      (button :onclick "bash -c 'bash /home/belal/.config/eww/scripts/ram_kill_top.sh; sleep 0.5; eww update RAM_PANEL=\"$(python3 /home/belal/.config/eww/scripts/ram_panel.py)\"' &"
+              :class "act danger" :hexpand true :vexpand false
+        (label :text "󰆴 Matar Top 1" :class "act-lbl"))
+      (button :onclick "ghostty -e bash -c 'btop || fastfetch; read -n1' &"
+              :class "act" :hexpand true :vexpand false
+        (label :text "󰘚 Analizar en Terminal" :class "act-lbl"))
+      (label :text {ram_opt.ok ? "Liberados: ${ram_opt.freed}" : "Listo"}
+             :style "color:#00FF88;font-size:9.5px;font-weight:bold;margin-left:6px;"))
+  ))
+
+(defwidget agent_admin_container []
+  (box :class "monitor-body" :orientation "v" :spacing 6 :space-evenly false :vexpand true
+    (box :orientation "h" :space-evenly false :vexpand false
+      (label :text "AGENT MONITOR" :style "color:#E6EDF3;font-size:12px;font-weight:bold;")
+      (box :hexpand true)
+      (button :onclick "bash -c 'python3 /home/belal/.config/eww/scripts/agent_control.py close-stale 2; eww update agents_data=\"$(python3 /home/belal/.config/eww/scripts/agent_control.py json)\" ag_stale=\"$(python3 /home/belal/.config/eww/scripts/agent_control.py get stats.stale_count)\" ag_tree=\"$(python3 /home/belal/.config/eww/scripts/agent_control.py tree)\"' &"
+              :class "act warn" :vexpand false
+        (label :text "Close stale" :class "act-lbl"))
+      (button :onclick "eww open --toggle agent_admin" :class "icon-btn" :vexpand false
+        (label :text "X" :style "color:rgba(255,255,255,0.6);font-size:12px;")))
+
+    (box :orientation "h" :space-evenly true :spacing 3 :vexpand false
+      (box :class "stat-pill hl" :orientation "h" :spacing 4 :halign "center"
+        (label :text "LIVE" :style "color:rgba(255,255,255,0.4);font-size:7px;")
+        (label :text ag_live :style "color:#00FF88;font-size:12px;font-weight:bold;"))
+      (box :class "stat-pill" :orientation "h" :spacing 4 :halign "center"
+        (label :text "SUB" :style "color:rgba(255,255,255,0.4);font-size:7px;")
+        (label :text ag_sub :style "color:#00CCFF;font-size:12px;font-weight:bold;"))
+      (box :class "stat-pill" :orientation "h" :spacing 4 :halign "center"
+        (label :text "STALE" :style "color:rgba(255,255,255,0.4);font-size:7px;")
+        (label :text ag_stale :style "color:#F85149;font-size:12px;font-weight:bold;"))
+      (box :class "stat-pill" :orientation "h" :spacing 4 :halign "center"
+        (label :text "GW" :style "color:rgba(255,255,255,0.4);font-size:7px;")
+        (label :text ag_gw :style "color:#00CCFF;font-size:10px;font-weight:bold;")))
+
+    (box :orientation "h" :space-evenly true :spacing 3 :vexpand false
+      (act_btn :label "New" :class "" :onclick "eww close agent_admin; ghostty -e hermes &")
+      (act_btn :label "Cont" :class "" :onclick "eww close agent_admin; ghostty -e hermes -c &")
+      (act_btn :label "Pause" :class "warn" :onclick "bash -c 'python3 /home/belal/.config/eww/scripts/agent_control.py cron-pause-all; eww update agents_data=\"$(python3 /home/belal/.config/eww/scripts/agent_control.py json)\" ag_cron=\"$(python3 /home/belal/.config/eww/scripts/agent_control.py get stats.cron_active)\"' &")
+      (act_btn :label "ResumeCron" :class "" :onclick "bash -c 'python3 /home/belal/.config/eww/scripts/agent_control.py cron-resume-all; eww update agents_data=\"$(python3 /home/belal/.config/eww/scripts/agent_control.py json)\" ag_cron=\"$(python3 /home/belal/.config/eww/scripts/agent_control.py get stats.cron_active)\"' &")
+      (act_btn :label "GW+" :class "danger" :onclick "bash -c 'python3 /home/belal/.config/eww/scripts/agent_control.py gateway-restart; eww update ag_gw=\"$(python3 /home/belal/.config/eww/scripts/agent_control.py get stats.gateway)\"' &"))
+
+    (box :class "card" :orientation "v" :spacing 2 :space-evenly false :vexpand false
+      (label :text "CRON" :class "section-title")
+      (box :orientation "v" :spacing 2 :space-evenly false
+        (for cron in {jq(agents_data, ".crons")}
+          (box :orientation "h" :spacing 5 :class "sess-row" :space-evenly false :vexpand false
+            (label :text {cron.name} :class "sess-title" :hexpand true :xalign 0 :limit-width 22 :show-truncated true)
+            (label :text {cron.schedule} :class "sess-meta" :limit-width 10 :show-truncated true)
+            (label :text {cron.state} :class "badge ${cron.state == 'active' ? 'active' : 'paused'}")
+            (button :onclick "bash -c 'python3 /home/belal/.config/eww/scripts/agent_control.py cron-toggle ${cron.id}; eww update agents_data=\"$(python3 /home/belal/.config/eww/scripts/agent_control.py json)\"' &"
+                    :class "sess-btn" :vexpand false
+              (label :text "T" :class "sess-btn-ico"))))))
+
+    (box :orientation "v" :spacing 2 :space-evenly false :vexpand true
+      (label :text "SESIONES" :class "section-title")
+      (scroll :vscroll true :hscroll false :vexpand true :class "monitor-scroll"
+        (box :orientation "v" :spacing 4 :space-evenly false
+          (for item in {jq(agents_data, ".sessions")}
+            (box :class "monitor-card ${item.status}" :orientation "v" :spacing 3 :space-evenly false :vexpand false
+              (box :orientation "h" :spacing 3 :space-evenly false
+                (label :text {item.title} :class "sess-title" :hexpand true :xalign 0 :limit-width 46 :show-truncated true)
+                (label :text {item.status_desc} :class "badge ${item.status}")
+                (button :onclick "ghostty -e hermes --resume ${item.id} &" :class "sess-btn" :vexpand false :tooltip "Abrir en Terminal"
+                  (label :text "󰆍" :class "sess-btn-ico"))
+                (button :onclick "bash -c 'python3 /home/belal/.config/eww/scripts/agent_control.py delete ${item.id}; eww update agents_data=\"$(python3 /home/belal/.config/eww/scripts/agent_control.py json)\"' &"
+                        :class "sess-btn danger" :vexpand false
+                  (label :text "X" :class "sess-btn-ico")))
+              (label :text "${item.model} · ${item.duration}" :class "sess-meta" :xalign 0)
+              (label :visible {item.running_action != ""} :text "${item.running_action}"
+                     :style "color:#00CCFF;font-size:9px;" :xalign 0))))))))
+
+(defwidget osd_container []
+  (box :class "osd-body" :orientation "h" :spacing 6 :halign "center" :valign "center" :space-evenly false
+    (label :text osd_icon :class "osd-icon")
     (box :orientation "v" :space-evenly false
-      (label :text "Welcome, Bela" :class "welcome-text")
-      (label :text "SouthWest AI Labs ⚡" :class "company-text"))))
+      (label :text osd_label :class "osd-label")
+      (box :class "osd-bar-container" :style "min-width: 90px;"
+        (box :class "osd-bar-fill" :style "min-width: {osd_pct}px")))))
 
-;; --- System Metrics Widget ---
-(defwidget sys_metrics []
-  (box :class "metrics-box" :orientation "v" :space-evenly false
-    (label :text "System Resources" :class "section-title")
-    (metric_circle :label "CPU" :value {EWW_CPU.avg} :icon "")
-    (metric_circle :label "RAM" :value {EWW_RAM.used_perc} :icon "")
-    (metric_circle :label "DISK" :value {round(EWW_DISK["/"].used_perc, 0)} :icon "󰋊")))
+(defpoll vol_pct :interval "1s" "/home/belal/.config/eww/scripts/sys_info.sh vol")
+(defpoll vol_icon :interval "1s" "/home/belal/.config/eww/scripts/sys_info.sh vol_icon")
 
-(defwidget metric_circle [label value icon]
-  (box :class "metric-item" :orientation "h" :space-evenly false
-    (label :text icon :class "metric-icon")
-    (box :orientation "v" :space-evenly false :hexpand true
-      (box :orientation "h" :space-evenly true
-        (label :text label :halign "start")
-        (label :text "${round(value, 0)}%" :halign "end"))
-      (scale :min 0 :max 101 :active false :value value :class "metric-scale"))))
+(defpoll EWW_SYS_STATS :interval "2s"
+  :initial '{"cpu":{"avg":0,"temp":0,"temp_str":"--"},"ram":{"used_mem_perc":0,"used_gb":0,"total_gb":0,"temp":0,"temp_str":"--"},"gpu":{"load":0,"temp":0,"temp_str":"--","vram_str":"--"},"sensors":{"cpu_tctl":"--","cpu_socket":"--","mb_system":"--","mb_chipset":"--","mb_vrm":"--","mb_vsoc":"--","gpu_edge":"--","gpu_junction":"--","gpu_mem":"--","nvme0":"--","nvme1":"--"},"xavier":{"online":false,"mode":"offline","status_str":"Xavier: Standby"},"net":{"down":"0B/s","up":"0B/s","combined":"↓0B/s ↑0B/s"},"conns":{"in":0,"out":0,"summary":"In:0 Out:0"}}'
+  "python3 /home/belal/.config/eww/scripts/system_stats.py all")
 
-;; --- Quick Controls ---
-(defwidget quick_controls []
-  (box :class "controls-box" :orientation "v" :space-evenly false
-    (label :text "Quick Controls" :class "section-title")
-    (control_item :label "Volume" :value {volume} :icon {vol_icon} :onchange "pactl set-sink-volume @DEFAULT_SINK@ {}%")
-    (control_item :label "Brightness" :value {brightness} :icon "󰃠" :onchange "brightnessctl set {}%")))
+(defpoll disks_list :interval "10s" :initial "[]" "python3 /home/belal/.config/eww/scripts/disks.py json")
+(defpoll calendar_markup :interval "1m" :initial "Cargando calendario..." "python3 /home/belal/.config/eww/scripts/calendar_gen.py")
+(deflisten media_info :initial '{"status":"Stopped","title":"No media","artist":"","cover":""}' "/home/belal/.config/eww/scripts/media_daemon.py")
 
-(defwidget control_item [label value icon onchange]
-  (box :class "control-item" :orientation "h" :space-evenly false
-    (label :text icon :class "control-icon")
-    (scale :min 0 :max 101 :active true :value value :onchange onchange :hexpand true :class "control-scale")))
+(defpoll agents_data :interval "3s"
+  :initial '{"stats":{"active_count":0,"subagents_count":0,"total_active_agents":0,"idle_count":0,"stale_count":0,"total_sessions":0,"total_tokens":"0","total_cost":"$0.00","gateway":"unknown","cron_active":0,"cron_paused":0},"sessions":[],"crons":[],"tree":"...","active_label":"Standby"}'
+  "python3 /home/belal/.config/eww/scripts/agent_control.py json")
+(defpoll ag_tree :interval "3s" :initial "..." "python3 /home/belal/.config/eww/scripts/agent_control.py tree")
+(defpoll ag_active :interval "3s" :initial "Standby" "python3 /home/belal/.config/eww/scripts/agent_control.py active")
+(defpoll ag_live :interval "3s" :initial "0" "python3 /home/belal/.config/eww/scripts/agent_control.py get stats.active_count")
+(defpoll ag_sub :interval "3s" :initial "0" "python3 /home/belal/.config/eww/scripts/agent_control.py get stats.subagents_count")
+(defpoll ag_stale :interval "5s" :initial "0" "python3 /home/belal/.config/eww/scripts/agent_control.py get stats.stale_count")
+(defpoll ag_cron :interval "5s" :initial "0" "python3 /home/belal/.config/eww/scripts/agent_control.py get stats.cron_active")
+(defpoll ag_gw :interval "5s" :initial "?" "python3 /home/belal/.config/eww/scripts/agent_control.py get stats.gateway")
 
-;; --- AI Status Card ---
-(defwidget ai_status_card []
-  (box :class "ai-box" :orientation "v" :space-evenly false
-    (label :text "AI Agents Status" :class "section-title")
-    (box :orientation "h" :space-evenly true
-      (agent_status :name "Hermes" :status {hermes_status})
-      (agent_status :name "Gemini" :status {gemini_status})
-      (agent_status :name "Codex" :status {codex_status}))))
+(defpoll toggle_net :interval "5s" "/home/belal/.config/eww/scripts/toggles.sh network icon")
+(defpoll toggle_bt :interval "5s" "/home/belal/.config/eww/scripts/toggles.sh bt icon")
+(defpoll toggle_night :interval "5s" "/home/belal/.config/eww/scripts/toggles.sh nightlight icon")
+(defpoll toggle_dark :interval "5s" "/home/belal/.config/eww/scripts/toggles.sh darkmode icon")
+(defpoll toggle_dnd :interval "5s" "/home/belal/.config/eww/scripts/toggles.sh dnd icon")
+(defpoll net_active :interval "5s" "/home/belal/.config/eww/scripts/toggles.sh network active")
+(defpoll bt_active :interval "5s" "/home/belal/.config/eww/scripts/toggles.sh bt active")
+(defpoll night_active :interval "5s" "/home/belal/.config/eww/scripts/toggles.sh nightlight active")
+(defpoll dark_active :interval "5s" "/home/belal/.config/eww/scripts/toggles.sh darkmode active")
+(defpoll dnd_active :interval "5s" "/home/belal/.config/eww/scripts/toggles.sh dnd active")
+(defpoll system_profile :interval "3s" "cat /home/belal/.config/system-profiles/.current_state 2>/dev/null | grep '^PROFILE=' | cut -d= -f2 || echo 'default'")
+(defpoll power_cost :interval "30s" :initial "0.00 kWh | $0" "python3 /home/belal/.config/eww/scripts/power_session.py")
+(defpoll pomo_state :interval "1s" :initial "WORK 25:00 R1 [pausa]" "python3 /home/belal/.config/eww/scripts/pomodoro.py status")
+(defpoll profile_icon :interval "3s" "/home/belal/.config/system-profiles/profile-manager.sh icon")
 
-(defwidget agent_status [name status]
-  (box :class "agent-card" :orientation "v" :space-evenly false
-    (label :text {status == "Active" ? "󰚩" : "󱚧"} :class {status == "Active" ? "agent-icon-active" : "agent-icon-inactive"})
-    (label :text name :class "agent-name")
-    (label :text status :class "agent-status-text")))
+(defpoll osd_icon :interval "2s" "echo VOL")
+(defpoll osd_label :interval "2s" "echo ''")
+(defpoll osd_pct :interval "2s" "echo '60'")
 
-;; --- Clock & Calendar ---
-(defwidget clock_cal []
-  (box :class "clock-box" :orientation "v" :space-evenly false
-    (label :text {time} :class "clock-text")
-    (label :text {date} :class "date-text")
-    (calendar :class "cal-widget" :show-details true)))
+(defpoll RAM_PANEL :interval "2s"
+  :initial '{"used":"0","total":"0","available":"0","used_pct":0,"swap_used":"0","swap_total":"0","swap_pct":0,"cpu":{"pct":0,"temp":0,"temp_str":"--"},"gpu":{"load":0,"edge":0,"jct":0,"temp_str":"--","power":"--","vram_str":"--"},"profile":{"name":"default","icon":"󰒓","label":"Default"},"game":{"running":false,"game":"Sin juego","fps":"--"},"procs":[]}'
+  "python3 /home/belal/.config/eww/scripts/ram_panel.py")
+(defpoll ram_opt :interval "3s"
+  :initial '{"ok":false,"freed":"—","available":"—","ts":""}'
+  "bash /home/belal/.config/eww/scripts/ram_opt_status.sh")
 
-;; --- Variables & Polls ---
-(defpoll time :interval "1s" "date +'%H:%M:%S'")
-(defpoll date :interval "1m" "date +'%A, %d %B'")
+(defvar confirm_action "")
+(defvar confirm_label "")
+(defvar keybind_tab "sys")
 
-(defpoll volume :interval "1s" "./scripts/sys_info.sh vol")
-(defpoll vol_icon :interval "1s" "./scripts/sys_info.sh vol_icon")
-(defpoll brightness :interval "1s" "./scripts/sys_info.sh bright")
+(defwidget keybind_row [keys desc]
+  (box :class "kb-row" :orientation "h" :spacing 8 :space-evenly false :vexpand false
+    (box :class "kb-keys" :orientation "h" :spacing 4 :space-evenly false :halign "start"
+      (label :text keys :class "kb-badge"))
+    (box :hexpand true)
+    (label :text desc :class "kb-desc" :xalign 1)))
 
-(defpoll hermes_status :interval "5s" "./scripts/ai_status.sh hermes")
-(defpoll gemini_status :interval "5s" "./scripts/ai_status.sh gemini")
-(defpoll codex_status :interval "5s" "./scripts/ai_status.sh codex")
+(defwidget keybinds_container []
+  (box :class "kb-container" :orientation "v" :spacing 8 :space-evenly false
+    (box :orientation "h" :space-evenly false :vexpand false :class "kb-header"
+      (box :orientation "h" :spacing 6 :space-evenly false :valign "center"
+        (label :text "⌨" :style "color:#00FF88;font-size:16px;font-weight:bold;")
+        (label :text "ATAJOS DE TECLADO SWAL" :style "color:#E6EDF3;font-size:12px;font-weight:bold;"))
+      (box :hexpand true)
+      (button :onclick "eww close keybinds_panel" :class "icon-btn"
+        (label :text "󰅖" :style "color:rgba(255,255,255,0.7);font-size:13px;")))
+
+    (box :class "kb-tabs" :orientation "h" :space-evenly true :spacing 4 :vexpand false
+      (button :onclick "eww update keybind_tab='sys'"
+              :class {keybind_tab == "sys" ? "kb-tab active" : "kb-tab"}
+        (label :text "🪟 Ventanas"))
+      (button :onclick "eww update keybind_tab='apps'"
+              :class {keybind_tab == "apps" ? "kb-tab active" : "kb-tab"}
+        (label :text "🚀 Apps"))
+      (button :onclick "eww update keybind_tab='ai'"
+              :class {keybind_tab == "ai" ? "kb-tab active" : "kb-tab"}
+        (label :text "🤖 SWAL / IA"))
+      (button :onclick "eww update keybind_tab='media'"
+              :class {keybind_tab == "media" ? "kb-tab active" : "kb-tab"}
+        (label :text "🔊 Control")))
+
+    (scroll :vscroll true :hscroll false :vexpand true :class "kb-scroll"
+      (box :orientation "v" :spacing 4 :space-evenly false
+        (box :visible {keybind_tab == "sys"} :orientation "v" :spacing 4 :space-evenly false
+          (keybind_row :keys "SUPER + V" :desc "Alternar Ventana Flotante / Acoplada (Tiling)")
+          (keybind_row :keys "SUPER + F" :desc "Pantalla Completa / Fullscreen")
+          (keybind_row :keys "SUPER + Q" :desc "Cerrar Ventana Activa")
+          (keybind_row :keys "SUPER + 1..4" :desc "Ir a Escritorio (Workspace 1 - 4)")
+          (keybind_row :keys "SUPER + SHIFT + 1..4" :desc "Mover Ventana a Escritorio 1 - 4")
+          (keybind_row :keys "ALT + TAB" :desc "Rotar entre Escritorios")
+          (keybind_row :keys "SUPER + Flechas / H,J,K,L" :desc "Mover Foco entre Ventanas")
+          (keybind_row :keys "SUPER + SHIFT + Flechas" :desc "Mover Posición de Ventana")
+          (keybind_row :keys "SUPER + CTRL + Flechas" :desc "Redimensionar Ventana Activa")
+          (keybind_row :keys "SUPER + S" :desc "Ventana Especial (Scratchpad)")
+          (keybind_row :keys "SUPER + SHIFT + T" :desc "Fijar Ventana en Todos los Desktops"))
+
+        (box :visible {keybind_tab == "apps"} :orientation "v" :spacing 4 :space-evenly false
+          (keybind_row :keys "SUPER + D" :desc "Menú de Aplicaciones (App Grid)")
+          (keybind_row :keys "SUPER + R" :desc "Ejecutar Comando (Rofi Run)")
+          (keybind_row :keys "SUPER + E" :desc "Explorador de Archivos")
+          (keybind_row :keys "SUPER + RETURN / T" :desc "Abrir Terminal Ghostty")
+          (keybind_row :keys "SUPER + SHIFT + RETURN" :desc "Terminal Flotante")
+          (keybind_row :keys "SUPER + B" :desc "Historial de Portapapeles")
+          (keybind_row :keys "SUPER + SHIFT + S" :desc "Captura de Pantalla (Área)")
+          (keybind_row :keys "SUPER + C" :desc "Selector de Color (Colorpicker)")
+          (keybind_row :keys "SUPER + I" :desc "Información del Sistema (Fastfetch)"))
+
+        (box :visible {keybind_tab == "ai"} :orientation "v" :spacing 4 :space-evenly false
+          (keybind_row :keys "SUPER + ESCAPE" :desc "Abrir / Cerrar Dashboard SWAL")
+          (keybind_row :keys "SUPER + SHIFT + C" :desc "Menú de Configuración SWAL")
+          (keybind_row :keys "SUPER + ALT + T" :desc "Cambiar Tema UI (Classic/Noctalia/Dank)")
+          (keybind_row :keys "ghostty -e hermes" :desc "Lanzar Hermes AI Agent")
+          (keybind_row :keys "ghostty -e agy" :desc "Lanzar Antigravity Agent CLI")
+          (keybind_row :keys "antigravity" :desc "Lanzar Antigravity UI App")
+          (keybind_row :keys "ghostty -e opencode" :desc "Lanzar OpenClaw / Opencode"))
+
+        (box :visible {keybind_tab == "media"} :orientation "v" :spacing 4 :space-evenly false
+          (keybind_row :keys "SUPER + SPACE" :desc "Cambiar Teclado (EN / ES)")
+          (keybind_row :keys "Vol + / Vol -" :desc "Subir / Bajar Volumen Audio")
+          (keybind_row :keys "Mute" :desc "Silenciar Audio")
+          (keybind_row :keys "Brillo + / -" :desc "Ajustar Brillo de Pantalla")
+          (keybind_row :keys "Media Play/Pause" :desc "Reproducir / Pausar Multimedia")
+          (keybind_row :keys "CTRL + Scroll" :desc "Zoom en Terminal Ghostty"))))))
+
+(defpoll chat_markup :interval "2s" :initial "Cargando chat..." "python3 /home/belal/.config/eww/scripts/agent_chat.py markup")
+(defpoll chat_status :interval "3s" :initial "Comprobando agente..." "python3 /home/belal/.config/eww/scripts/agent_chat.py status")
+(defvar chat_agent "Xavier Core")
+(defvar chat_input_val "")
+
+(defwidget agent_chat_container []
+  (box :class "chat-container" :orientation "v" :spacing 6 :space-evenly false
+    (box :orientation "h" :space-evenly false :vexpand false :class "chat-header"
+      (box :orientation "h" :spacing 6 :space-evenly false :valign "center"
+        (label :text "💬" :style "color:#00CCFF;font-size:16px;font-weight:bold;")
+        (label :text "CHAT DIRECTO AGENTE SWAL" :style "color:#E6EDF3;font-size:12px;font-weight:bold;"))
+      (box :hexpand true)
+      (label :text chat_status :style "font-size:9px;margin-right:8px;")
+      (button :onclick "eww close agent_chat" :class "icon-btn"
+        (label :text "󰅖" :style "color:rgba(255,255,255,0.7);font-size:13px;")))
+
+    (box :class "chat-tabs" :orientation "h" :space-evenly true :spacing 4 :vexpand false
+      (button :onclick "python3 /home/belal/.config/eww/scripts/agent_chat.py agent xavier"
+              :class {chat_agent == "Xavier Core" ? "chat-tab active" : "chat-tab"}
+        (label :text "🟢 Xavier Core (RAG / Memoria)"))
+      (button :onclick "python3 /home/belal/.config/eww/scripts/agent_chat.py agent hermes"
+              :class {chat_agent == "Hermes Agent" ? "chat-tab active" : "chat-tab"}
+        (label :text "🤖 Hermes Agent")))
+
+    (scroll :vscroll true :hscroll false :vexpand true :class "chat-scroll"
+      (box :orientation "v" :spacing 4 :space-evenly false
+        (label :markup chat_markup :xalign 0 :yalign 0 :wrap true :vexpand true)))
+
+    (box :class "chat-footer" :orientation "v" :spacing 4 :space-evenly false :vexpand false
+      (box :orientation "h" :spacing 4 :space-evenly false :vexpand false
+        (input :class "chat-input"
+               :tooltip "Escribe tu consulta para el agente..."
+               :hexpand true
+               :onaccept "python3 /home/belal/.config/eww/scripts/agent_chat.py send '%s'"
+               :value chat_input_val)
+        (button :onclick "python3 /home/belal/.config/eww/scripts/agent_chat.py send '${chat_input_val}'" :class "act send-btn" :vexpand false
+          (label :text "Enviar" :class "act-lbl")))
+
+      (box :orientation "h" :spacing 4 :space-evenly false :vexpand false :valign "center"
+        (button :onclick "python3 /home/belal/.config/eww/scripts/agent_chat.py clear" :class "act danger" :vexpand false
+          (label :text "Limpiar" :class "act-lbl"))
+        (button :onclick "ghostty -e hermes &" :class "act" :vexpand false
+          (label :text "Hermes CLI" :class "act-lbl"))
+        (button :onclick "bash -c 'hermes dashboard --no-open >/tmp/hermes-dash.log 2>&1 & sleep 1; xdg-open http://127.0.0.1:9119 &'" :class "act" :vexpand false
+          (label :text "Web Dash" :class "act-lbl"))
+        (box :hexpand true)
+        (label :text "Pulsa Enter para enviar" :style "color:#8B949E;font-size:8px;")))))
+
+
+(defvar settings_tab "appearance")
+
+(defwidget swal_settings_container []
+  (box :class "settings-container" :orientation "v" :space-evenly false :spacing 6 :vexpand true :hexpand true
+    ;; Header
+    (box :class "settings-header" :orientation "h" :space-evenly false :valign "center" :vexpand false
+      (label :text "⚙  CONFIGURACIÓN DEL SISTEMA (SWAL DESKTOP)" :style "color:#06b6d4;font-weight:bold;font-size:12px;")
+      (box :hexpand true)
+      (button :onclick "eww close swal_settings" :class "icon-btn"
+        (label :text "󰅖" :style "color:rgba(255,255,255,0.7);font-size:13px;")))
+
+    ;; Navigation Tabs
+    (box :class "settings-tabs" :orientation "h" :space-evenly true :spacing 4 :vexpand false
+      (button :onclick "eww update settings_tab='appearance'"
+              :class {settings_tab == "appearance" ? "settings-tab active" : "settings-tab"}
+        (label :text "🎨 Apariencia & Temas"))
+      (button :onclick "eww update settings_tab='node_services'"
+              :class {settings_tab == "node_services" ? "settings-tab active" : "settings-tab"}
+        (label :text "⚡ Nodo & Rust Core"))
+      (button :onclick "eww update settings_tab='performance'"
+              :class {settings_tab == "performance" ? "settings-tab active" : "settings-tab"}
+        (label :text "🚀 Rendimiento"))
+      (button :onclick "eww update settings_tab='diagnostics'"
+              :class {settings_tab == "diagnostics" ? "settings-tab active" : "settings-tab"}
+        (label :text "🩺 Diagnóstico & Nix")))
+
+    ;; Tab Content: Appearance
+    (box :visible {settings_tab == "appearance"} :class "settings-body" :orientation "v" :spacing 8 :space-evenly false :vexpand true
+      (label :text "Selección de Tema Visual del Sistema" :class "section-title" :halign "start")
+      (box :orientation "h" :spacing 6 :space-evenly true :vexpand false
+        (button :onclick "swal-theme switch hive-dark" :class "act" :vexpand false
+          (box :orientation "v" :spacing 2 :space-evenly false
+            (label :text "🟢 SWAL Hive Dark" :style "font-weight:bold;color:#06b6d4;")
+            (label :text "Design System @swal/ui" :style "font-size:9px;color:#94a3b8;")))
+        (button :onclick "swal-theme switch cyber-neon" :class "act" :vexpand false
+          (box :orientation "v" :spacing 2 :space-evenly false
+            (label :text "⚡ Cyber Neon" :style "font-weight:bold;color:#00ff88;")
+            (label :text "Tema Clásico Matrix" :style "font-size:9px;color:#94a3b8;")))
+        (button :onclick "swal-theme switch nord-swal" :class "act" :vexpand false
+          (box :orientation "v" :spacing 2 :space-evenly false
+            (label :text "❄ Nord Frost" :style "font-weight:bold;color:#88c0d0;")
+            (label :text "Estilo Nórdico Azul" :style "font-size:9px;color:#94a3b8;"))))
+
+      (label :text "Fondo de Pantalla & Ventanas" :class "section-title" :halign "start")
+      (box :orientation "h" :spacing 6 :space-evenly true :vexpand false
+        (button :onclick "find ~/Wallpapers -type f 2>/dev/null | rofi -dmenu | xargs -I {} swww img {}" :class "act" :vexpand false
+          (label :text "🖼️ Cambiar Wallpaper (Rofi)" :class "act-lbl"))
+        (button :onclick "swal-theme picker" :class "act" :vexpand false
+          (label :text "🎨 Selector de Temas Rofi" :class "act-lbl"))
+        (button :onclick "~/.config/hypr/scripts/layout.sh" :class "act" :vexpand false
+          (label :text "󰌌 Alternar Layout Hyprland" :class "act-lbl"))))
+
+    ;; Tab Content: Node & Rust Services
+    (box :visible {settings_tab == "node_services"} :class "settings-body" :orientation "v" :spacing 8 :space-evenly false :vexpand true
+      (box :class "card" :orientation "v" :spacing 4 :space-evenly false
+        (box :orientation "h" :space-evenly false :valign "center"
+          (label :text "🧠 Xavier Cognitive Memory Core" :style "font-weight:bold;color:#06b6d4;")
+          (box :hexpand true)
+          (label :text "Puerto HTTP: 8006 | MCP: 8100" :style "font-size:9px;color:#94a3b8;"))
+        (label :text "Motor de grafo de conocimiento, vector embeddings (SQLite-vec) y memoria central persistente." :style "font-size:9.5px;color:#cbd5e1;" :wrap true)
+        (box :orientation "h" :spacing 4 :space-evenly false
+          (button :onclick "python3 /home/belal/.config/eww/scripts/swal_settings.py restart_xavier" :class "act" :vexpand false
+            (label :text "🔄 Reiniciar Xavier" :class "act-lbl"))
+          (button :onclick "xdg-open http://localhost:8006/health" :class "act" :vexpand false
+            (label :text "🌐 Health API" :class "act-lbl"))
+          (button :onclick "ghostty -e 'cd ~/proyectosSWAL/apps/xavier && cargo run --release --bin xavier-cli' &" :class "act" :vexpand false
+            (label :text "💻 Xavier Rust CLI" :class "act-lbl"))))
+
+      (box :class "card" :orientation "v" :spacing 4 :space-evenly false
+        (box :orientation "h" :space-evenly false :valign "center"
+          (label :text "🌐 Edge-Mesh P2P Mesh & CRDT Daemon" :style "font-weight:bold;color:#f97316;")
+          (box :hexpand true)
+          (label :text "ML-DSA-65 Post-Quantum Identity" :style "font-size:9px;color:#94a3b8;"))
+        (label :text "Canal P2P descentralizado y sincronización en tiempo real entre todos los nodos SWAL." :style "font-size:9.5px;color:#cbd5e1;" :wrap true)
+        (box :orientation "h" :spacing 4 :space-evenly false
+          (button :onclick "ghostty -e 'cd ~/proyectosSWAL/cores/edge-mesh && pnpm dev' &" :class "act" :vexpand false
+            (label :text "🌐 Abrir Edge-Mesh Logs" :class "act-lbl"))
+          (button :onclick "ghostty -e hermes &" :class "act" :vexpand false
+            (label :text "🤖 Lanzar Hermes Agent" :class "act-lbl")))))
+
+    ;; Tab Content: Performance
+    (box :visible {settings_tab == "performance"} :class "settings-body" :orientation "v" :spacing 8 :space-evenly false :vexpand true
+      (label :text "Perfiles de Rendimiento del Sistema" :class "section-title" :halign "start")
+      (box :orientation "h" :spacing 6 :space-evenly true :vexpand false
+        (button :onclick "python3 /home/belal/.config/eww/scripts/ram_panel.py profile default" :class "act" :vexpand false
+          (box :orientation "v" :spacing 2 :space-evenly false
+            (label :text "⚙ Default" :style "font-weight:bold;")
+            (label :text "Equilibrado diario" :style "font-size:8.5px;color:#94a3b8;")))
+        (button :onclick "python3 /home/belal/.config/eww/scripts/ram_panel.py profile gaming" :class "act" :vexpand false
+          (box :orientation "v" :spacing 2 :space-evenly false
+            (label :text "🎮 Gaming" :style "font-weight:bold;color:#10b981;")
+            (label :text "Máx FPS & GPU Boost" :style "font-size:8.5px;color:#94a3b8;")))
+        (button :onclick "python3 /home/belal/.config/eww/scripts/ram_panel.py profile ai_hub" :class "act" :vexpand false
+          (box :orientation "v" :spacing 2 :space-evenly false
+            (label :text "🤖 AI Hub" :style "font-weight:bold;color:#06b6d4;")
+            (label :text "VRAM & Cuda Threads" :style "font-size:8.5px;color:#94a3b8;")))
+        (button :onclick "python3 /home/belal/.config/eww/scripts/ram_panel.py profile zen" :class "act" :vexpand false
+          (box :orientation "v" :spacing 2 :space-evenly false
+            (label :text "🧘 Zen" :style "font-weight:bold;color:#a855f7;")
+            (label :text "Bajo consumo & silencio" :style "font-size:8.5px;color:#94a3b8;"))))
+
+      (label :text "Optimización de Memoria y Almacenamiento" :class "section-title" :halign "start")
+      (box :orientation "h" :spacing 6 :space-evenly false
+        (button :onclick "python3 /home/belal/.config/eww/scripts/ram_panel.py clear_cache" :class "act warn" :vexpand false
+          (label :text "🧹 Liberar Memoria Caché de RAM" :class "act-lbl"))
+        (button :onclick "ghostty -e btop &" :class "act" :vexpand false
+          (label :text "📊 Abrir Btop Monitor" :class "act-lbl"))))
+
+    ;; Tab Content: Diagnostics
+    (box :visible {settings_tab == "diagnostics"} :class "settings-body" :orientation "v" :spacing 8 :space-evenly false :vexpand true
+      (label :text "Herramientas de Salud & Diagnóstico del Sistema" :class "section-title" :halign "start")
+      (box :orientation "h" :spacing 6 :space-evenly true :vexpand false
+        (button :onclick "python3 /home/belal/.config/eww/scripts/swal_settings.py doctor" :class "act" :vexpand false
+          (box :orientation "v" :spacing 2 :space-evenly false
+            (label :text "🩺 SWAL Doctor Scan" :style "font-weight:bold;color:#06b6d4;")
+            (label :text "Diagnóstico de 5 puntos" :style "font-size:8.5px;color:#94a3b8;")))
+        (button :onclick "python3 /home/belal/.config/eww/scripts/swal_settings.py doctor_fix" :class "act warn" :vexpand false
+          (box :orientation "v" :spacing 2 :space-evenly false
+            (label :text "🔧 SWAL Auto-Fix" :style "font-weight:bold;color:#f59e0b;")
+            (label :text "Saneamiento y hot-reload" :style "font-size:8.5px;color:#94a3b8;")))
+        (button :onclick "python3 /home/belal/.config/eww/scripts/swal_settings.py rebuild_nix" :class "act danger" :vexpand false
+          (box :orientation "v" :spacing 2 :space-evenly false
+            (label :text "⚙ Reconstruir NixOS" :style "font-weight:bold;color:#ef4444;")
+            (label :text "nixos-rebuild switch" :style "font-size:8.5px;color:#94a3b8;"))))
+
+      (label :text "Herramientas Rápidas" :class "section-title" :halign "start")
+      (box :orientation "h" :spacing 6 :space-evenly false
+        (button :onclick "eww reload" :class "act" :vexpand false
+          (label :text "🔄 Recargar Eww" :class "act-lbl"))
+        (button :onclick "ghostty -e python3 /home/belal/proyectosSWAL/periferia/swal-desktop/tests/test_theme_engine.py &" :class "act" :vexpand false
+          (label :text "🧪 Ejecutar Tests E2E" :class "act-lbl"))))))
