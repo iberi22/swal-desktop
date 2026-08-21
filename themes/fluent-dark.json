@@ -1,0 +1,25 @@
+{
+  "id": "fluent-dark",
+  "name": "Fluent Dark",
+  "author": "SouthWest AI Labs",
+  "version": "1.0.0",
+  "colors": {
+    "bg": "rgba(32, 32, 32, 0.94)",
+    "elevated": "rgba(44, 44, 44, 0.70)",
+    "elevated_850": "rgba(32, 32, 32, 0.85)",
+    "void": "#1a1a1a",
+    "accent_primary": "#60cdff",
+    "accent_secondary": "#0078d4",
+    "text_primary": "#ffffff",
+    "text_secondary": "#a0a0a0",
+    "success": "#6ccb5f",
+    "warning": "#fce100",
+    "danger": "#ff99a4",
+    "border_active": "rgba(96, 205, 255, 0.40)",
+    "border_subtle": "rgba(255, 255, 255, 0.08)"
+  },
+  "hyprland": {
+    "active_border": "rgba(60cdffff) rgba(0078d4ff) 45deg",
+    "inactive_border": "rgba(2c2c2cff)"
+  }
+}
