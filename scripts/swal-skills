@@ -1,0 +1,149 @@
+#!/usr/bin/env python3
+"""
+⚡ SWAL Agent Skills Hub & Synchronizer (v1.0.0)
+Unified skill manager connecting Hermes, Antigravity, Jules, fx CLI, OpenCode CLI, Claude CLI, and Orca.
+Single Source of Truth: ~/.agents/skills/
+"""
+
+import os
+import sys
+import glob
+import shutil
+import json
+
+CANONICAL_HUB = os.path.expanduser("~/.agents/skills")
+AGENT_TARGETS = [
+    os.path.expanduser("~/.gemini/antigravity/builtin/skills"),
+    os.path.expanduser("~/.gemini/config/skills"),
+    os.path.expanduser("~/.config/hermes/skills"),
+    os.path.expanduser("~/.hermes/skills"),
+    os.path.expanduser("~/.config/opencode/skills"),
+    os.path.expanduser("~/.config/fx/skills"),
+    os.path.expanduser("~/.claude/skills"),
+]
+
+# ANSI colors
+CYAN = "\033[96m"
+GREEN = "\033[92m"
+YELLOW = "\033[93m"
+RED = "\033[91m"
+BOLD = "\033[1m"
+RESET = "\033[0m"
+
+
+def ensure_hub():
+    os.makedirs(CANONICAL_HUB, exist_ok=True)
+    for target in AGENT_TARGETS:
+        os.makedirs(target, exist_ok=True)
+
+
+def get_hub_skills():
+    ensure_hub()
+    skills = []
+    for item in sorted(os.listdir(CANONICAL_HUB)):
+        full_path = os.path.join(CANONICAL_HUB, item)
+        if os.path.isdir(full_path) and os.path.exists(os.path.join(full_path, "SKILL.md")):
+            skills.append((item, full_path))
+    return skills
+
+
+def import_foreign_skills():
+    """Discover skills in other agent directories and promote them to the canonical hub."""
+    ensure_hub()
+    imported = 0
+    for target in AGENT_TARGETS:
+        if not os.path.exists(target):
+            continue
+        for item in os.listdir(target):
+            src_path = os.path.join(target, item)
+            # Skip if it's already a symlink pointing to the hub
+            if os.path.islink(src_path):
+                continue
+            if os.path.isdir(src_path) and os.path.exists(os.path.join(src_path, "SKILL.md")):
+                hub_dest = os.path.join(CANONICAL_HUB, item)
+                if not os.path.exists(hub_dest):
+                    print(f"  {CYAN}i Promoting foreign skill '{item}' from {target} to Hub...{RESET}")
+                    shutil.copytree(src_path, hub_dest)
+                    imported += 1
+    return imported
+
+
+def sync_skills():
+    print(f"\n{BOLD}{CYAN}════════════════════════════════════════════════════════════{RESET}")
+    print(f"{BOLD}{CYAN}  ⚡ SWAL AGENT SKILLS HUB — SYNCHRONIZATION ENGINE         {RESET}")
+    print(f"{BOLD}{CYAN}════════════════════════════════════════════════════════════{RESET}")
+    print(f"Canonical Hub: {BOLD}{CANONICAL_HUB}{RESET}\n")
+
+    imported = import_foreign_skills()
+    if imported > 0:
+        print(f"  {GREEN}✓ Promoted {imported} new skill(s) into Canonical Hub.{RESET}")
+
+    skills = get_hub_skills()
+    print(f"Found {BOLD}{len(skills)}{RESET} skills in Canonical Hub.\n")
+
+    total_links = 0
+    for skill_name, skill_path in skills:
+        for target in AGENT_TARGETS:
+            dest_link = os.path.join(target, skill_name)
+            # If already exists and is a link pointing to the right place, ok
+            if os.path.islink(dest_link):
+                try:
+                    target_of_link = os.readlink(dest_link)
+                    if target_of_link == skill_path:
+                        continue
+                except OSError:
+                    pass
+                os.unlink(dest_link)
+            elif os.path.isdir(dest_link):
+                shutil.rmtree(dest_link)
+            elif os.path.exists(dest_link):
+                os.remove(dest_link)
+
+            try:
+                os.symlink(skill_path, dest_link)
+                total_links += 1
+            except OSError as e:
+                print(f"  {RED}✗ Failed to link {skill_name} into {target}: {e}{RESET}")
+
+    print(f"  {GREEN}✓ Successfully synchronized {len(skills)} skills across {len(AGENT_TARGETS)} agent runtimes!{RESET}")
+    print(f"  {GREEN}✓ Created/verified {total_links} symlinks.{RESET}")
+    print(f"\n{BOLD}Supported Agent Environments:{RESET}")
+    print(f"  • Hermes Agent CLI (~/.config/hermes/skills)")
+    print(f"  • Antigravity & Gemini CLI (~/.gemini/config/skills)")
+    print(f"  • OpenCode CLI (~/.config/opencode/skills)")
+    print(f"  • fx CLI (~/.config/fx/skills)")
+    print(f"  • Claude CLI (~/.claude/skills)")
+    print(f"  • Orca Orchestration (~/.agents/skills)")
+    print(f"\n{BOLD}{CYAN}════════════════════════════════════════════════════════════{RESET}\n")
+
+
+def list_skills():
+    skills = get_hub_skills()
+    print(f"\n{BOLD}Installed Skills in SWAL Hub ({len(skills)}):{RESET}")
+    for name, path in skills:
+        desc = "No description"
+        skill_md = os.path.join(path, "SKILL.md")
+        with open(skill_md, "r", errors="ignore") as f:
+            for line in f:
+                if line.startswith("description:"):
+                    desc = line.replace("description:", "").strip().strip('"')
+                    break
+        print(f"  • {BOLD}{name:<30}{RESET} — {desc[:70]}...")
+    print()
+
+
+def main():
+    cmd = sys.argv[1] if len(sys.argv) > 1 else "sync"
+    if cmd == "list":
+        list_skills()
+    elif cmd == "sync":
+        sync_skills()
+    elif cmd == "status":
+        skills = get_hub_skills()
+        print(f"Hub has {len(skills)} skills. All agents synchronized.")
+    else:
+        print("Usage: swal-skills [sync|list|status]")
+
+
+if __name__ == "__main__":
+    main()

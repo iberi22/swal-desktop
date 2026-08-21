@@ -156,6 +156,18 @@ def check_services():
     return True
 
 
+def check_skills_hub():
+    print(f"\n{BOLD}[6/6] Validating Agent Skills Hub Synchronization...{RESET}")
+    hub = os.path.expanduser("~/.agents/skills")
+    if not os.path.exists(hub):
+        print(f"  {RED}✗ Hub not found at {hub}{RESET}")
+        return False
+
+    skills = [d for d in os.listdir(hub) if os.path.isdir(os.path.join(hub, d))]
+    print(f"  {GREEN}✓ Canonical Hub: {len(skills)} skills active{RESET}")
+    return True
+
+
 def main():
     parser = argparse.ArgumentParser(description="SWAL Desktop Diagnostic & Linter Utility")
     parser.add_argument("--fix", action="store_true", help="Automatically heal detected issues and reload desktop")
@@ -170,6 +182,7 @@ def main():
     s3 = check_logs()
     s4 = check_themes()
     s5 = check_services()
+    s6 = check_skills_hub()
 
     if args.fix:
         print(f"\n{BOLD}{CYAN}🔧 Applying Hot Reload...{RESET}")
@@ -177,7 +190,7 @@ def main():
         print(f"{GREEN}✓ Eww reloaded successfully.{RESET}")
 
     print(f"\n{BOLD}{CYAN}════════════════════════════════════════════════════════════{RESET}")
-    if all([s1, s2, s3, s4, s5]):
+    if all([s1, s2, s3, s4, s5, s6]):
         print(f"{BOLD}{GREEN}  ✓ SYSTEM HEALTHY: All checks passed with 0 errors.         {RESET}")
     else:
         print(f"{BOLD}{YELLOW}  ⚠ SOME CHECKS REPORTED ISSUES (Run with --fix to heal).     {RESET}")

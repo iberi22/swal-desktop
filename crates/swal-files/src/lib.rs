@@ -2,10 +2,15 @@
 //! Modern Minimalist Agentic File Manager Core in Rust
 
 pub mod agent;
+pub mod cli;
 pub mod config;
 pub mod entry;
+pub mod git;
+pub mod gui;
 pub mod omnibar;
+pub mod preview;
 pub mod scanner;
+pub mod session;
 
 use config::FileManagerConfig;
 use entry::FileEntry;
@@ -113,61 +118,5 @@ impl FileManagerSession {
             return true;
         }
         false
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use tempfile::tempdir;
-
-    #[test]
-    fn test_directory_scanning_and_sorting() {
-        let dir = tempdir().unwrap();
-        let p = dir.path();
-        std::fs::create_dir(p.join("alpha_dir")).unwrap();
-        std::fs::write(p.join("beta_file.rs"), "fn main() {}").unwrap();
-        std::fs::write(p.join("gamma_file.json"), "{}").unwrap();
-
-        let opts = ScanOptions::default();
-        let entries = scan_directory(p, &opts).unwrap();
-
-        assert_eq!(entries.len(), 3);
-        // Directories should be first
-        assert!(entries[0].is_dir);
-        assert_eq!(entries[0].name, "alpha_dir");
-        assert_eq!(entries[1].name, "beta_file.rs");
-        assert_eq!(entries[1].icon, "🦀");
-    }
-
-    #[test]
-    fn test_tab_navigation_and_history() {
-        let dir = tempdir().unwrap();
-        let p1 = dir.path().join("dir1");
-        let p2 = dir.path().join("dir2");
-        std::fs::create_dir(&p1).unwrap();
-        std::fs::create_dir(&p2).unwrap();
-
-        let mut tab = FileTab::new(1, p1.clone());
-        assert_eq!(tab.current_path, p1);
-
-        tab.navigate_to(p2.clone());
-        assert_eq!(tab.current_path, p2);
-        assert_eq!(tab.history.len(), 2);
-
-        assert!(tab.go_back());
-        assert_eq!(tab.current_path, p1);
-    }
-
-    #[test]
-    fn test_omnibar_parsing() {
-        let dir = tempdir().unwrap();
-        let p = dir.path();
-
-        let intent_agent = omnibar::parse_omnibar_input("@explain this folder", p);
-        assert_eq!(intent_agent, omnibar::OmnibarIntent::AgentPrompt("explain this folder".to_string()));
-
-        let intent_cmd = omnibar::parse_omnibar_input(">git status", p);
-        assert_eq!(intent_cmd, omnibar::OmnibarIntent::Command("git status".to_string()));
     }
 }

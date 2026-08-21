@@ -814,15 +814,24 @@
           (label :text "🧪 Ejecutar Tests E2E" :class "act-lbl"))))))
 
 ;; =========================================================================
-;; SWAL FILES — Modern Minimalist Agentic File Manager (Files-inspired)
+;; SWAL FILES — Modern Minimalist Agentic File Manager (Files & Yazi inspired)
 ;; =========================================================================
-(defpoll swal_files_data :interval "2s" "python3 ~/.config/eww/scripts/swal_files_view.py")
+(defpoll swal_files_data :interval "2s" "swal-files view-json")
 
 (defwindow swal_files
   :monitor 0
-  :geometry (geometry :x "0%" :y "0%" :width "920px" :height "620px" :anchor "center")
+  :geometry (geometry :x "0%" :y "0%" :width "1080px" :height "660px" :anchor "center")
   :stacking "overlay"
-  :wm-type "dialog"
+  :wm-type "normal"
+  :exclusive false
+  :focusable true
+  (swal_files_container))
+
+(defwindow swal_files_maximized
+  :monitor 0
+  :geometry (geometry :x "0%" :y "24px" :width "98%" :height "93%" :anchor "center")
+  :stacking "overlay"
+  :wm-type "normal"
   :exclusive false
   :focusable true
   (swal_files_container))
@@ -834,95 +843,202 @@
       (box :class "files-tabs-container" :orientation "h" :space-evenly false :spacing 3
         (for tab in "${swal_files_data.tabs}"
           (box :class "files-tab ${tab.active ? 'active' : 'inactive'}" :orientation "h" :space-evenly false :spacing 4
-            (button :class "files-tab-btn" :onclick "python3 ~/.config/eww/scripts/swal_files_view.py tab_switch '${tab.id}' && eww update swal_files_data"
+            (button :class "files-tab-btn" :onclick "swal-files tab-switch '${tab.id}'"
               (box :orientation "h" :space-evenly false :spacing 4
                 (label :class "files-tab-icon" :text "📂")
                 (label :class "files-tab-title" :text "${tab.title}" :limit-width 18)))
-            (button :class "files-tab-close" :onclick "python3 ~/.config/eww/scripts/swal_files_view.py tab_close '${tab.id}' && eww update swal_files_data" "✕"))))
-      (button :class "files-new-tab-btn" :tooltip "Nueva Pestana (Ctrl+T)" :onclick "python3 ~/.config/eww/scripts/swal_files_view.py tab_new && eww update swal_files_data" "+")
+            (button :class "files-tab-close" :onclick "swal-files tab-close '${tab.id}'" "✕"))))
+      (button :class "files-new-tab-btn" :tooltip "Nueva Pestana (Ctrl+T)" :onclick "swal-files tab-new" "+")
       (box :hexpand true)
+      ;; Window Controls
       (box :class "files-win-controls" :orientation "h" :space-evenly false :spacing 4
-        (button :class "files-win-btn" :onclick "notify-send 'SWAL Files' 'Minimizado' &" "─")
-        (button :class "files-win-btn" :onclick "notify-send 'SWAL Files' 'Maximizar' &" "□")
-        (button :class "files-win-btn close" :onclick "eww close swal_files" "✕")))
+        (button :class "files-win-btn" :onclick "eww close swal_files; eww close swal_files_maximized" "─")
+        (button :class "files-win-btn" :onclick "swal-files toggle-maximize" "□")
+        (button :class "files-win-btn close" :onclick "eww close swal_files; eww close swal_files_maximized" "✕")))
 
+    ;; 2. COMMAND TOOLBAR & OMNIBAR
     ;; 2. COMMAND TOOLBAR & OMNIBAR
     (box :class "files-toolbar" :orientation "h" :space-evenly false :spacing 4
       ;; Nav cluster
       (box :class "files-nav-cluster" :orientation "h" :space-evenly false :spacing 2
-        (button :class "files-tool-btn" :tooltip "Atras" :onclick "python3 ~/.config/eww/scripts/swal_files_view.py nav '${swal_files_data.parent_path}' && eww update swal_files_data" "󰁍")
-        (button :class "files-tool-btn" :tooltip "Subir de nivel" :onclick "python3 ~/.config/eww/scripts/swal_files_view.py nav '${swal_files_data.parent_path}' && eww update swal_files_data" "󰁝")
-        (button :class "files-tool-btn" :tooltip "Refrescar" :onclick "eww update swal_files_data" "󰑐"))
+        (button :class "files-tool-btn" :tooltip "Atras" :onclick "swal-files nav '${swal_files_data.parent_path}'" "󰁍")
+        (button :class "files-tool-btn" :tooltip "Subir de nivel" :onclick "swal-files nav '${swal_files_data.parent_path}'" "󰁝")
+        (button :class "files-tool-btn" :tooltip "Refrescar" :onclick "swal-files view-json" "󰑐"))
 
       ;; Breadcrumbs Address Bar (Pills)
       (box :class "files-address-bar" :orientation "h" :space-evenly false :spacing 2 :hexpand true
         (for crumb in "${swal_files_data.breadcrumbs}"
           (box :orientation "h" :space-evenly false :spacing 2
-            (button :class "files-crumb-pill" :onclick "python3 ~/.config/eww/scripts/swal_files_view.py nav '${crumb.path}' && eww update swal_files_data" "${crumb.name}")
+            (button :class "files-crumb-pill" :onclick "swal-files nav '${crumb.path}'" "${crumb.name}")
             (label :class "files-crumb-sep" :text "›"))))
+
+      ;; Pin / Unpin Active Folder
+      (button :class "files-tool-btn pin-pill ${swal_files_data.is_current_pinned ? 'pinned' : ''}" :tooltip "${swal_files_data.is_current_pinned ? 'Despinear carpeta actual' : 'Pinear carpeta actual a Favoritos'}" :onclick "swal-files toggle-pin-current"
+        "${swal_files_data.is_current_pinned ? '󰤱 Despinear' : '📌 Pinear'}")
+
+      ;; Filter & Grouping Pills
+      (button :class "files-tool-btn group-pill" :tooltip "Cambiar Agrupamiento" :onclick "swal-files set-group '${swal_files_data.group_by == 'none' ? 'type' : (swal_files_data.group_by == 'type' ? 'date' : (swal_files_data.group_by == 'date' ? 'size' : 'none'))}'"
+        "󰒺 Grupo: ${swal_files_data.group_by}")
+
+      (button :class "files-tool-btn filter-pill" :tooltip "Filtrar por tipo" :onclick "swal-files set-filter '${swal_files_data.filter_type == 'all' ? 'code' : (swal_files_data.filter_type == 'code' ? 'documents' : (swal_files_data.filter_type == 'documents' ? 'images' : 'all'))}'"
+        "󰈲 Filtro: ${swal_files_data.filter_type}")
+
+      ;; Preview Mode Switcher (Yazi Sidebar on/off)
+      (button :class "files-tool-btn preview-mode ${swal_files_data.preview_mode == 'sidebar' ? 'active' : ''}" :tooltip "Alternar Panel Lateral Yazi" :onclick "swal-files toggle-preview-mode"
+        "${swal_files_data.preview_mode == 'sidebar' ? '󰍹 Panel Lateral' : '󰍺 Panel Oculto'}")
 
       ;; Action cluster (Agent prompt & View switcher)
       (button :class "files-tool-btn agent" :tooltip "Consultar Agente sobre esta carpeta" :onclick "notify-send 'SWAL Xavier Agent' 'Analizando directorio actual con GraphRAG...' &" "🤖 Xavier AI")
-      (button :class "files-tool-btn" :tooltip "Alternar Vista" :onclick "python3 ~/.config/eww/scripts/swal_files_view.py toggle_view && eww update swal_files_data" "🔲"))
+      (button :class "files-tool-btn" :tooltip "Alternar Vista (Detalles/Grid)" :onclick "swal-files toggle-view" "🔲"))
 
-    ;; 3. MAIN WORKSPACE (SIDEBAR + FILE LIST)
+    ;; 3. MAIN 3-PANEL WORKSPACE (1. SIDEBAR | 2. FILE LIST / GROUPS | 3. YAZI PREVIEW)
     (box :class "files-main-layout" :orientation "h" :space-evenly false :vexpand true
-      ;; Fluent Sidebar
+      ;; Column 1: Fluent Left Sidebar (Dynamic Pins & Workspaces)
       (box :class "files-fluent-sidebar" :orientation "v" :space-evenly false
         (scroll :vscroll true :hscroll false :vexpand true
-          (box :orientation "v" :space-evenly false :spacing 2
-            ;; Favoritos
-            (label :class "files-side-header" :text "FAVORITOS" :xalign 0)
-            (button :class "files-side-btn" :onclick "python3 ~/.config/eww/scripts/swal_files_view.py nav '/home/belal' && eww update swal_files_data"
-              (box :orientation "h" :space-evenly false :spacing 6 (label :text "🏠" :class "side-ico") (label :text "Home" :xalign 0)))
-            (button :class "files-side-btn" :onclick "python3 ~/.config/eww/scripts/swal_files_view.py nav '/home/belal/Downloads' && eww update swal_files_data"
-              (box :orientation "h" :space-evenly false :spacing 6 (label :text "📥" :class "side-ico") (label :text "Descargas" :xalign 0)))
-            (button :class "files-side-btn" :onclick "python3 ~/.config/eww/scripts/swal_files_view.py nav '/home/belal/Documents' && eww update swal_files_data"
-              (box :orientation "h" :space-evenly false :spacing 6 (label :text "📁" :class "side-ico") (label :text "Documentos" :xalign 0)))
+          (box :orientation "v" :space-evenly false :spacing 6
+            ;; Section 1: Favoritos
+            (box :class "files-side-section" :orientation "v" :space-evenly false
+              (box :class "files-side-header-box" :orientation "h" :space-evenly false
+                (label :class "files-side-header" :text "FAVORITOS" :xalign 0 :hexpand true)
+                (button :class "files-pin-add-btn" :tooltip "Pinear carpeta actual a Favoritos" :onclick "swal-files pin-current" "+"))
+              (box :class "files-side-list" :orientation "v" :space-evenly false
+                (for fav in "${swal_files_data.favorites}"
+                  (box :class "files-side-item ${fav.is_active ? 'active' : ''}" :orientation "h" :space-evenly false
+                    (button :class "files-side-btn" :onclick "swal-files nav '${fav.path}'" :hexpand true
+                      (box :orientation "h" :space-evenly false :spacing 6
+                        (label :text "${fav.icon}" :class "side-ico")
+                        (label :text "${fav.name}" :xalign 0 :limit-width 13)))
+                    (button :class "files-unpin-btn" :tooltip "Despinear '${fav.name}'" :onclick "swal-files unpin '${fav.path}'" "✕")))))
 
-            ;; Espacios Agénticos
-            (label :class "files-side-header" :text "ESPACIOS AGENTICOS" :xalign 0)
-            (button :class "files-side-btn" :onclick "python3 ~/.config/eww/scripts/swal_files_view.py nav '/home/belal/proyectosSWAL' && eww update swal_files_data"
-              (box :orientation "h" :space-evenly false :spacing 6 (label :text "⚡" :class "side-ico") (label :text "Proyectos SWAL" :xalign 0)))
-            (button :class "files-side-btn" :onclick "python3 ~/.config/eww/scripts/swal_files_view.py nav '/home/belal/.config/swal' && eww update swal_files_data"
-              (box :orientation "h" :space-evenly false :spacing 6 (label :text "⚙️" :class "side-ico") (label :text "Config SWAL" :xalign 0)))
+            ;; Section 2: Espacios Agénticos
+            (box :class "files-side-section" :orientation "v" :space-evenly false
+              (box :class "files-side-header-box" :orientation "h" :space-evenly false
+                (label :class "files-side-header" :text "ESPACIOS AGENTICOS" :xalign 0 :hexpand true))
+              (box :class "files-side-list" :orientation "v" :space-evenly false
+                (for ws in "${swal_files_data.workspaces}"
+                  (box :class "files-side-item ${ws.is_active ? 'active' : ''}" :orientation "h" :space-evenly false
+                    (button :class "files-side-btn" :onclick "swal-files nav '${ws.path}'" :hexpand true
+                      (box :orientation "h" :space-evenly false :spacing 6
+                        (label :text "${ws.icon}" :class "side-ico")
+                        (label :text "${ws.name}" :xalign 0 :limit-width 13)))
+                    (button :class "files-unpin-btn" :tooltip "Despinear workspace" :onclick "swal-files unpin '${ws.path}'" "✕")))))
 
-            ;; Etiquetas AI
-            (label :class "files-side-header" :text "ETIQUETAS AI" :xalign 0)
-            (box :class "files-side-tag" :orientation "h" :space-evenly false :spacing 4 (label :text "🟢") (label :text "Agentic" :class "tag-lbl"))
-            (box :class "files-side-tag" :orientation "h" :space-evenly false :spacing 4 (label :text "🔵") (label :text "SWAL Core" :class "tag-lbl"))
-            (box :class "files-side-tag" :orientation "h" :space-evenly false :spacing 4 (label :text "🟣") (label :text "Memory/Xavier" :class "tag-lbl"))
-            (box :class "files-side-tag" :orientation "h" :space-evenly false :spacing 4 (label :text "🟠") (label :text "WIP" :class "tag-lbl"))
+            ;; Section 3: Etiquetas AI
+            (box :class "files-side-section" :orientation "v" :space-evenly false
+              (label :class "files-side-header" :text "ETIQUETAS AI" :xalign 0)
+              (box :class "files-side-tag" :orientation "h" :space-evenly false :spacing 4 (label :text "🟢") (label :text "Agentic" :class "tag-lbl"))
+              (box :class "files-side-tag" :orientation "h" :space-evenly false :spacing 4 (label :text "🔵") (label :text "SWAL Core" :class "tag-lbl"))
+              (box :class "files-side-tag" :orientation "h" :space-evenly false :spacing 4 (label :text "🟣") (label :text "Memory/Xavier" :class "tag-lbl"))
+              (box :class "files-side-tag" :orientation "h" :space-evenly false :spacing 4 (label :text "🟠") (label :text "WIP" :class "tag-lbl")))
 
-            ;; Unidades
-            (label :class "files-side-header" :text "UNIDADES" :xalign 0)
-            (button :class "files-side-btn" :onclick "python3 ~/.config/eww/scripts/swal_files_view.py nav '/' && eww update swal_files_data"
-              (box :orientation "h" :space-evenly false :spacing 6 (label :text "󰋊" :class "side-ico") (label :text "NVMe Root (/)" :xalign 0))))))
+            ;; Section 4: Unidades
+            (box :class "files-side-section" :orientation "v" :space-evenly false
+              (label :class "files-side-header" :text "UNIDADES" :xalign 0)
+              (button :class "files-side-btn" :onclick "swal-files nav '/'"
+                (box :orientation "h" :space-evenly false :spacing 6 (label :text "󰋊" :class "side-ico") (label :text "NVMe Root (/)" :xalign 0)))))))
 
-      ;; File List / Details View
+
+      ;; Column 2: File Browser Pane (File Rows + Group Headers)
       (box :class "files-content-pane" :orientation "v" :space-evenly false :vexpand true :hexpand true
         ;; Columns Header
-        (box :class "files-col-header" :orientation "h" :space-evenly false
+        (box :class "files-col-header" :orientation "h" :space-evenly false :spacing 8
           (label :class "col-name" :text "Nombre" :xalign 0 :hexpand true)
-          (label :class "col-date" :text "Fecha de Modificación" :xalign 0)
+          (label :class "col-date" :text "Modificado" :xalign 0)
           (label :class "col-type" :text "Tipo" :xalign 0)
           (label :class "col-size" :text "Tamaño" :xalign 1))
 
-        ;; File Rows
+        ;; File Rows / Groups
         (scroll :class "files-items-scroll" :vscroll true :hscroll false :vexpand true
           (box :class "files-items-list" :orientation "v" :space-evenly false
-            (for item in "${swal_files_data.entries}"
-              (button :class "files-row-btn" :onclick "python3 ~/.config/eww/scripts/swal_files_view.py nav '${item.path}' && eww update swal_files_data"
-                (box :class "files-row" :orientation "h" :space-evenly false
-                  (box :class "col-name-cell" :orientation "h" :space-evenly false :spacing 6 :hexpand true
-                    (label :class "item-ico" :text "${item.icon}")
-                    (label :class "item-txt" :text "${item.name}" :xalign 0 :limit-width 30))
-                  (label :class "col-date-cell" :text "${item.date_modified}" :xalign 0)
-                  (label :class "col-type-cell" :text "${item.type}" :xalign 0)
-                  (label :class "col-size-cell" :text "${item.size}" :xalign 1))))))))
+            (for group in "${swal_files_data.groups}"
+              (box :orientation "v" :space-evenly false
+                ;; Optional Group Header when grouped
+                (box :class "files-group-header" :visible "${swal_files_data.group_by != 'none'}" :orientation "h" :space-evenly false
+                  (label :class "files-group-title" :text "${group.title}")
+                  (label :class "files-group-count" :text "(${group.count})"))
+                ;; Entries in this group
+                (for item in "${group.entries}"
+                  (button :class "files-row-btn ${item.is_selected ? 'selected' : ''}" :onclick "${item.is_dir ? 'swal-files nav \'' + item.path + '\'' : 'swal-files select-item \'' + item.path + '\''}" :ondblclick "swal-files open-item '${item.path}'"
+                    (box :class "files-row" :orientation "h" :space-evenly false :spacing 8
+                      (box :class "col-name-cell" :orientation "h" :space-evenly false :spacing 6 :hexpand true
+                        (label :class "item-ico" :text "${item.icon}")
+                        (label :class "item-txt" :text "${item.name}" :xalign 0 :limit-width 24)
+                        (label :class "git-badge ${item.git_status}" :text "${item.git_badge}"))
+                      (label :class "col-date-cell" :text "${item.date_modified}" :xalign 0)
+                      (label :class "col-type-cell" :text "${item.type}" :xalign 0)
+                      (label :class "col-size-cell" :text "${item.size}" :xalign 1)))))))))
 
-    ;; 4. STATUS BAR
+      ;; Column 3: Yazi-Style Right Preview Panel (Visible when preview_mode == "sidebar")
+      (box :class "files-yazi-preview" :visible "${swal_files_data.preview_mode == 'sidebar'}" :orientation "v" :space-evenly false
+        ;; Preview Header
+        (box :class "yazi-preview-header" :orientation "h" :space-evenly false :spacing 6
+          (label :class "yazi-file-icon" :text "${swal_files_data.preview.is_dir ? '📁' : (swal_files_data.preview.is_image ? '🖼️' : '📝')}")
+          (box :orientation "v" :space-evenly false :hexpand true
+            (label :class "yazi-file-title" :text "${swal_files_data.preview.file_name}" :limit-width 22 :xalign 0)
+            (label :class "yazi-file-meta" :text "${swal_files_data.preview.file_type} · ${swal_files_data.preview.size_formatted}" :xalign 0))
+          (button :class "yazi-popout-btn" :tooltip "Abrir en Ventana Flotante" :onclick "swal-files open-editor '${swal_files_data.preview.path}'" "🗖"))
+
+        ;; Preview Body (Code Lines / Hex Dump / Git Card)
+        (box :class "yazi-preview-body" :orientation "h" :space-evenly false :vexpand true
+          (scroll :class "yazi-gutter-scroll" :visible "${swal_files_data.preview.is_text}" :vscroll true :hscroll false :vexpand true
+            (label :class "yazi-gutter" :text "${swal_files_data.preview.gutter_lines}" :xalign 1))
+          (scroll :class "yazi-content-scroll" :vscroll true :hscroll true :hexpand true :vexpand true
+            (label :class "yazi-code-view" :text "${swal_files_data.preview.content}" :xalign 0 :yalign 0 :wrap false)))
+
+        ;; Preview Actions Footer
+        (box :class "yazi-preview-actions" :orientation "h" :space-evenly true :spacing 4
+          (button :class "yazi-act-btn" :onclick "ghostty --working-directory='${swal_files_data.preview.path}' &" "󰆍 Terminal")
+          (button :class "yazi-act-btn" :onclick "wl-copy '${swal_files_data.preview.path}' && notify-send 'SWAL Files' 'Ruta copiada al portapapeles' &" "📋 Copiar")
+          (button :class "yazi-act-btn accent" :onclick "${swal_files_data.preview.is_dir ? 'swal-files nav \'' + swal_files_data.preview.path + '\'' : 'swal-files open-editor \'' + swal_files_data.preview.path + '\''}"
+            "${swal_files_data.preview.is_dir ? '📂 Entrar' : '󰏫 Editor'}"))))
+
+
+    ;; 4. STATUS BAR (WITH LIVE GIT STATUS)
     (box :class "files-status-bar" :orientation "h" :space-evenly false
-      (label :class "stat-left" :text "${swal_files_data.total_items} elementos")
+      (label :class "stat-left" :text "${swal_files_data.total_items} elementos · [Filtro: ${swal_files_data.filter_type}]")
       (box :hexpand true)
-      (label :class "stat-agent" :text "⚡ Xavier GraphRAG (:8006) · Engine 200Hz"))))
+      (label :class "stat-git" :text "${swal_files_data.git_status.summary}")
+      (label :class "stat-sep" :text " · ")
+      (label :class "stat-agent" :text "⚡ Xavier GraphRAG (:8006)"))))
+
+
+;; =========================================================================
+;; SWAL MINIMALIST EDITOR & QUICKLOOK VIEWER (Sublime Text Aesthetic)
+;; =========================================================================
+(defpoll swal_editor_data :interval "5s" "swal-files editor-json")
+
+(defwindow swal_editor
+  :monitor 0
+  :geometry (geometry :x "0%" :y "0%" :width "820px" :height "580px" :anchor "center")
+  :stacking "overlay"
+  :wm-type "normal"
+  :exclusive false
+  :focusable true
+  (swal_editor_container))
+
+(defwidget swal_editor_container []
+  (box :class "editor-app-window" :orientation "v" :space-evenly false
+    ;; Titlebar
+    (box :class "editor-titlebar" :orientation "h" :space-evenly false :spacing 6
+      (label :class "editor-file-icon" :text "📝")
+      (label :class "editor-file-title" :text "${swal_editor_data.file_name}" :limit-width 32)
+      (label :class "editor-file-type" :text "[${swal_editor_data.file_type}]")
+      (box :hexpand true)
+      (label :class "editor-file-path" :text "${swal_editor_data.path}" :limit-width 50)
+      (button :class "files-win-btn close" :onclick "eww close swal_editor" "✕"))
+
+    ;; Body
+    (box :class "editor-body" :orientation "h" :space-evenly false :vexpand true :hexpand true
+      (scroll :class "editor-gutter-scroll" :vscroll true :hscroll false :vexpand true
+        (label :class "editor-gutter" :text "${swal_editor_data.gutter_lines}" :xalign 1))
+      (scroll :class "editor-content-scroll" :vscroll true :hscroll true :hexpand true :vexpand true
+        (label :class "editor-code-view" :text "${swal_editor_data.content}" :xalign 0 :yalign 0 :wrap false)))
+
+    ;; Status Footer
+    (box :class "editor-status-bar" :orientation "h" :space-evenly false
+      (label :class "stat-left" :text "${swal_editor_data.line_count} líneas  ·  ${swal_editor_data.size_formatted}  ·  UTF-8")
+      (box :hexpand true)
+      (label :class "stat-agent" :text "⚡ SWAL Minimalist QuickLook Viewer"))))
+
+

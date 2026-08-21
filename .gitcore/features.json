@@ -2,7 +2,7 @@
   "project": "swal-desktop",
   "version": "1.2.0",
   "gitcore_protocol_version": "3.8.0",
-  "total_features": 15,
+  "total_features": 30,
   "completed_features": 15,
   "waves": [
     {
@@ -16,6 +16,12 @@
       "name": "Rust Core Engine & Declarative A2UI Runtime",
       "status": "completed",
       "progress": 100
+    },
+    {
+      "id": "wave-3",
+      "name": "Files Community Fluent Theme & Hermes Ambient Orb Pipeline",
+      "status": "in_progress",
+      "progress": 0
     }
   ],
   "features": [
@@ -189,6 +195,188 @@
       "assigned": "Jules-15",
       "files": [
         "crates/swal-widget-vault/"
+      ]
+    },
+    {
+      "id": "feat-swal-16",
+      "name": "Windows / Files-Community Fluent Dark & Fluent Mica Theme Tokens",
+      "wave": "wave-3",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-01",
+      "issue": 15,
+      "files": [
+        "themes/fluent-dark.json",
+        "themes/fluent-mica.json"
+      ]
+    },
+    {
+      "id": "feat-swal-17",
+      "name": "Eww SCSS Fluent 2 Styling & Acrylic Mica Effects for SWAL Files",
+      "wave": "wave-3",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-02",
+      "issue": 16,
+      "files": [
+        "eww/files-fluent.scss"
+      ]
+    },
+    {
+      "id": "feat-swal-18",
+      "name": "Windows Files Dual-Pane Layout Controller in Rust (swal-files)",
+      "wave": "wave-3",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-03",
+      "issue": 17,
+      "files": [
+        "crates/swal-files/src/dual_pane.rs"
+      ]
+    },
+    {
+      "id": "feat-swal-19",
+      "name": "Storage Drive & Disk Space Usage Visualizer Engine in Rust",
+      "wave": "wave-3",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-04",
+      "issue": 18,
+      "files": [
+        "crates/swal-files/src/storage.rs"
+      ]
+    },
+    {
+      "id": "feat-swal-20",
+      "name": "Windows Files Tab Tooltips & Pin Drag/Reorder Metadata",
+      "wave": "wave-3",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-05",
+      "issue": 19,
+      "files": [
+        "crates/swal-files/src/tabs_extended.rs"
+      ]
+    },
+    {
+      "id": "feat-swal-21",
+      "name": "Hermes Agent Protocol & Cognition State Machine in swal-ambient-orb",
+      "wave": "wave-3",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-06",
+      "issue": 20,
+      "files": [
+        "crates/swal-ambient-orb/src/hermes.rs"
+      ]
+    },
+    {
+      "id": "feat-swal-22",
+      "name": "GLSL Shaders for Hermes Thinking Particle Vortex & A2UI Waves",
+      "wave": "wave-3",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-07",
+      "issue": 21,
+      "files": [
+        "crates/swal-ambient-orb/src/hermes_shaders.rs"
+      ]
+    },
+    {
+      "id": "feat-swal-23",
+      "name": "Async Unix Domain Socket IPC Daemon for Hermes Ambient Orb",
+      "wave": "wave-3",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-08",
+      "issue": 22,
+      "files": [
+        "crates/swal-ambient-orb/src/socket.rs"
+      ]
+    },
+    {
+      "id": "feat-swal-24",
+      "name": "Hermes Direct A2UI Component Streamer in swal-a2ui-engine",
+      "wave": "wave-3",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-09",
+      "issue": 23,
+      "files": [
+        "crates/swal-a2ui-engine/src/hermes_streamer.rs"
+      ]
+    },
+    {
+      "id": "feat-swal-25",
+      "name": "Radial Agent Quick Action Menu for Hermes Orb in Eww",
+      "wave": "wave-3",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-10",
+      "issue": 24,
+      "files": [
+        "eww/hermes_orb.yuck",
+        "eww/scripts/hermes_orb_menu.py"
+      ]
+    },
+    {
+      "id": "feat-swal-26",
+      "name": "E2E Integration Test Suite for Hermes Orb & A2UI Streamer",
+      "wave": "wave-3",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-11",
+      "issue": 25,
+      "files": [
+        "crates/swal-ambient-orb/tests/test_hermes_orb.rs"
+      ]
+    },
+    {
+      "id": "feat-swal-27",
+      "name": "Unit Test Suite for Files Fluent Theme Tokens & Schema Validator",
+      "wave": "wave-3",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-12",
+      "issue": 26,
+      "files": [
+        "tests/test_fluent_theme.py"
+      ]
+    },
+    {
+      "id": "feat-swal-28",
+      "name": "Integration Test Suite for Dual-Pane and Storage Engine",
+      "wave": "wave-3",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-13",
+      "issue": 27,
+      "files": [
+        "crates/swal-files/tests/test_dual_pane_storage.rs"
+      ]
+    },
+    {
+      "id": "feat-swal-29",
+      "name": "CLI Helper Script for Hermes Agent Voice Orb & Theme Switching",
+      "wave": "wave-3",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-14",
+      "issue": 28,
+      "files": [
+        "scripts/swal-hermes-orb"
+      ]
+    },
+    {
+      "id": "feat-swal-30",
+      "name": "Architecture Documentation for Fluent Theme & Hermes Ambient Orb",
+      "wave": "wave-3",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-15",
+      "issue": 29,
+      "files": [
+        "docs/HERMES_ORB_FLUENT_THEME.md"
       ]
     }
   ]
