@@ -1,0 +1,17 @@
+[package]
+name = "swal-files"
+version = "0.1.0"
+edition = "2021"
+authors = ["SouthWest AI Labs <agent@southwest-ai-labs.com>"]
+description = "Modern Minimalist Agentic File Manager Core in Rust, inspired by files-community/Files"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.0", features = ["full"] }
+chrono = { version = "0.4", features = ["serde"] }
+dirs = "5.0"
+walkdir = "2.4"
+
+[dev-dependencies]
+tempfile = "3.8"

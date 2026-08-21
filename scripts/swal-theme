@@ -610,6 +610,125 @@ button.settings-tab.active label {{ color: $theme-accent; font-weight: bold; }}
   border-radius: 6px;
   padding: 6px 8px;
 }}
+
+/* SWAL Files Agentic Explorer */
+.files-container {{
+  background-color: $theme-bg;
+  border: 1px solid $theme-border-active;
+  border-radius: 10px;
+  padding: 10px;
+  color: $theme-text;
+}}
+.files-header {{
+  padding-bottom: 6px;
+  border-bottom: 1px solid $theme-border-subtle;
+}}
+.files-icon {{ font-size: 14px; margin-right: 6px; }}
+.files-title {{
+  font-family: "JetBrainsMono Nerd Font", monospace;
+  font-weight: bold;
+  color: $theme-accent;
+  font-size: 12px;
+}}
+button.files-close {{
+  background-color: rgba(255, 255, 255, 0.04);
+  border: 1px solid $theme-border-subtle;
+  border-radius: 4px;
+  padding: 1px 6px;
+  color: $theme-text;
+}}
+button.files-close:hover {{
+  background-color: $theme-danger;
+  color: #ffffff;
+}}
+.files-omnibar-box {{
+  margin-top: 6px;
+  margin-bottom: 6px;
+  background-color: $theme-elevated;
+  border: 1px solid $theme-border-subtle;
+  border-radius: 6px;
+  padding: 3px 6px;
+}}
+button.files-nav-btn {{
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid $theme-border-subtle;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 10.5px;
+  color: $theme-text;
+}}
+button.files-nav-btn.agent {{
+  background-color: rgba(6, 182, 212, 0.12);
+  border-color: $theme-accent;
+  color: $theme-accent;
+  font-weight: bold;
+}}
+.files-path-label {{
+  font-family: "JetBrainsMono Nerd Font", monospace;
+  font-size: 11px;
+  color: $theme-text-sec;
+  padding: 0 6px;
+}}
+.files-sidebar {{
+  min-width: 170px;
+  background-color: $theme-elevated;
+  border: 1px solid $theme-border-subtle;
+  border-radius: 6px;
+  padding: 6px;
+  margin-right: 6px;
+}}
+.sidebar-heading {{
+  font-size: 9.5px;
+  font-weight: bold;
+  color: $theme-text-sec;
+  margin-top: 4px;
+  margin-bottom: 2px;
+}}
+button.sidebar-item {{
+  background-color: transparent;
+  border: none;
+  border-radius: 4px;
+  padding: 3px 4px;
+  color: $theme-text;
+  font-size: 10.5px;
+  margin-bottom: 2px;
+}}
+button.sidebar-item:hover {{
+  background-color: rgba(255, 255, 255, 0.05);
+  color: $theme-accent;
+}}
+.sidebar-tag {{
+  font-size: 10px;
+  padding: 1px 3px;
+  color: $theme-text-sec;
+}}
+.files-scroll {{
+  background-color: $theme-elevated;
+  border: 1px solid $theme-border-subtle;
+  border-radius: 6px;
+  padding: 4px;
+}}
+button.file-row-btn {{
+  background-color: transparent;
+  border: none;
+  border-radius: 4px;
+  padding: 3px 4px;
+  margin-bottom: 1px;
+}}
+button.file-row-btn:hover {{
+  background-color: rgba(255, 255, 255, 0.05);
+}}
+.file-row-icon {{ font-size: 13px; margin-right: 6px; }}
+.file-row-name {{ font-size: 11px; color: $theme-text; }}
+.file-row-size {{ font-size: 10px; color: $theme-text-sec; }}
+.files-footer {{
+  margin-top: 6px;
+  padding-top: 4px;
+  border-top: 1px solid $theme-border-subtle;
+  font-size: 9.5px;
+}}
+.footer-info {{ color: $theme-text-sec; }}
+.footer-status {{ color: $theme-success; font-weight: bold; }}
 """
 
 

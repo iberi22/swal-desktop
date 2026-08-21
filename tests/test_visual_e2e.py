@@ -127,7 +127,22 @@ class TestSWALVisualE2E(unittest.TestCase):
         print(f"  ✓ RAM Panel captured: {art_ram}")
         run_cmd(["eww", "close", "ram_panel"])
 
-    def test_04_system_stability_after_visual_runs(self):
+    def test_04_swal_files_visual_layout(self):
+        """Verify SWAL Files agentic file manager renders with sidebar and breadcrumbs."""
+        for win in ["swal_settings", "dashboard", "ram_panel", "keybinds_panel", "agent_chat"]:
+            run_cmd(["eww", "close", win])
+        time.sleep(0.5)
+
+        run_cmd(["eww", "open", "swal_files"])
+        time.sleep(1.2)
+
+        art_files = capture_and_crop("swal_files", "782x562+569+280", "e2e_swal_files_verified.png")
+        self.assertIsNotNone(art_files)
+        self.assertGreater(os.path.getsize(art_files), 10000)
+        print(f"  ✓ SWAL Files captured: {art_files}")
+        run_cmd(["eww", "close", "swal_files"])
+
+    def test_05_system_stability_after_visual_runs(self):
         """Run swal-doctor after visual test suite to verify 0 errors in logs."""
         out, _, code = run_cmd(["swal-doctor"])
         self.assertEqual(code, 0, f"swal-doctor reported issues: {out}")

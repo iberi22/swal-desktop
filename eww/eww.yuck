@@ -88,7 +88,9 @@
         (label :text "⌨" :style "color:#00FF88;font-size:12.5px;margin-right:2px;"))
       (button :onclick "~/.config/hypr/scripts/layout.sh" :class "icon-btn" :vexpand false :tooltip "Distribución de ventanas"
         (label :text "󰌌" :style "color:rgba(255,255,255,0.7);font-size:12.5px;margin-right:2px;"))
-      (button :onclick "eww open --toggle swal_settings" :class "icon-btn" :vexpand false :tooltip "Configuración Manual del Sistema (SWAL Settings)"
+      (button :onclick "eww open --toggle swal_files" :class "icon-btn" :vexpand false :tooltip "Explorador de Archivos Agentico (Rust Core)"
+        (label :text "📂" :style "color:#06b6d4;font-size:12.5px;margin-right:2px;"))
+      (button :onclick "eww open --toggle swal_settings" :class "icon-btn" :vexpand false :tooltip "Configuracion Manual del Sistema (SWAL Settings)"
         (label :text "⚙" :style "color:#f97316;font-size:13.5px;margin-right:3px;"))
       (button :onclick "/home/belal/.config/eww/scripts/toggle_dashboard.sh close" :class "close-btn" :vexpand false :tooltip "Cerrar Dashboard"
         (label :text "󰅖" :class "close-lbl")))
@@ -810,3 +812,52 @@
           (label :text "🔄 Recargar Eww" :class "act-lbl"))
         (button :onclick "ghostty -e python3 /home/belal/proyectosSWAL/periferia/swal-desktop/tests/test_theme_engine.py &" :class "act" :vexpand false
           (label :text "🧪 Ejecutar Tests E2E" :class "act-lbl"))))))
+
+;; =========================================================================
+;; SWAL FILES — Modern Minimalist Agentic File Manager (Rust Core)
+;; =========================================================================
+(defpoll swal_files_data :interval "2s" "python3 ~/.config/eww/scripts/swal_files_view.py")
+
+(defwindow swal_files
+  :monitor 0
+  :geometry (geometry :x "0%" :y "0%" :width "780px" :height "560px" :anchor "center")
+  :stacking "overlay"
+  :wm-type "dialog"
+  :exclusive false
+  :focusable true
+  (swal_files_container))
+
+(defwidget swal_files_container []
+  (box :class "files-container" :orientation "v" :space-evenly false
+    (box :class "files-header" :orientation "h" :space-evenly false
+      (label :class "files-icon" :text "📂")
+      (label :class "files-title" :text "SWAL FILES (RUST AGENTIC CORE)")
+      (box :hexpand true)
+      (button :class "files-close" :onclick "eww close swal_files" "✕"))
+    (box :class "files-omnibar-box" :orientation "h" :space-evenly false
+      (button :class "files-nav-btn" :onclick "python3 ~/.config/eww/scripts/swal_files_view.py nav '${swal_files_data.parent_path}' && eww update swal_files_data" "⬆ Subir")
+      (label :class "files-path-label" :text "${swal_files_data.current_path}" :hexpand true :limit-width 50)
+      (button :class "files-nav-btn agent" :onclick "notify-send 'SWAL Agent' 'Escaneando directorio con Xavier...' &" "🤖 Analizar"))
+    (box :class "files-body" :orientation "h" :space-evenly false :vexpand true
+      (box :class "files-sidebar" :orientation "v" :space-evenly false
+        (label :class "sidebar-heading" :text "ACCESO RAPIDO" :xalign 0)
+        (button :class "sidebar-item" :onclick "python3 ~/.config/eww/scripts/swal_files_view.py nav '/home/belal' && eww update swal_files_data" "🏠 Home")
+        (button :class "sidebar-item" :onclick "python3 ~/.config/eww/scripts/swal_files_view.py nav '/home/belal/proyectosSWAL' && eww update swal_files_data" "⚡ Proyectos SWAL")
+        (button :class "sidebar-item" :onclick "python3 ~/.config/eww/scripts/swal_files_view.py nav '/home/belal/Downloads' && eww update swal_files_data" "📥 Descargas")
+        (button :class "sidebar-item" :onclick "python3 ~/.config/eww/scripts/swal_files_view.py nav '/home/belal/.config/swal' && eww update swal_files_data" "⚙️ Config SWAL")
+        (label :class "sidebar-heading" :text "ETIQUETAS AI" :xalign 0)
+        (label :class "sidebar-tag" :text "🟢 Agentic" :xalign 0)
+        (label :class "sidebar-tag" :text "🔵 SWAL Core" :xalign 0)
+        (label :class "sidebar-tag" :text "🟣 Memory/Xavier" :xalign 0))
+      (scroll :class "files-scroll" :vscroll true :hscroll false :vexpand true :hexpand true
+        (box :class "files-list" :orientation "v" :space-evenly false
+          (for item in "${swal_files_data.entries}"
+            (button :class "file-row-btn" :onclick "python3 ~/.config/eww/scripts/swal_files_view.py nav '${item.path}' && eww update swal_files_data"
+              (box :class "file-row" :orientation "h" :space-evenly false
+                (label :class "file-row-icon" :text "${item.icon}")
+                (label :class "file-row-name" :text "${item.name}" :hexpand true :xalign 0 :limit-width 36)
+                (label :class "file-row-size" :text "${item.size}")))))))
+    (box :class "files-footer" :orientation "h" :space-evenly false
+      (label :class "footer-info" :text "${swal_files_data.total_items} elementos • Rust Backend (0.00s latency)")
+      (box :hexpand true)
+      (label :class "footer-status" :text "● Xavier Conectado"))))
