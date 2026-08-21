@@ -6,6 +6,7 @@ pub mod config;
 pub mod entry;
 pub mod omnibar;
 pub mod scanner;
+pub mod tabs_extended;
 
 use config::FileManagerConfig;
 use entry::FileEntry;
