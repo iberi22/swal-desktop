@@ -1,0 +1,25 @@
+{
+  "id": "fluent-mica",
+  "name": "SWAL Fluent Mica",
+  "author": "SouthWest AI Labs",
+  "version": "1.0.0",
+  "colors": {
+    "bg": "rgba(20, 20, 20, 0.85)",
+    "elevated": "rgba(35, 35, 35, 0.75)",
+    "elevated_850": "rgba(40, 40, 40, 0.80)",
+    "void": "#101010",
+    "accent_primary": "#0078d4",
+    "accent_secondary": "#2b88d8",
+    "text_primary": "#ffffff",
+    "text_secondary": "#cccccc",
+    "success": "#107c41",
+    "warning": "#d13438",
+    "danger": "#a80000",
+    "border_active": "rgba(0, 120, 212, 0.6)",
+    "border_subtle": "rgba(255, 255, 255, 0.1)"
+  },
+  "hyprland": {
+    "active_border": "rgba(0078d4ff) rgba(2b88d8ff) 45deg",
+    "inactive_border": "rgba(202020ff)"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "id": "fluent-dark",
+  "name": "SWAL Fluent Dark",
+  "author": "SouthWest AI Labs",
+  "version": "1.0.0",
+  "colors": {
+    "bg": "rgba(32, 32, 32, 0.98)",
+    "elevated": "rgba(44, 44, 44, 0.85)",
+    "elevated_850": "rgba(50, 50, 50, 0.90)",
+    "void": "#1a1a1a",
+    "accent_primary": "#0078d4",
+    "accent_secondary": "#0f6cbd",
+    "text_primary": "#ffffff",
+    "text_secondary": "#adadad",
+    "success": "#107c41",
+    "warning": "#d13438",
+    "danger": "#a80000",
+    "border_active": "rgba(0, 120, 212, 0.5)",
+    "border_subtle": "rgba(255, 255, 255, 0.08)"
+  },
+  "hyprland": {
+    "active_border": "rgba(0078d4ff) rgba(0f6cbdff) 45deg",
+    "inactive_border": "rgba(2c2c2cff)"
+  }
+}
