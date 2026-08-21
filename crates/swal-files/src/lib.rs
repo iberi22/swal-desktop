@@ -4,6 +4,7 @@
 pub mod agent;
 pub mod cli;
 pub mod config;
+pub mod dual_pane;
 pub mod entry;
 pub mod git;
 pub mod gui;
@@ -11,6 +12,9 @@ pub mod omnibar;
 pub mod preview;
 pub mod scanner;
 pub mod session;
+pub mod storage;
+pub mod tabs_extended;
+
 
 use config::FileManagerConfig;
 use entry::FileEntry;

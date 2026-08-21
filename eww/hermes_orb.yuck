@@ -1,0 +1,57 @@
+;; SWAL Desktop — Hermes Ambient Orb Overlay & Radial Action Menu
+;; Defines the interactive radial quick action menu (@summarize, @refactor, @execute, @chat)
+
+(defvar hermes_orb_expanded false)
+(defvar hermes_orb_status "idle")
+
+(defwidget hermes_orb_overlay []
+  (box :class "hermes-orb-container" :orientation "v" :space-evenly false :valign "center" :halign "center"
+    (box :class "hermes-orb-wrapper" :orientation "v" :space-evenly false :valign "center" :halign "center"
+      ;; Radial Quick Action Buttons Menu (visible when expanded)
+      (box :visible {hermes_orb_expanded} :class "hermes-radial-menu" :orientation "v" :space-evenly false :spacing 6
+        (box :class "radial-row top" :orientation "h" :space-evenly true :spacing 8
+          (button :onclick "python3 ~/.config/eww/scripts/hermes_orb_menu.py dispatch @summarize & eww update hermes_orb_expanded=false"
+                  :class "radial-btn summarize"
+                  :tooltip "@summarize: Resumir contexto o selección activo"
+            (box :orientation "h" :spacing 4 :space-evenly false :halign "center"
+              (label :text "📝" :class "radial-ico")
+              (label :text "@summarize" :class "radial-lbl"))))
+
+        (box :class "radial-row middle" :orientation "h" :space-evenly true :spacing 12
+          (button :onclick "python3 ~/.config/eww/scripts/hermes_orb_menu.py dispatch @refactor & eww update hermes_orb_expanded=false"
+                  :class "radial-btn refactor"
+                  :tooltip "@refactor: Refactorizar y optimizar código"
+            (box :orientation "h" :spacing 4 :space-evenly false :halign "center"
+              (label :text "🛠️" :class "radial-ico")
+              (label :text "@refactor" :class "radial-lbl")))
+
+          (button :onclick "python3 ~/.config/eww/scripts/hermes_orb_menu.py dispatch @execute & eww update hermes_orb_expanded=false"
+                  :class "radial-btn execute"
+                  :tooltip "@execute: Ejecutar tarea agéntica SWAL"
+            (box :orientation "h" :spacing 4 :space-evenly false :halign "center"
+              (label :text "⚡" :class "radial-ico")
+              (label :text "@execute" :class "radial-lbl"))))
+
+        (box :class "radial-row bottom" :orientation "h" :space-evenly true :spacing 8
+          (button :onclick "python3 ~/.config/eww/scripts/hermes_orb_menu.py dispatch @chat & eww update hermes_orb_expanded=false"
+                  :class "radial-btn chat"
+                  :tooltip "@chat: Abrir panel de chat directo con Hermes"
+            (box :orientation "h" :spacing 4 :space-evenly false :halign "center"
+              (label :text "💬" :class "radial-ico")
+              (label :text "@chat" :class "radial-lbl")))))
+
+      ;; Center Reactive Animated Orb Button
+      (button :onclick "eww update hermes_orb_expanded=${!hermes_orb_expanded}"
+              :class "hermes-orb-core ${hermes_orb_expanded ? 'active' : 'idle'}"
+              :tooltip "Hermes Ambient Orb — Click para acciones rápidas radiales"
+        (box :class "orb-inner-glow" :orientation "v" :space-evenly false :halign "center" :valign "center"
+          (label :text {hermes_orb_expanded ? "󰅖" : "🤖"} :class "orb-icon"))))))
+
+(defwindow hermes_orb
+  :monitor 0
+  :geometry (geometry :x "20px" :y "20px" :width "240px" :height "240px" :anchor "bottom right")
+  :stacking "overlay"
+  :wm-type "dock"
+  :exclusive false
+  :focusable false
+  (hermes_orb_overlay))

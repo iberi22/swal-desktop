@@ -3,7 +3,11 @@
 //! Provides the state machine, lock-free audio amplitude & thought trigger consumer,
 //! and shader compiler/pipeline bindings for ambient visual states.
 
+pub mod hermes;
+pub mod hermes_shaders;
 pub mod shaders;
+pub mod socket;
+
 
 use serde::{Deserialize, Serialize};
 use std::sync::atomic::{AtomicU32, Ordering};
