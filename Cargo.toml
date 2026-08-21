@@ -4,6 +4,7 @@ members = [
     "crates/swal-a2ui-engine",
     "crates/swal-ambient-orb",
     "crates/swal-node-daemon",
+    "crates/swal-widget-vault",
     "crates/swal-render-pipeline"
 ]
 resolver = "2"
