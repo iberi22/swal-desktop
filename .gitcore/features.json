@@ -2,7 +2,7 @@
   "project": "swal-desktop",
   "version": "1.2.0",
   "gitcore_protocol_version": "3.8.0",
-  "total_features": 40,
+  "total_features": 50,
   "completed_features": 40,
   "waves": [
     {
@@ -28,6 +28,12 @@
       "name": "Pure Rust Native Wayland Layer Shell & GPU Rendering Engine (Zero-Eww)",
       "status": "completed",
       "progress": 100
+    },
+    {
+      "id": "wave-5",
+      "name": "macOS-Inspired Centralized System Settings & Generative AUI Component System",
+      "status": "in_progress",
+      "progress": 0
     }
   ],
   "features": [
@@ -503,6 +509,126 @@
       "issue": 54,
       "files": [
         "crates/swal-render-pipeline/tests/test_native_pipeline_e2e.rs"
+      ]
+    },
+    {
+      "id": "feat-swal-41",
+      "name": "Canonical System Settings JSON Schema & Store Engine in Rust",
+      "wave": "wave-5",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-01",
+      "issue": 65,
+      "files": [
+        "crates/swal-node-daemon/src/settings_store.rs"
+      ]
+    },
+    {
+      "id": "feat-swal-42",
+      "name": "A2UI Rich Settings Component Nodes (Toggle, Slider, Select, ColorSwatch)",
+      "wave": "wave-5",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-02",
+      "issue": 66,
+      "files": [
+        "crates/swal-a2ui-engine/src/settings_components.rs"
+      ]
+    },
+    {
+      "id": "feat-swal-43",
+      "name": "Generative AUI Agent Action Card & Dynamic Response Streamer",
+      "wave": "wave-5",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-03",
+      "issue": 67,
+      "files": [
+        "crates/swal-a2ui-engine/src/agent_action_card.rs"
+      ]
+    },
+    {
+      "id": "feat-swal-44",
+      "name": "macOS-Inspired Centralized Settings Window Layout Builder",
+      "wave": "wave-5",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-04",
+      "issue": 68,
+      "files": [
+        "crates/swal-node-daemon/src/settings_window.rs"
+      ]
+    },
+    {
+      "id": "feat-swal-45",
+      "name": "GPU Rasterizer Extension for Interactive Settings Controls",
+      "wave": "wave-5",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-05",
+      "issue": 69,
+      "files": [
+        "crates/swal-render-pipeline/src/controls_render.rs"
+      ]
+    },
+    {
+      "id": "feat-swal-46",
+      "name": "Interactive Settings Hit-Testing & Value Mutation Controller",
+      "wave": "wave-5",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-06",
+      "issue": 70,
+      "files": [
+        "crates/swal-render-pipeline/src/settings_controller.rs"
+      ]
+    },
+    {
+      "id": "feat-swal-47",
+      "name": "Agent Real-Time Configuration Mutation IPC Protocol in Rust",
+      "wave": "wave-5",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-07",
+      "issue": 71,
+      "files": [
+        "crates/swal-node-daemon/src/agent_config_ipc.rs"
+      ]
+    },
+    {
+      "id": "feat-swal-48",
+      "name": "Settings CLI Companion Tool in Rust (swal-node-daemon)",
+      "wave": "wave-5",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-08",
+      "issue": 72,
+      "files": [
+        "crates/swal-node-daemon/src/settings_cli.rs"
+      ]
+    },
+    {
+      "id": "feat-swal-49",
+      "name": "SWAL Doctor Embedded Self-Healing & Diagnostic Engine in Rust",
+      "wave": "wave-5",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-09",
+      "issue": 73,
+      "files": [
+        "crates/swal-node-daemon/src/doctor_engine.rs"
+      ]
+    },
+    {
+      "id": "feat-swal-50",
+      "name": "E2E Integration Test Suite for Centralized Settings & Generative AUI",
+      "wave": "wave-5",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-10",
+      "issue": 74,
+      "files": [
+        "crates/swal-node-daemon/tests/test_settings_aui_e2e.rs"
       ]
     }
   ]
