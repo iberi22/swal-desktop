@@ -223,6 +223,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "swal-ambient-orb"
+version = "0.1.0"
+dependencies = [
+ "crossbeam-channel",
+ "serde",
+]
+
+[[package]]
 name = "swal-render-pipeline"
 version = "0.1.0"
 dependencies = [
