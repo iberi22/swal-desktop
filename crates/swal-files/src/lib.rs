@@ -2,8 +2,11 @@
 //! Modern Minimalist Agentic File Manager Core in Rust
 
 pub mod agent;
+pub mod agent_protocol;
+pub mod app_runtime;
 pub mod archive;
 pub mod cli;
+pub mod cloud_sync;
 pub mod config;
 pub mod dual_pane;
 pub mod entry;
@@ -11,12 +14,14 @@ pub mod git;
 pub mod gui;
 pub mod native_window;
 pub mod omnibar;
-
+pub mod platform;
+pub mod plugin_system;
 pub mod preview;
 pub mod scanner;
 pub mod session;
 pub mod storage;
 pub mod tabs_extended;
+pub mod tui;
 pub mod watcher;
 
 pub use archive::{ArchiveEntry, ArchiveError, ArchiveInspector, ArchiveKind, ArchiveMetadata, BatchTagManager};

@@ -119,7 +119,10 @@ impl WidgetVault {
                     && event
                         .paths
                         .iter()
-                        .any(|p| p.extension().and_then(|s| s.to_str()) == Some("json"))
+                        .any(|p| {
+                            let s = p.to_string_lossy();
+                            s.ends_with(".json") && !s.ends_with(".tmp")
+                        })
                 {
                     let _ = Self::scan_directory(&vault_dir_clone, &widgets_clone);
                 }
@@ -211,11 +214,9 @@ impl WidgetVault {
     /// Saves or creates a widget on disk in $VAULT_DIR/{id}.json
     pub fn save_widget(&self, widget: &Widget) -> Result<(), VaultError> {
         let file_path = self.vault_dir.join(format!("{}.json", widget.id));
-        let tmp_path = self.vault_dir.join(format!("{}.json.tmp", widget.id));
         let content = serde_json::to_string_pretty(widget)?;
 
-        fs::write(&tmp_path, content)?;
-        fs::rename(&tmp_path, &file_path)?;
+        fs::write(&file_path, content)?;
 
         let mut lock = self.widgets.write().unwrap();
         lock.insert(widget.id.clone(), widget.clone());

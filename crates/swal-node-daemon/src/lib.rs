@@ -1,4 +1,5 @@
 pub mod agent_config_ipc;
+pub mod desktop_bridge;
 pub mod doctor_engine;
 pub mod hermes_stream;
 pub mod native_shell;

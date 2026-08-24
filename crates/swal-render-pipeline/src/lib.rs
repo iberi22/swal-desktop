@@ -2,6 +2,7 @@
 //! High-refresh (200Hz - 240Hz) lock-free render coordinator for SWAL Desktop
 
 pub mod controls_render;
+pub mod cross_platform_surface;
 pub mod events;
 pub mod fluent_acrylic;
 pub mod gestures;

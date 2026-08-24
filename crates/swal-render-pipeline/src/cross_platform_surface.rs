@@ -377,7 +377,7 @@ mod tests {
         assert_eq!(adapter.config().scale_factor, 1.25);
         assert_eq!(adapter.get_render_texture_bounds(), (3200, 1800));
 
-        let ctx_bounds = adapter.wgpu_context().unwrap().surface_config;
+        let ctx_bounds = &adapter.wgpu_context().unwrap().surface_config;
         assert_eq!(ctx_bounds.width, 3200);
         assert_eq!(ctx_bounds.height, 1800);
 

@@ -114,7 +114,7 @@ impl StandaloneWindowFrame {
                 }
 
                 header_children.push(ComponentNode::StatusBadge {
-                    status: if self.is_focused { "active" } else { "inactive" },
+                    status: if self.is_focused { "active".to_string() } else { "inactive".to_string() },
                     label: title_label,
                     color: None,
                 });
@@ -126,7 +126,7 @@ impl StandaloneWindowFrame {
                 }
 
                 header_children.push(ComponentNode::StatusBadge {
-                    status: if self.is_focused { "active" } else { "inactive" },
+                    status: if self.is_focused { "active".to_string() } else { "inactive".to_string() },
                     label: title_label,
                     color: None,
                 });

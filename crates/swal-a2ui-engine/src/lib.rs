@@ -7,6 +7,7 @@ pub mod hermes_streamer;
 pub mod native_render;
 pub mod schema;
 pub mod settings_components;
+pub mod standalone_window;
 
 pub use calendar::{AgendaEvent, AgendaList, CalendarGrid};
 use serde::{Deserialize, Serialize};

@@ -116,6 +116,14 @@ impl AppRuntimeDispatcher {
             }
         }
 
+        let is_tui_env = env::var("SWAL_TUI")
+            .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
+            .unwrap_or(false);
+
+        if is_tui_env {
+            return AppRuntimeMode::TuiTerminal;
+        }
+
         let is_swal_active = env::var("SWAL_DESKTOP_ACTIVE")
             .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
             .unwrap_or(false);
@@ -139,12 +147,7 @@ impl AppRuntimeDispatcher {
             return AppRuntimeMode::StandaloneWindow;
         }
 
-        let is_tui_env = env::var("SWAL_TUI")
-            .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
-            .unwrap_or(false);
-
-        let is_tty = is_tui_env
-            || env::var("SSH_TTY").is_ok()
+        let is_tty = env::var("SSH_TTY").is_ok()
             || env::var("TERM").map(|v| !v.trim().is_empty() && v != "dumb").unwrap_or(false);
 
         if is_tty {
