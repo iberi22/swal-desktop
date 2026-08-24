@@ -2,7 +2,7 @@
 //!
 //! Converts ComponentNode trees directly into GPU draw commands and layout bounding boxes.
 
-use crate::ComponentNode;
+use crate::{AgendaEvent, ComponentNode};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct LayoutRect {
@@ -43,6 +43,29 @@ pub enum GpuDrawCommand {
         bounds: LayoutRect,
         progress: f32,
         color: [f32; 4],
+    },
+    DrawSlider {
+        bounds: LayoutRect,
+        label: String,
+        min: f32,
+        max: f32,
+        value: f32,
+        action_id: String,
+    },
+    DrawProcessTable {
+        bounds: LayoutRect,
+        limit: usize,
+        sort_by: String,
+    },
+    DrawCalendar {
+        bounds: LayoutRect,
+        year: u32,
+        month: u32,
+        highlighted_days: Vec<u32>,
+    },
+    DrawAgenda {
+        bounds: LayoutRect,
+        events: Vec<AgendaEvent>,
     },
 }
 
@@ -290,6 +313,37 @@ fn evaluate_node(node: &ComponentNode, bounds: LayoutRect, commands: &mut Vec<Gp
                 }
             }
         }
+        ComponentNode::Slider { label, min, max, value, action } => {
+            commands.push(GpuDrawCommand::DrawSlider {
+                bounds,
+                label: label.clone(),
+                min: *min,
+                max: *max,
+                value: *value,
+                action_id: action.clone(),
+            });
+        }
+        ComponentNode::ProcessTable { limit, sort_by } => {
+            commands.push(GpuDrawCommand::DrawProcessTable {
+                bounds,
+                limit: *limit,
+                sort_by: sort_by.clone(),
+            });
+        }
+        ComponentNode::CalendarGrid { year, month, highlighted_days } => {
+            commands.push(GpuDrawCommand::DrawCalendar {
+                bounds,
+                year: *year,
+                month: *month,
+                highlighted_days: highlighted_days.clone(),
+            });
+        }
+        ComponentNode::AgendaList { events } => {
+            commands.push(GpuDrawCommand::DrawAgenda {
+                bounds,
+                events: events.clone(),
+            });
+        }
     }
 }
 
@@ -396,5 +450,89 @@ mod tests {
             _ => false,
         });
         assert!(has_terminal_cmd, "Expected terminal command text GPU command");
+    }
+
+    #[test]
+    fn test_evaluate_slider_and_process_table_ast() {
+        let root = ComponentNode::Card {
+            title: Some("Audio & Process Controls".to_string()),
+            elevation: Some("elevated".to_string()),
+            children: vec![
+                ComponentNode::Slider {
+                    label: "Master Volume".to_string(),
+                    min: 0.0,
+                    max: 100.0,
+                    value: 65.0,
+                    action: "audio.set_volume".to_string(),
+                },
+                ComponentNode::ProcessTable {
+                    limit: 10,
+                    sort_by: "cpu".to_string(),
+                },
+            ],
+        };
+
+        let viewport = LayoutRect::new(0.0, 0.0, 400.0, 300.0);
+        let commands = evaluate_ast_to_gpu_commands(&root, viewport);
+
+        let has_slider = commands.iter().any(|cmd| match cmd {
+            GpuDrawCommand::DrawSlider { label, min, max, value, action_id, .. } => {
+                label == "Master Volume"
+                    && (*min - 0.0).abs() < f32::EPSILON
+                    && (*max - 100.0).abs() < f32::EPSILON
+                    && (*value - 65.0).abs() < f32::EPSILON
+                    && action_id == "audio.set_volume"
+            }
+            _ => false,
+        });
+        assert!(has_slider, "Commands list must contain DrawSlider command");
+
+        let has_process_table = commands.iter().any(|cmd| match cmd {
+            GpuDrawCommand::DrawProcessTable { limit, sort_by, .. } => {
+                *limit == 10 && sort_by == "cpu"
+            }
+            _ => false,
+        });
+        assert!(has_process_table, "Commands list must contain DrawProcessTable command");
+    }
+
+    #[test]
+    fn test_evaluate_calendar_and_agenda_ast() {
+        let root = ComponentNode::Card {
+            title: Some("Personal Schedule".to_string()),
+            elevation: Some("mica".to_string()),
+            children: vec![
+                ComponentNode::CalendarGrid {
+                    year: 2026,
+                    month: 8,
+                    highlighted_days: vec![15, 23],
+                },
+                ComponentNode::AgendaList {
+                    events: vec![
+                        AgendaEvent::new("Team Sync", "10:00", "meeting"),
+                        AgendaEvent::new("Code Review", "14:00", "dev"),
+                    ],
+                },
+            ],
+        };
+
+        let viewport = LayoutRect::new(0.0, 0.0, 500.0, 600.0);
+        let commands = evaluate_ast_to_gpu_commands(&root, viewport);
+
+        let has_calendar = commands.iter().any(|cmd| match cmd {
+            GpuDrawCommand::DrawCalendar { year, month, highlighted_days, .. } => {
+                *year == 2026 && *month == 8 && highlighted_days == &[15, 23]
+            }
+            _ => false,
+        });
+        assert!(has_calendar, "Commands list must contain DrawCalendar command");
+
+        let has_agenda = commands.iter().any(|cmd| match cmd {
+            GpuDrawCommand::DrawAgenda { events, .. } => {
+                events.len() == 2 && events[0].title == "Team Sync" && events[1].tag == "dev"
+            }
+            _ => false,
+        });
+        assert!(has_agenda, "Commands list must contain DrawAgenda command");
     }
 }

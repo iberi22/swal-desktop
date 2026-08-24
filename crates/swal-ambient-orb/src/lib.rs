@@ -5,6 +5,7 @@
 
 pub mod hermes;
 pub mod hermes_shaders;
+pub mod particle_shader;
 pub mod shaders;
 pub mod socket;
 

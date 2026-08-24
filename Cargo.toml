@@ -6,6 +6,7 @@ members = [
     "crates/swal-node-daemon",
     "crates/swal-widget-vault",
     "crates/swal-render-pipeline",
-    "crates/swal-files"
+    "crates/swal-files",
+    "crates/swal-vision-rs"
 ]
 resolver = "2"

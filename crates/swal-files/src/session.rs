@@ -5,8 +5,22 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use crate::config::FileManagerConfig;
 
-pub const STATE_FILE: &str = "/tmp/swal_files_session.json";
-pub const EDITOR_STATE_FILE: &str = "/tmp/swal_editor_session.json";
+pub fn get_session_file_path() -> PathBuf {
+    let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/home/belal"));
+    let dir = home.join(".config/swal/files");
+    let _ = fs::create_dir_all(&dir);
+    dir.join("session.json")
+}
+
+pub fn get_editor_session_file_path() -> PathBuf {
+    let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/home/belal"));
+    let dir = home.join(".config/swal/files");
+    let _ = fs::create_dir_all(&dir);
+    dir.join("editor_session.json")
+}
+
+pub const STATE_FILE: &str = "/home/belal/.config/swal/files/session.json";
+pub const EDITOR_STATE_FILE: &str = "/home/belal/.config/swal/files/editor_session.json";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TabState {

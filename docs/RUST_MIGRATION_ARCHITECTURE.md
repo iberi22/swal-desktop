@@ -52,10 +52,25 @@ To achieve maximum performance (sub-millisecond latency, zero garbage collection
 
 ---
 
-## 4. Phased Migration Roadmap
+## 4. Zero-Complexity Architectural Principles (State of the Art)
 
-| Phase | Milestone | Deliverable |
-|---|---|---|
-| **Wave 1 (Completed)** | Theme Engine, NixOS Services & Settings Panel | `swal-theme`, `@swal/ui` Hive Dark, `swal-doctor`, settings modal |
-| **Wave 2 (Current)** | Native Rust Telemetry & A2UI Declarative Engine | `swal-desktop-core` Rust crate, JSON A2UI compiler, widget vault |
-| **Wave 3** | Ambient Orb Modal & Full Wayland Integration | GLSL shader orb, voice visualizer, seamless desktop overlay |
+1. **Zero-Allocation Stack Buffers**:
+   - File reads from `/sys/class/hwmon/` and `/sys/class/drm/` execute into pre-allocated stack slices (`[u8; 64]`) with byte-level parsing in-place (`0% allocation overhead`, `<0.1ms latency`).
+2. **Unified Single Daemon Model**:
+   - One background Tokio supervisor (`swal-node-daemon`) eliminates multi-process IPC collisions, zombie sockets, and GTK layer-shell desynchronizations.
+3. **Wayland zwlr_layer_shell_v1 Protocol Native Surface**:
+   - Direct surface state toggling without process teardown or GTK window destruction, guaranteeing zero orphan surfaces.
+4. **Declarative A2UI Hot-Reloading**:
+   - Widgets are parsed directly from canonical JSON schemas (`~/.config/swal/widgets/*.json`), allowing autonomous agents (Hermes/Xavier) to deploy dynamic UI cards at runtime.
+
+---
+
+## 5. Phased Migration Roadmap & Feature Tracking
+
+| Phase | Milestone | Deliverable | Status |
+|---|---|---|---|
+| **Phase 1** | Native Telemetry & Zero-Alloc Metric Readers | `swal-telemetry-rs` direct `/proc` & `hwmon` reader (<0.1ms) | 🟢 90% |
+| **Phase 2** | A2UI Generative Engine & Widget Vault | `swal-a2ui-engine`, `swal-widget-vault`, JSON AST compiler | 🟢 85% |
+| **Phase 3** | Native Wayland Host & Render Loop | `swal-render-pipeline`, `wgpu` Mica shader, `swal-desktop-ctl` | 🟢 90% |
+| **Phase 4** | Complete Zero-EWW Cutover & NixOS Switch | Full retirement of `eww daemon` and `eww.yuck` | 🟡 80% |
+

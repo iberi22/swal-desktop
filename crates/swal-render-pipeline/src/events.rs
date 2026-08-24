@@ -280,9 +280,6 @@ impl HitTestManager {
     }
 }
 
-fn main() {
-    println!("swal-events binary initialized.");
-}
 
 #[cfg(test)]
 mod tests {

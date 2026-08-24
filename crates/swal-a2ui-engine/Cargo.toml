@@ -5,6 +5,12 @@ edition = "2021"
 authors = ["SouthWest AI Labs <agent@southwest-ai-labs.com>"]
 description = "Declarative JSON to Native Component Tree parser for SWAL Generative UI"
 
+[[bin]]
+name = "swal-a2ui"
+path = "src/main.rs"
+
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+tokio = { version = "1.0", features = ["full"] }
+

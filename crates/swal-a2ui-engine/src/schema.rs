@@ -59,9 +59,29 @@ impl ThemePalette {
         }
     }
 
+    pub fn fluent_dark() -> Self {
+        Self {
+            id: "fluent-dark".to_string(),
+            bg: "rgba(32, 32, 32, 0.95)".to_string(),
+            elevated: "rgba(45, 45, 45, 0.85)".to_string(),
+            elevated_850: "rgba(38, 38, 38, 0.90)".to_string(),
+            void: "#1a1a1a".to_string(),
+            accent_primary: "#60cdff".to_string(),
+            accent_secondary: "#0078d4".to_string(),
+            text_primary: "#ffffff".to_string(),
+            text_secondary: "#cccccc".to_string(),
+            success: "#6ccb5f".to_string(),
+            warning: "#fce100".to_string(),
+            danger: "#ff99a4".to_string(),
+            border_active: "rgba(96, 205, 255, 0.60)".to_string(),
+            border_subtle: "rgba(255, 255, 255, 0.08)".to_string(),
+        }
+    }
+
     pub fn from_name(name: &str) -> Self {
         match name {
             "cyber-neon" | "cyber_neon" => Self::cyber_neon(),
+            "fluent-dark" | "fluent_dark" | "files-dark" | "windows-dark" => Self::fluent_dark(),
             _ => Self::hive_dark(),
         }
     }

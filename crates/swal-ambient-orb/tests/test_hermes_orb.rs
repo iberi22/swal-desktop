@@ -224,3 +224,42 @@ fn test_hermes_orb_progress_and_audio_clamping() {
     assert!((uniforms3.audio_amplitude - 0.6).abs() < f32::EPSILON);
     assert!((uniforms3.thought_trigger - 0.3).abs() < f32::EPSILON);
 }
+
+#[test]
+fn test_speaking_particle_wgsl_shader_integration() {
+    use swal_ambient_orb::particle_shader::{
+        self, ParticleShaderUniforms, CYAN_GLOW_HEX, EMERALD_PARTICLE_HEX,
+        SPEAKING_PARTICLE_WGSL_SHADER, SPEAKING_WGSL_SHADER,
+    };
+
+    assert_eq!(SPEAKING_WGSL_SHADER, SPEAKING_PARTICLE_WGSL_SHADER);
+    assert_eq!(
+        particle_shader::get_speaking_wgsl_shader(),
+        SPEAKING_PARTICLE_WGSL_SHADER
+    );
+    assert_eq!(
+        particle_shader::get_wgsl_shader_for_state(&OrbState::Speaking),
+        Some(SPEAKING_PARTICLE_WGSL_SHADER)
+    );
+    assert_eq!(
+        particle_shader::get_wgsl_shader_for_state(&OrbState::Listening),
+        None
+    );
+
+    assert!(SPEAKING_PARTICLE_WGSL_SHADER.contains(EMERALD_PARTICLE_HEX));
+    assert!(SPEAKING_PARTICLE_WGSL_SHADER.contains(CYAN_GLOW_HEX));
+
+    // Test Naga WGSL parsing in integration tests
+    let parsed = naga::front::wgsl::parse_str(SPEAKING_PARTICLE_WGSL_SHADER);
+    assert!(
+        parsed.is_ok(),
+        "Integration test: Failed to parse WGSL shader with Naga"
+    );
+
+    let uniforms = ParticleShaderUniforms::new(0.5, 0.8, 0.4);
+    assert_eq!(uniforms.time, 0.5);
+    assert_eq!(uniforms.audio_amplitude, 0.8);
+    assert_eq!(uniforms.thought_trigger, 0.4);
+    assert_eq!(uniforms.state_id, 2.0);
+    assert_eq!(uniforms.as_bytes().len(), 16);
+}

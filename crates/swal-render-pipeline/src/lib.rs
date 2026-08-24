@@ -1,10 +1,14 @@
 //! swal-render-pipeline
 //! High-refresh (200Hz - 240Hz) lock-free render coordinator for SWAL Desktop
 
+pub mod controls_render;
 pub mod events;
+pub mod fluent_acrylic;
+pub mod gestures;
 pub mod layershell;
 pub mod mica_shader;
 pub mod orb_surface;
+pub mod settings_controller;
 pub mod text;
 pub mod wgpu_context;
 

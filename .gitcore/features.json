@@ -2,7 +2,7 @@
   "project": "swal-desktop",
   "version": "1.2.0",
   "gitcore_protocol_version": "3.8.0",
-  "total_features": 50,
+  "total_features": 60,
   "completed_features": 40,
   "waves": [
     {
@@ -32,6 +32,12 @@
     {
       "id": "wave-5",
       "name": "macOS-Inspired Centralized System Settings & Generative AUI Component System",
+      "status": "in_progress",
+      "progress": 0
+    },
+    {
+      "id": "wave-6",
+      "name": "Standalone Cross-Platform Swal-Files & Autonomous Agentic Desktop Integration (Zero-Eww)",
       "status": "in_progress",
       "progress": 0
     }
@@ -629,6 +635,126 @@
       "issue": 74,
       "files": [
         "crates/swal-node-daemon/tests/test_settings_aui_e2e.rs"
+      ]
+    },
+    {
+      "id": "feat-swal-51",
+      "name": "Cross-Platform OS & Filesystem Abstraction Layer in Pure Rust",
+      "wave": "wave-6",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-01",
+      "issue": null,
+      "files": [
+        "crates/swal-files/src/platform.rs"
+      ]
+    },
+    {
+      "id": "feat-swal-52",
+      "name": "Standalone & Desktop Agent Protocol Connector in Rust",
+      "wave": "wave-6",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-02",
+      "issue": null,
+      "files": [
+        "crates/swal-files/src/agent_protocol.rs"
+      ]
+    },
+    {
+      "id": "feat-swal-53",
+      "name": "Decentralized P2P & Remote Storage Provider Engine in Rust",
+      "wave": "wave-6",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-03",
+      "issue": null,
+      "files": [
+        "crates/swal-files/src/cloud_sync.rs"
+      ]
+    },
+    {
+      "id": "feat-swal-54",
+      "name": "Cross-Platform Standalone Window & App Runtime Dispatcher in Rust",
+      "wave": "wave-6",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-04",
+      "issue": null,
+      "files": [
+        "crates/swal-files/src/app_runtime.rs"
+      ]
+    },
+    {
+      "id": "feat-swal-55",
+      "name": "Terminal UI (TUI) Mode for Remote SSH & Headless Linux in Pure Rust",
+      "wave": "wave-6",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-05",
+      "issue": null,
+      "files": [
+        "crates/swal-files/src/tui.rs"
+      ]
+    },
+    {
+      "id": "feat-swal-56",
+      "name": "Standalone Cross-Platform Window Frame & Titlebar Node in Rust",
+      "wave": "wave-6",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-06",
+      "issue": null,
+      "files": [
+        "crates/swal-a2ui-engine/src/standalone_window.rs"
+      ]
+    },
+    {
+      "id": "feat-swal-57",
+      "name": "Unified Cross-Platform WGPU Surface Backend in Rust",
+      "wave": "wave-6",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-07",
+      "issue": null,
+      "files": [
+        "crates/swal-render-pipeline/src/cross_platform_surface.rs"
+      ]
+    },
+    {
+      "id": "feat-swal-58",
+      "name": "Standalone-to-Desktop Discovery & IPC Bridge in Rust",
+      "wave": "wave-6",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-08",
+      "issue": null,
+      "files": [
+        "crates/swal-node-daemon/src/desktop_bridge.rs"
+      ]
+    },
+    {
+      "id": "feat-swal-59",
+      "name": "Agentic File Tool Plugin System in Pure Rust",
+      "wave": "wave-6",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-09",
+      "issue": null,
+      "files": [
+        "crates/swal-files/src/plugin_system.rs"
+      ]
+    },
+    {
+      "id": "feat-swal-60",
+      "name": "Comprehensive E2E Test Suite for Standalone & Cross-Platform SWAL Files",
+      "wave": "wave-6",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-10",
+      "issue": null,
+      "files": [
+        "crates/swal-files/tests/test_standalone_crossplatform_e2e.rs"
       ]
     }
   ]

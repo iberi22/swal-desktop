@@ -1,6 +1,13 @@
+pub mod agent_config_ipc;
+pub mod doctor_engine;
+pub mod hermes_stream;
 pub mod native_shell;
+pub mod settings_cli;
+pub mod settings_store;
+pub mod settings_window;
 pub mod xavier;
 
+pub use hermes_stream::{HermesEvent, HermesEventListener, HermesStreamEvent};
 
 use serde::{Deserialize, Serialize};
 use std::sync::atomic::{AtomicBool, Ordering};

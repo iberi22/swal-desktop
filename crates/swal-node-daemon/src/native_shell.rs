@@ -48,6 +48,11 @@ pub enum SurfaceStatus {
 pub enum ShellEvent {
     /// Incoming payload from `/tmp/swal_hermes_orb.sock`
     HermesOrbPacket { payload: String },
+    /// Orb state transition event parsed from live Hermes stream
+    OrbStateChanged {
+        state: String,
+        details: Option<String>,
+    },
     /// CPU & RAM metrics from `/run/user/1000/swal/telemetry.sock`
     TelemetryUpdate { cpu_pct: f32, ram_pct: f32 },
     /// Direct command targeting a specific surface

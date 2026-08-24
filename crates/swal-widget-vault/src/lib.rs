@@ -11,6 +11,9 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, RwLock};
 use tar::{Archive, Builder, Header};
 
+pub mod hot_reload;
+pub use hot_reload::{VaultEvent, WidgetVaultWatcher};
+
 #[derive(Debug)]
 pub enum VaultError {
     Io(std::io::Error),
@@ -112,7 +115,12 @@ impl WidgetVault {
 
         let watcher = notify::recommended_watcher(move |res: NotifyResult<Event>| {
             if let Ok(event) = res {
-                if !event.kind.is_access() {
+                if !event.kind.is_access()
+                    && event
+                        .paths
+                        .iter()
+                        .any(|p| p.extension().and_then(|s| s.to_str()) == Some("json"))
+                {
                     let _ = Self::scan_directory(&vault_dir_clone, &widgets_clone);
                 }
             }
@@ -171,6 +179,16 @@ impl WidgetVault {
 
     pub fn get_vault_dir(&self) -> &PathBuf {
         &self.vault_dir
+    }
+
+    /// Returns an Arc clone of the underlying widgets storage map
+    pub fn widgets_handle(&self) -> Arc<RwLock<HashMap<String, Widget>>> {
+        Arc::clone(&self.widgets)
+    }
+
+    /// Spawns a WidgetVaultWatcher connected to this vault
+    pub fn start_watcher(&self) -> Result<WidgetVaultWatcher, VaultError> {
+        WidgetVaultWatcher::for_vault(self)
     }
 
     /// Returns a list of all installed widgets

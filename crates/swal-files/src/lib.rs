@@ -2,6 +2,7 @@
 //! Modern Minimalist Agentic File Manager Core in Rust
 
 pub mod agent;
+pub mod archive;
 pub mod cli;
 pub mod config;
 pub mod dual_pane;
@@ -16,7 +17,10 @@ pub mod scanner;
 pub mod session;
 pub mod storage;
 pub mod tabs_extended;
+pub mod watcher;
 
+pub use archive::{ArchiveEntry, ArchiveError, ArchiveInspector, ArchiveKind, ArchiveMetadata, BatchTagManager};
+pub use watcher::{DirectoryWatcher, FsChangeEvent, WatcherError};
 
 use config::FileManagerConfig;
 use entry::FileEntry;

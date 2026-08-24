@@ -2,26 +2,48 @@
 //! High-frequency zero-allocation system telemetry reader for SWAL Desktop
 
 pub mod ipc;
+pub mod rapl;
+pub mod storage;
+
+pub use storage::DiskInfo;
 
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
+use std::sync::Mutex;
+
+static GLOBAL_RAPL_METER: Mutex<Option<rapl::RaplPowerMeter>> = Mutex::new(None);
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct SystemMetrics {
     pub cpu_usage_pct: f32,
+    pub cpu_temp_c: f32,
+    pub cpu_power_watts: f32,
     pub ram_used_mb: u64,
     pub ram_total_mb: u64,
     pub ram_usage_pct: f32,
     pub swap_used_mb: u64,
     pub swap_total_mb: u64,
     pub gpu_usage_pct: f32,
+    pub gpu_temp_c: f32,
+    pub gpu_junction_temp_c: f32,
+    pub gpu_power_watts: f32,
+    pub net_rx_kbps: f32,
+    pub net_tx_kbps: f32,
+    #[serde(default)]
+    pub disks: Vec<DiskInfo>,
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct CpuTicks {
     pub total: u64,
     pub idle: u64,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct NetworkBytes {
+    pub rx_bytes: u64,
+    pub tx_bytes: u64,
 }
 
 /// Reads current raw CPU ticks from `/proc/stat`.
@@ -65,6 +87,85 @@ pub fn calculate_cpu_usage(prev: CpuTicks, current: CpuTicks) -> f32 {
     } else {
         0.0
     }
+}
+
+/// Reads a millidegree temperature integer from a sysfs path into a stack buffer.
+fn read_sysfs_temp(path: &str) -> Option<f32> {
+    let mut file = File::open(path).ok()?;
+    let mut buf = [0u8; 32];
+    use std::io::Read;
+    let n = file.read(&mut buf).ok()?;
+    let s = std::str::from_utf8(&buf[..n]).ok()?.trim();
+    let milli: f32 = s.parse().ok()?;
+    Some(milli / 1000.0)
+}
+
+/// Reads a microwatt power integer from a sysfs path into a stack buffer.
+fn read_sysfs_power(path: &str) -> Option<f32> {
+    let mut file = File::open(path).ok()?;
+    let mut buf = [0u8; 32];
+    use std::io::Read;
+    let n = file.read(&mut buf).ok()?;
+    let s = std::str::from_utf8(&buf[..n]).ok()?.trim();
+    let micro: f32 = s.parse().ok()?;
+    Some(micro / 1_000_000.0)
+}
+
+/// Reads hardware temperatures for CPU (k10temp/coretemp) and GPU (amdgpu/nouveau/nvidia).
+pub fn read_hardware_temperatures() -> (f32, f32, f32, f32) {
+    let mut cpu_temp = 0.0f32;
+    let mut gpu_temp = 0.0f32;
+    let mut gpu_junc = 0.0f32;
+    let mut gpu_power = 0.0f32;
+
+    // Scan hwmon 0 to 8
+    for i in 0..8 {
+        let base = format!("/sys/class/hwmon/hwmon{}", i);
+        let name_path = format!("{}/name", base);
+        if let Ok(name) = std::fs::read_to_string(&name_path) {
+            let n = name.trim();
+            if n == "k10temp" || n == "coretemp" || n == "acpitz" {
+                if let Some(t) = read_sysfs_temp(&format!("{}/temp1_input", base)) {
+                    cpu_temp = t;
+                }
+            } else if n == "amdgpu" || n.starts_with("nvidia") || n == "nouveau" {
+                if let Some(t) = read_sysfs_temp(&format!("{}/temp1_input", base)) {
+                    gpu_temp = t;
+                }
+                if let Some(t) = read_sysfs_temp(&format!("{}/temp2_input", base)) {
+                    gpu_junc = t;
+                }
+                if let Some(p) = read_sysfs_power(&format!("{}/power1_average", base)) {
+                    gpu_power = p;
+                }
+            }
+        }
+    }
+
+    (cpu_temp, gpu_temp, gpu_junc, gpu_power)
+}
+
+/// Reads network bytes from `/proc/net/dev`.
+pub fn read_network_bytes() -> NetworkBytes {
+    let mut bytes = NetworkBytes::default();
+    if let Ok(file) = File::open("/proc/net/dev") {
+        let reader = BufReader::new(file);
+        for line in reader.lines().flatten() {
+            if line.contains(':') {
+                let parts: Vec<&str> = line.split_whitespace().collect();
+                if parts.len() >= 10 {
+                    let iface = parts[0].trim_end_matches(':');
+                    if iface != "lo" {
+                        let rx: u64 = parts[1].parse().unwrap_or(0);
+                        let tx: u64 = parts[9].parse().unwrap_or(0);
+                        bytes.rx_bytes += rx;
+                        bytes.tx_bytes += tx;
+                    }
+                }
+            }
+        }
+    }
+    bytes
 }
 
 /// Reads GPU usage percentage directly from sysfs without spawning external subprocesses.
@@ -124,16 +225,34 @@ pub fn read_memory_metrics() -> Result<SystemMetrics, std::io::Error> {
 
     Ok(SystemMetrics {
         cpu_usage_pct: 0.0,
+        cpu_temp_c: 0.0,
+        cpu_power_watts: 0.0,
         ram_used_mb: mem_used,
         ram_total_mb: mem_total,
         ram_usage_pct: mem_pct,
         swap_used_mb: swap_used,
         swap_total_mb: swap_total,
         gpu_usage_pct: 0.0,
+        gpu_temp_c: 0.0,
+        gpu_junction_temp_c: 0.0,
+        gpu_power_watts: 0.0,
+        net_rx_kbps: 0.0,
+        net_tx_kbps: 0.0,
+        disks: Vec::new(),
     })
 }
 
-/// Reads combined system metrics (CPU, Memory, Swap, GPU).
+/// Reads instantaneous CPU package power (Watts) using the global RAPL meter.
+pub fn read_cpu_power_watts() -> f32 {
+    if let Ok(mut lock) = GLOBAL_RAPL_METER.lock() {
+        let meter = lock.get_or_insert_with(rapl::RaplPowerMeter::new);
+        meter.sample()
+    } else {
+        0.0
+    }
+}
+
+/// Reads combined system metrics (CPU, Memory, Swap, GPU, Hardware Temps, Disks).
 pub fn read_system_metrics(prev_cpu: Option<CpuTicks>) -> (SystemMetrics, CpuTicks) {
     let curr_cpu = read_cpu_ticks().unwrap_or_default();
     let cpu_pct = match prev_cpu {
@@ -143,16 +262,32 @@ pub fn read_system_metrics(prev_cpu: Option<CpuTicks>) -> (SystemMetrics, CpuTic
 
     let mut metrics = read_memory_metrics().unwrap_or(SystemMetrics {
         cpu_usage_pct: 0.0,
+        cpu_temp_c: 0.0,
+        cpu_power_watts: 0.0,
         ram_used_mb: 0,
         ram_total_mb: 0,
         ram_usage_pct: 0.0,
         swap_used_mb: 0,
         swap_total_mb: 0,
         gpu_usage_pct: 0.0,
+        gpu_temp_c: 0.0,
+        gpu_junction_temp_c: 0.0,
+        gpu_power_watts: 0.0,
+        net_rx_kbps: 0.0,
+        net_tx_kbps: 0.0,
+        disks: Vec::new(),
     });
 
     metrics.cpu_usage_pct = cpu_pct;
     metrics.gpu_usage_pct = read_gpu_metrics();
+
+    let (cpu_t, gpu_t, gpu_junc, gpu_pwr) = read_hardware_temperatures();
+    metrics.cpu_temp_c = cpu_t;
+    metrics.cpu_power_watts = read_cpu_power_watts();
+    metrics.gpu_temp_c = gpu_t;
+    metrics.gpu_junction_temp_c = gpu_junc;
+    metrics.gpu_power_watts = gpu_pwr;
+    metrics.disks = storage::scan_mounted_partitions();
 
     (metrics, curr_cpu)
 }
@@ -189,10 +324,33 @@ mod tests {
     }
 
     #[test]
+    fn test_hardware_temperatures() {
+        let (cpu, gpu, junc, pwr) = read_hardware_temperatures();
+        assert!(cpu >= 0.0);
+        assert!(gpu >= 0.0);
+        assert!(junc >= 0.0);
+        assert!(pwr >= 0.0);
+    }
+
+    #[test]
+    fn test_cpu_power_reading() {
+        let power = read_cpu_power_watts();
+        assert!(power >= 0.0);
+    }
+
+    #[test]
+    fn test_network_bytes_reading() {
+        let net = read_network_bytes();
+        let _ = net.rx_bytes + net.tx_bytes;
+    }
+
+    #[test]
     fn test_read_system_metrics() {
         let (metrics, ticks) = read_system_metrics(None);
         assert!(ticks.total > 0);
         assert!(metrics.ram_total_mb > 0);
+        assert!(metrics.cpu_power_watts >= 0.0);
+        assert!(!metrics.disks.is_empty(), "Disks should be populated on Linux host");
 
         let _ticks_next = CpuTicks {
             total: ticks.total + 200,
@@ -200,5 +358,8 @@ mod tests {
         };
         let (metrics2, _) = read_system_metrics(Some(ticks));
         assert!(metrics2.ram_total_mb > 0);
+        assert!(metrics2.cpu_power_watts >= 0.0);
+        assert!(!metrics2.disks.is_empty());
     }
 }
+

@@ -1,13 +1,14 @@
 //! swal-a2ui-engine
 //! Declarative A2UI schema compiler and validator
 
+pub mod agent_action_card;
+pub mod calendar;
 pub mod hermes_streamer;
 pub mod native_render;
 pub mod schema;
 pub mod settings_components;
 
-
-
+pub use calendar::{AgendaEvent, AgendaList, CalendarGrid};
 use serde::{Deserialize, Serialize};
 pub use schema::{compile_widget, validate_widget_json, SchemaValidationError, ThemePalette};
 
@@ -83,6 +84,28 @@ pub enum ComponentNode {
         #[serde(default)]
         tabs: Vec<TabItem>,
     },
+    #[serde(alias = "Range")]
+    Slider {
+        label: String,
+        min: f32,
+        max: f32,
+        value: f32,
+        action: String,
+    },
+    ProcessTable {
+        limit: usize,
+        sort_by: String,
+    },
+    CalendarGrid {
+        year: u32,
+        month: u32,
+        #[serde(default)]
+        highlighted_days: Vec<u32>,
+    },
+    AgendaList {
+        #[serde(default)]
+        events: Vec<AgendaEvent>,
+    },
 }
 
 impl ComponentNode {
@@ -123,6 +146,14 @@ impl ComponentNode {
                     for child in &mut tab.content {
                         child.resolve_tokens(palette);
                     }
+                }
+            }
+            ComponentNode::Slider { .. } => {}
+            ComponentNode::ProcessTable { .. } => {}
+            ComponentNode::CalendarGrid { .. } => {}
+            ComponentNode::AgendaList { events } => {
+                for event in events {
+                    event.tag = palette.resolve_token(&event.tag);
                 }
             }
         }
@@ -200,6 +231,27 @@ mod tests {
                                 "command": "swal-doctor --check",
                                 "output": ["Checking system...", "OK"],
                                 "height": 150
+                            },
+                            {
+                                "type": "Slider",
+                                "label": "Master Volume",
+                                "min": 0.0,
+                                "max": 100.0,
+                                "value": 75.0,
+                                "action": "audio.set_volume"
+                            },
+                            {
+                                "type": "Range",
+                                "label": "Brightness",
+                                "min": 0.0,
+                                "max": 1.0,
+                                "value": 0.85,
+                                "action": "display.set_brightness"
+                            },
+                            {
+                                "type": "ProcessTable",
+                                "limit": 10,
+                                "sort_by": "memory"
                             }
                         ]
                     },
@@ -230,7 +282,10 @@ mod tests {
             assert_eq!(children.len(), 2);
             if let ComponentNode::Grid { columns, children: grid_children, .. } = &children[0] {
                 assert_eq!(*columns, 2);
-                assert_eq!(grid_children.len(), 5);
+                assert_eq!(grid_children.len(), 8);
+                assert!(matches!(&grid_children[5], ComponentNode::Slider { label, min, max, value, action } if label == "Master Volume" && *min == 0.0 && *max == 100.0 && *value == 75.0 && action == "audio.set_volume"));
+                assert!(matches!(&grid_children[6], ComponentNode::Slider { label, min, max, value, action } if label == "Brightness" && *min == 0.0 && *max == 1.0 && *value == 0.85 && action == "display.set_brightness"));
+                assert!(matches!(&grid_children[7], ComponentNode::ProcessTable { limit, sort_by } if *limit == 10 && sort_by == "memory"));
             } else {
                 panic!("Expected Grid component");
             }
@@ -243,6 +298,63 @@ mod tests {
             }
         } else {
             panic!("Expected Card root node");
+        }
+    }
+
+    #[test]
+    fn test_parse_slider_and_range() {
+        let slider_json = r#"{
+            "type": "Slider",
+            "label": "Audio Output",
+            "min": 0.0,
+            "max": 100.0,
+            "value": 45.5,
+            "action": "pipewire.volume"
+        }"#;
+        let node: ComponentNode = serde_json::from_str(slider_json).expect("Must parse Slider");
+        if let ComponentNode::Slider { label, min, max, value, action } = node {
+            assert_eq!(label, "Audio Output");
+            assert_eq!(min, 0.0);
+            assert_eq!(max, 100.0);
+            assert_eq!(value, 45.5);
+            assert_eq!(action, "pipewire.volume");
+        } else {
+            panic!("Expected Slider variant");
+        }
+
+        let range_json = r#"{
+            "type": "Range",
+            "label": "Backlight",
+            "min": 10.0,
+            "max": 100.0,
+            "value": 80.0,
+            "action": "brightnessctl.set"
+        }"#;
+        let range_node: ComponentNode = serde_json::from_str(range_json).expect("Must parse Range alias");
+        if let ComponentNode::Slider { label, min, max, value, action } = range_node {
+            assert_eq!(label, "Backlight");
+            assert_eq!(min, 10.0);
+            assert_eq!(max, 100.0);
+            assert_eq!(value, 80.0);
+            assert_eq!(action, "brightnessctl.set");
+        } else {
+            panic!("Expected Slider variant for Range");
+        }
+    }
+
+    #[test]
+    fn test_parse_process_table() {
+        let json = r#"{
+            "type": "ProcessTable",
+            "limit": 15,
+            "sort_by": "cpu"
+        }"#;
+        let node: ComponentNode = serde_json::from_str(json).expect("Must parse ProcessTable");
+        if let ComponentNode::ProcessTable { limit, sort_by } = node {
+            assert_eq!(limit, 15);
+            assert_eq!(sort_by, "cpu");
+        } else {
+            panic!("Expected ProcessTable variant");
         }
     }
 
@@ -328,5 +440,106 @@ mod tests {
 
         let invalid_json = r#"{ invalid json"#;
         assert!(matches!(validate_widget_json(invalid_json), Err(SchemaValidationError::InvalidJson(_))));
+    }
+
+    #[test]
+    fn test_parse_calendar_and_agenda_nodes() {
+        let calendar_json = r#"{
+            "type": "CalendarGrid",
+            "year": 2026,
+            "month": 8,
+            "highlighted_days": [10, 15, 23]
+        }"#;
+
+        let cal_node: ComponentNode = serde_json::from_str(calendar_json).expect("Must parse CalendarGrid");
+        if let ComponentNode::CalendarGrid { year, month, highlighted_days } = cal_node {
+            assert_eq!(year, 2026);
+            assert_eq!(month, 8);
+            assert_eq!(highlighted_days, vec![10, 15, 23]);
+        } else {
+            panic!("Expected CalendarGrid component variant");
+        }
+
+        let agenda_json = r#"{
+            "type": "AgendaList",
+            "events": [
+                {
+                    "title": "Release 1.01",
+                    "time": "09:00 AM",
+                    "tag": "$accent_primary"
+                },
+                {
+                    "title": "Standup",
+                    "time": "10:30 AM",
+                    "tag": "work"
+                }
+            ]
+        }"#;
+
+        let agenda_node: ComponentNode = serde_json::from_str(agenda_json).expect("Must parse AgendaList");
+        if let ComponentNode::AgendaList { events } = agenda_node {
+            assert_eq!(events.len(), 2);
+            assert_eq!(events[0].title, "Release 1.01");
+            assert_eq!(events[0].tag, "$accent_primary");
+        } else {
+            panic!("Expected AgendaList component variant");
+        }
+    }
+
+    #[test]
+    fn test_compile_widget_agenda_token_resolution() {
+        let json_data = r#"{
+            "schema": "https://swal.dev/schemas/a2ui.v1.json",
+            "title": "Calendar & Agenda Widget",
+            "root": {
+                "type": "Card",
+                "title": "Daily Schedule",
+                "children": [
+                    {
+                        "type": "CalendarGrid",
+                        "year": 2026,
+                        "month": 8,
+                        "highlighted_days": [23]
+                    },
+                    {
+                        "type": "AgendaList",
+                        "events": [
+                            {
+                                "title": "Deploy SWAL",
+                                "time": "12:00 PM",
+                                "tag": "$accent_primary"
+                            },
+                            {
+                                "title": "Node Maintenance",
+                                "time": "03:00 PM",
+                                "tag": "$danger"
+                            }
+                        ]
+                    }
+                ]
+            }
+        }"#;
+
+        let compiled = compile_widget(json_data, "hive-dark").expect("Must compile widget");
+        if let ComponentNode::Card { children, .. } = compiled.root {
+            assert_eq!(children.len(), 2);
+            if let ComponentNode::CalendarGrid { year, month, highlighted_days } = &children[0] {
+                assert_eq!(*year, 2026);
+                assert_eq!(*month, 8);
+                assert_eq!(highlighted_days, &[23]);
+            } else {
+                panic!("Expected CalendarGrid");
+            }
+
+            if let ComponentNode::AgendaList { events } = &children[1] {
+                assert_eq!(events.len(), 2);
+                assert_eq!(events[0].tag, "#06b6d4"); // $accent_primary for hive-dark
+                assert_eq!(events[1].tag, "#ef4444"); // $danger for hive-dark
+            } else {
+                panic!("Expected AgendaList");
+            }
+        } else {
+            panic!("Expected Card root");
+        }
     }
 }
