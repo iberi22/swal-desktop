@@ -4,6 +4,7 @@
 pub mod hermes_streamer;
 pub mod native_render;
 pub mod schema;
+pub mod settings_components;
 
 
 
