@@ -2,7 +2,7 @@
   "project": "swal-desktop",
   "version": "1.2.0",
   "gitcore_protocol_version": "3.8.0",
-  "total_features": 60,
+  "total_features": 65,
   "completed_features": 60,
   "waves": [
     {
@@ -40,6 +40,12 @@
       "name": "Standalone Cross-Platform Swal-Files & Autonomous Agentic Desktop Integration (Zero-Eww)",
       "status": "completed",
       "progress": 100
+    },
+    {
+      "id": "wave-7",
+      "name": "Native Session Supervisor, NixOS Flake Units & Release Packaging (Zero-Eww)",
+      "status": "in_progress",
+      "progress": 0
     }
   ],
   "features": [
@@ -755,6 +761,66 @@
       "issue": 94,
       "files": [
         "crates/swal-files/tests/test_standalone_crossplatform_e2e.rs"
+      ]
+    },
+    {
+      "id": "feat-swal-61",
+      "name": "Unified Native Desktop Session Supervisor & Startup Orchestrator in Rust",
+      "wave": "wave-7",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-01",
+      "issue": null,
+      "files": [
+        "crates/swal-node-daemon/src/session_orchestrator.rs"
+      ]
+    },
+    {
+      "id": "feat-swal-62",
+      "name": "Declarative NixOS Flake & Systemd User Units Generator in Pure Rust",
+      "wave": "wave-7",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-02",
+      "issue": null,
+      "files": [
+        "crates/swal-node-daemon/src/nixos_integration.rs"
+      ]
+    },
+    {
+      "id": "feat-swal-63",
+      "name": "Semantic Memory & Knowledge Graph Client in Rust",
+      "wave": "wave-7",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-03",
+      "issue": null,
+      "files": [
+        "crates/swal-files/src/memory_graph.rs"
+      ]
+    },
+    {
+      "id": "feat-swal-64",
+      "name": "System Tray & Notification Surface in Pure Rust",
+      "wave": "wave-7",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-04",
+      "issue": null,
+      "files": [
+        "crates/swal-render-pipeline/src/notification_surface.rs"
+      ]
+    },
+    {
+      "id": "feat-swal-65",
+      "name": "Comprehensive E2E Release Verification & Integration Test Suite in Rust",
+      "wave": "wave-7",
+      "status": "in_progress",
+      "completion_percentage": 0,
+      "assigned": "Jules-05",
+      "issue": null,
+      "files": [
+        "crates/swal-node-daemon/tests/test_wave7_session_release_e2e.rs"
       ]
     }
   ]
