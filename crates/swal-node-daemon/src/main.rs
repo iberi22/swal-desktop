@@ -20,6 +20,7 @@ use tokio::time::sleep;
 use swal_node_daemon::native_shell::{NativeShellSupervisor, NativeSurfaceKind, ShellEvent};
 use swal_node_daemon::{DaemonConfig, SwalNodeDaemon};
 
+pub mod desktop_bridge;
 pub mod gesture_consumer;
 use gesture_consumer::{GestureConsumer, ScreenConfig};
 
