@@ -2,6 +2,9 @@
 //! Provides spatial hit-testing, layer resolution, pointer events, window focus,
 //! and keyboard shortcut matching.
 
+#[path = "settings_controller.rs"]
+pub mod settings_controller;
+
 use serde::{Deserialize, Serialize};
 
 /// Represents a rectangular region for spatial hit testing.
