@@ -770,7 +770,7 @@
       "status": "completed",
       "completion_percentage": 100,
       "assigned": "Jules-01",
-      "issue": null,
+      "issue": 105,
       "files": [
         "crates/swal-node-daemon/src/session_orchestrator.rs"
       ]
@@ -782,7 +782,7 @@
       "status": "completed",
       "completion_percentage": 100,
       "assigned": "Jules-02",
-      "issue": null,
+      "issue": 106,
       "files": [
         "crates/swal-node-daemon/src/nixos_integration.rs"
       ]
@@ -794,7 +794,7 @@
       "status": "completed",
       "completion_percentage": 100,
       "assigned": "Jules-03",
-      "issue": null,
+      "issue": 107,
       "files": [
         "crates/swal-files/src/memory_graph.rs"
       ]
@@ -806,7 +806,7 @@
       "status": "completed",
       "completion_percentage": 100,
       "assigned": "Jules-04",
-      "issue": null,
+      "issue": 108,
       "files": [
         "crates/swal-render-pipeline/src/notification_surface.rs"
       ]
@@ -818,7 +818,7 @@
       "status": "completed",
       "completion_percentage": 100,
       "assigned": "Jules-05",
-      "issue": null,
+      "issue": 109,
       "files": [
         "crates/swal-node-daemon/tests/test_wave7_session_release_e2e.rs"
       ]
