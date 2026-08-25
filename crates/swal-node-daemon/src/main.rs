@@ -13,7 +13,7 @@ use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::io::AsyncWriteExt;
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::UnixListener;
 use tokio::time::sleep;
 
@@ -55,23 +55,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 1. Initialize Telemetry IPC Server in background
     let telemetry_handle = tokio::spawn(async {
         let sock_path = "/run/user/1000/swal/telemetry.sock";
-        if let Some(parent) = Path::new(sock_path).parent() {
-            let _ = std::fs::create_dir_all(parent);
-        }
-        let _ = std::fs::remove_file(sock_path);
-
-        let mut prev_ticks = None;
-        loop {
-            let (metrics, ticks) = swal_telemetry_rs::read_system_metrics(prev_ticks);
-            prev_ticks = Some(ticks);
-
-            // Write telemetry cache to fast shared ramdisk
-            if let Ok(json) = serde_json::to_string(&metrics) {
-                let _ = std::fs::write("/tmp/swal_system_stats.json", &json);
-            }
-
-            sleep(Duration::from_millis(500)).await;
-        }
+        let server = swal_telemetry_rs::ipc::TelemetryServer::new(sock_path);
+        let _ = server.run(Duration::from_millis(250)).await;
     });
 
     // 2. Initialize Native Shell Supervisor
@@ -101,7 +86,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         loop {
             if let Ok((mut stream, _)) = listener.accept().await {
                 let mut buf = [0u8; 512];
-                if let Ok(n) = stream.try_read(&mut buf) {
+                if let Ok(n) = stream.read(&mut buf).await {
                     if n > 0 {
                         let cmd = String::from_utf8_lossy(&buf[..n]).trim().to_string();
                         println!("⚡ Received Desktop Control Command: '{}'", cmd);
@@ -132,7 +117,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     surface: NativeSurfaceKind::SwalFiles,
                                     command: "open_gui".to_string(),
                                 });
-                                let _ = std::process::Command::new("swal-files").spawn();
+                                let _ = std::process::Command::new("/home/belal/.local/bin/swal-files").spawn();
                                 let _ = stream.write_all(b"ok\n").await;
                             }
                             "close-files" | "close_files" => {
@@ -140,6 +125,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     surface: NativeSurfaceKind::SwalFiles,
                                     command: "close_gui".to_string(),
                                 });
+                                let _ = stream.write_all(b"ok\n").await;
+                            }
+                            "toggle-a2ui" | "toggle-agent-monitor" | "a2ui" => {
+                                let _ = supervisor_ctl.broadcast_event(ShellEvent::Command {
+                                    surface: NativeSurfaceKind::TelemetryBar,
+                                    command: "toggle_a2ui".to_string(),
+                                });
+                                let _ = std::process::Command::new("/home/belal/.config/eww/scripts/toggle_dashboard.sh")
+                                    .arg("toggle")
+                                    .status();
                                 let _ = stream.write_all(b"ok\n").await;
                             }
                             "orb-thinking" => {
@@ -156,7 +151,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 });
                                 let _ = stream.write_all(b"ok\n").await;
                             }
-                            "toggle-orb-hud" | "toggle_orb_hud" => {
+                            "toggle-orb-hud" | "toggle_orb_hud" | "toggle-orb" | "orb" => {
                                 let _ = supervisor_ctl.broadcast_event(ShellEvent::Command {
                                     surface: NativeSurfaceKind::HermesOrb,
                                     command: "toggle_hud".to_string(),
@@ -172,7 +167,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 });
                                 let _ = stream.write_all(b"ok\n").await;
                             }
-                            "ping" => {
+                            "ping" | "status" | "health" => {
                                 let _ = stream.write_all(b"pong\n").await;
                             }
                             _ => {
