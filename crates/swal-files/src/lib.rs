@@ -12,6 +12,7 @@ pub mod dual_pane;
 pub mod entry;
 pub mod git;
 pub mod gui;
+pub mod memory_graph;
 pub mod native_window;
 pub mod omnibar;
 pub mod platform;

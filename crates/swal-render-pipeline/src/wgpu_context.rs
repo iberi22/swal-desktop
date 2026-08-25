@@ -176,6 +176,6 @@ mod tests {
 
         let cmd_buffer = encoder.finish();
         ctx.queue.submit(std::iter::once(cmd_buffer));
-        ctx.device.poll(wgpu::Maintain::Wait);
+        ctx.device.poll(wgpu::Maintain::Poll);
     }
 }

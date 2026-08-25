@@ -3,6 +3,8 @@ pub mod desktop_bridge;
 pub mod doctor_engine;
 pub mod hermes_stream;
 pub mod native_shell;
+pub mod nixos_integration;
+pub mod session_orchestrator;
 pub mod settings_cli;
 pub mod settings_store;
 pub mod settings_window;

@@ -8,6 +8,7 @@ pub mod fluent_acrylic;
 pub mod gestures;
 pub mod layershell;
 pub mod mica_shader;
+pub mod notification_surface;
 pub mod orb_surface;
 pub mod settings_controller;
 pub mod text;
