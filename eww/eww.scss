@@ -1039,3 +1039,87 @@ button.yazi-act-btn.accent {
   font-size: 10px;
 }
 
+/* ===============================================================================
+   CORTANA & HERMES AMBIENT ORB HUD STYLES (Zero-Rect / Glowing Halo)
+   =============================================================================== */
+
+window#cortana_orb,
+window.cortana_orb {
+  background-color: transparent;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.cortana-widget-root {
+  background-color: transparent;
+  background: transparent;
+  padding: 12px;
+}
+
+.cortana-halo-stage {
+  min-width: 140px;
+  min-height: 140px;
+  border-radius: 9999px;
+  background-color: transparent;
+}
+
+.cortana-outer-ring {
+  min-width: 130px;
+  min-height: 130px;
+  border-radius: 9999px;
+  border: 2px solid rgba(6, 182, 212, 0.65);
+  box-shadow: 0 0 25px rgba(6, 182, 212, 0.45), inset 0 0 20px rgba(6, 182, 212, 0.35);
+  background-color: transparent;
+}
+
+.cortana-middle-ring {
+  min-width: 95px;
+  min-height: 95px;
+  border-radius: 9999px;
+  border: 2px solid rgba(139, 92, 246, 0.75);
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.50), inset 0 0 15px rgba(139, 92, 246, 0.30);
+  background-color: transparent;
+}
+
+.cortana-inner-ring {
+  min-width: 65px;
+  min-height: 65px;
+  border-radius: 9999px;
+  border: 2px solid rgba(0, 255, 136, 0.85);
+  box-shadow: 0 0 16px rgba(0, 255, 136, 0.65);
+  background-color: transparent;
+}
+
+.cortana-core {
+  min-width: 38px;
+  min-height: 38px;
+  border-radius: 9999px;
+  background: radial-gradient(circle, #06b6d4 0%, #8b5cf6 65%, #00ff88 100%);
+  box-shadow: 0 0 30px #06b6d4, 0 0 55px rgba(6, 182, 212, 0.9);
+}
+
+.cortana-pill {
+  margin-top: 14px;
+  background-color: rgba(15, 23, 42, 0.90);
+  border: 1px solid rgba(6, 182, 212, 0.45);
+  border-radius: 20px;
+  padding: 6px 16px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.6);
+}
+
+.cortana-dot {
+  color: #00ff88;
+  font-size: 13px;
+  margin-right: 4px;
+}
+
+.cortana-pill-text {
+  color: #f1f5f9;
+  font-weight: bold;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+
+
