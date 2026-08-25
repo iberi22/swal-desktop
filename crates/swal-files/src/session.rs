@@ -1,9 +1,10 @@
 //! Session state persistence and management for SWAL Files
 
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
-use crate::config::FileManagerConfig;
+pub use crate::config::{FileManagerConfig, SavedFilterPreset};
 
 pub fn get_session_file_path() -> PathBuf {
     let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/home/belal"));
@@ -46,7 +47,14 @@ pub struct SessionState {
     pub filter_type: String,
     pub preview_mode: String,
     pub selected_path: Option<String>,
+    /// User-defined saved filter presets (persisted across restarts)
+    #[serde(default)]
+    pub saved_filter_presets: Vec<SavedFilterPreset>,
+    /// Per-path filter memory: remembers last filter used in each directory
+    #[serde(default)]
+    pub path_filter_memory: HashMap<String, String>,
 }
+
 
 impl Default for SessionState {
     fn default() -> Self {
@@ -55,6 +63,9 @@ impl Default for SessionState {
             .unwrap_or_else(|| PathBuf::from("/home/belal"))
             .to_string_lossy()
             .to_string();
+
+        // Restore saved filter presets from config if available
+        let saved_filter_presets = cfg.saved_filter_presets.clone();
 
         Self {
             active_tab_id: 1,
@@ -83,6 +94,8 @@ impl Default for SessionState {
             filter_type: cfg.filter_type,
             preview_mode: cfg.preview_mode,
             selected_path: None,
+            saved_filter_presets,
+            path_filter_memory: HashMap::new(),
         }
     }
 }
@@ -108,7 +121,7 @@ pub fn save_session_to_path(session: &SessionState, path: &Path) {
     if let Ok(json) = serde_json::to_string_pretty(session) {
         let _ = fs::write(path, json);
     }
-    // Also sync preferences to persistent user config
+    // Sync all preferences to persistent user config so they survive session resets
     let mut cfg = FileManagerConfig::load();
     cfg.default_view_mode = session.view_mode.clone();
     cfg.show_hidden = session.show_hidden;
@@ -118,5 +131,7 @@ pub fn save_session_to_path(session: &SessionState, path: &Path) {
     cfg.filter_type = session.filter_type.clone();
     cfg.preview_mode = session.preview_mode.clone();
     cfg.selected_path = session.selected_path.clone();
+    cfg.saved_filter_presets = session.saved_filter_presets.clone();
     let _ = cfg.save();
 }
+

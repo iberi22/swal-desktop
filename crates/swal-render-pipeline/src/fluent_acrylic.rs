@@ -434,8 +434,9 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "requires real GPU adapter — run with: cargo test -- --ignored"]
     fn test_wgpu_headless_shader_compilation() {
-        let ctx = WgpuSurfaceContext::new_headless();
+        let ctx = WgpuSurfaceContext::shared_test_context();
         let shader_module = ctx.device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Fluent Acrylic WGSL Shader Test"),
             source: wgpu::ShaderSource::Wgsl(FLUENT_ACRYLIC_WGSL_SHADER.into()),

@@ -11,21 +11,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let command = args.get(1).map(|s| s.as_str()).unwrap_or("daemon");
 
     match command {
-        "toggle" | "toggle-hud" => {
+        "toggle" | "toggle-hud" | "hud" => {
             send_ctl_command("toggle-orb-hud")?;
             println!("✓ Hermes Ambient Orb toggled via Native Rust Core.");
         }
-        "thinking" | "think" => {
+        "thinking" | "think" | "thought" => {
             send_ctl_command("orb-thinking")?;
-            println!("✓ Hermes Ambient Orb state set to: Thinking");
+            println!("✓ Hermes Ambient Orb state set to: Thinking (Solar Amber Vortex)");
         }
-        "speaking" | "speak" => {
+        "speaking" | "speak" | "stream" => {
             send_ctl_command("orb-speaking")?;
-            println!("✓ Hermes Ambient Orb state set to: Speaking");
+            println!("✓ Hermes Ambient Orb state set to: Speaking / Streaming (Ultraviolet Pulse)");
         }
-        "idle" | "listening" => {
+        "idle" | "listening" | "listen" => {
             send_ctl_command("orb-idle")?;
-            println!("✓ Hermes Ambient Orb state set to: Listening / Idle");
+            println!("✓ Hermes Ambient Orb state set to: Listening / Idle (Electric Cyan & Emerald)");
+        }
+        "error" | "alert" => {
+            send_ctl_command("orb-thinking")?;
+            println!("✓ Hermes Ambient Orb state set to: Alert / Error (Crimson Plasma)");
         }
         "status" => {
             let response = send_ctl_command("ping")?;

@@ -7,7 +7,7 @@ use bytemuck::{Pod, Zeroable};
 use swal_ambient_orb::hermes::{HermesAgentState, HermesOrbPacket};
 use wgpu::util::DeviceExt;
 
-/// WGSL Port of HERMES_COGNITION_VORTEX_SHADER
+/// WGSL Port of HERMES_COGNITION_VORTEX_SHADER (3D Volumetric Raymarching + Optical Translucency)
 pub const HERMES_COGNITION_VORTEX_WGSL: &str = r#"
 struct OrbUniforms {
     u_time: f32,
@@ -37,64 +37,185 @@ fn vs_main(model: VertexInput) -> VertexOutput {
     return out;
 }
 
-// 2D Hash function
-fn hash2(p: vec2<f32>) -> vec2<f32> {
-    let p_dot = vec2<f32>(dot(p, vec2<f32>(127.1, 311.7)), dot(p, vec2<f32>(269.5, 183.3)));
-    return -1.0 + 2.0 * fract(sin(p_dot) * 43758.5453123);
+// 3D Rotation matrices
+fn rot_y(angle: f32) -> mat3x3<f32> {
+    let c = cos(angle);
+    let s = sin(angle);
+    return mat3x3<f32>(
+        vec3<f32>(c, 0.0, s),
+        vec3<f32>(0.0, 1.0, 0.0),
+        vec3<f32>(-s, 0.0, c)
+    );
 }
 
-// 2D Simplex/Value Noise
-fn noise2d(p: vec2<f32>) -> f32 {
+fn rot_z(angle: f32) -> mat3x3<f32> {
+    let c = cos(angle);
+    let s = sin(angle);
+    return mat3x3<f32>(
+        vec3<f32>(c, -s, 0.0),
+        vec3<f32>(s, c, 0.0),
+        vec3<f32>(0.0, 0.0, 1.0)
+    );
+}
+
+// 3D Simplex-inspired procedural noise
+fn hash3(p: vec3<f32>) -> f32 {
+    let p3 = fract(p * 0.1031);
+    let d = dot(p3, p3.yzx + 33.33);
+    return fract((p3.x + p3.y) * p3.z + d);
+}
+
+fn noise3d(p: vec3<f32>) -> f32 {
     let i = floor(p);
     let f = fract(p);
     let u = f * f * (3.0 - 2.0 * f);
 
-    let d00 = dot(hash2(i + vec2<f32>(0.0, 0.0)), f - vec2<f32>(0.0, 0.0));
-    let d10 = dot(hash2(i + vec2<f32>(1.0, 0.0)), f - vec2<f32>(1.0, 0.0));
-    let d01 = dot(hash2(i + vec2<f32>(0.0, 1.0)), f - vec2<f32>(0.0, 1.0));
-    let d11 = dot(hash2(i + vec2<f32>(1.0, 1.0)), f - vec2<f32>(1.0, 1.0));
+    let n000 = hash3(i + vec3<f32>(0.0, 0.0, 0.0));
+    let n100 = hash3(i + vec3<f32>(1.0, 0.0, 0.0));
+    let n010 = hash3(i + vec3<f32>(0.0, 1.0, 0.0));
+    let n110 = hash3(i + vec3<f32>(1.0, 1.0, 0.0));
+    let n001 = hash3(i + vec3<f32>(0.0, 0.0, 1.0));
+    let n101 = hash3(i + vec3<f32>(1.0, 0.0, 1.0));
+    let n011 = hash3(i + vec3<f32>(0.0, 1.0, 1.0));
+    let n111 = hash3(i + vec3<f32>(1.0, 1.0, 1.0));
 
-    return mix(mix(d00, d10, u.x), mix(d01, d11, u.x), u.y);
+    let x00 = mix(n000, n100, u.x);
+    let x10 = mix(n010, n110, u.x);
+    let x01 = mix(n001, n101, u.x);
+    let x11 = mix(n011, n111, u.x);
+
+    let y0 = mix(x00, x10, u.y);
+    let y1 = mix(x01, x11, u.y);
+
+    return mix(y0, y1, u.z);
 }
 
-// Multi-octave Fractal Brownian Motion (FBM)
-fn fbm(p_in: vec2<f32>) -> f32 {
+fn fbm3d(p_in: vec3<f32>) -> f32 {
     var val = 0.0;
     var amp = 0.5;
     var p = p_in;
-    let rot = mat2x2<f32>(0.8, 0.6, -0.6, 0.8);
     for (var i = 0; i < 4; i = i + 1) {
-        val += amp * noise2d(p);
-        p = rot * p * 2.02;
+        val += amp * noise3d(p);
+        p = p * 2.02 + vec3<f32>(0.12, 0.34, 0.56);
         amp *= 0.5;
     }
     return val;
 }
 
-const ELECTRIC_CYAN: vec3<f32> = vec3<f32>(0.023529, 0.713725, 0.831373); // #06b6d4
-const DEEP_INDIGO: vec3<f32>   = vec3<f32>(0.545098, 0.360784, 0.964706); // #8b5cf6
+// 3D Sphere Distance Function
+fn sd_sphere(p: vec3<f32>, r: f32) -> f32 {
+    return length(p) - r;
+}
+
+// Color palettes for Hermes Cognitive States
+const CYAN_CORE: vec3<f32>    = vec3<f32>(0.02, 0.94, 1.0);  // #05f0ff (Listening/Idle)
+const INDIGO_VORTEX: vec3<f32> = vec3<f32>(0.55, 0.25, 0.98); // #8c40fa (Deep Cognition)
+const EMERALD_PULSE: vec3<f32> = vec3<f32>(0.0, 1.0, 0.53);   // #00ff88 (Active Voice)
+const SOLAR_AMBER: vec3<f32>   = vec3<f32>(1.0, 0.62, 0.04);  // #fb9e0b (Thinking GraphRAG)
+const CRIMSON_ALERT: vec3<f32> = vec3<f32>(0.94, 0.27, 0.27); // #ef4444 (Error Alert)
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-    let st = in.uv - vec2<f32>(0.5);
-    let dist = length(st);
-    let angle = atan2(st.y, st.x);
+    // Center UV coordinates to [-1.0, 1.0]
+    let uv = (in.uv - vec2<f32>(0.5)) * 2.0;
+    let dist2d = length(uv);
 
-    let swirl_speed = 3.0 + uniforms.u_thought_trigger * 4.0;
-    let swirl_angle = angle + (1.0 / (dist + 0.1)) * 0.4 + uniforms.u_time * swirl_speed;
-    let v_uv_swirl = vec2<f32>(cos(swirl_angle), sin(swirl_angle)) * dist;
+    // Outside bounding sphere disc + atmosphere radius -> discard to maintain 100% transparent background
+    if (dist2d > 0.98) {
+        discard;
+    }
 
-    let n = fbm(v_uv_swirl * 6.0 - vec2<f32>(uniforms.u_time * 1.5));
-    let n2 = fbm(v_uv_swirl * 12.0 + vec2<f32>(uniforms.u_time * 2.0));
+    let time = uniforms.u_time;
+    let audio = clamp(uniforms.u_audio_amplitude, 0.0, 1.0);
+    let thought = clamp(uniforms.u_thought_trigger, 0.0, 1.0);
+    let state_id = uniforms.u_state_id;
 
-    let vortex_density = smoothstep(-0.2, 0.7, n + n2 * 0.5);
-    let core_glow = smoothstep(0.48, 0.05, dist);
+    // Ray setup: Camera origin and ray direction
+    let ro = vec3<f32>(0.0, 0.0, 2.0);
+    let rd = normalize(vec3<f32>(uv.x, -uv.y, -1.6));
 
-    var color = mix(DEEP_INDIGO, ELECTRIC_CYAN, vortex_density + uniforms.u_thought_trigger * 0.3);
-    color *= (1.0 + uniforms.u_audio_amplitude * 1.2);
+    // Dynamic rotation speed based on thought trigger & audio
+    let swirl_speed = 0.8 + thought * 3.5 + audio * 1.5;
+    let rot = rot_y(time * swirl_speed) * rot_z(time * 0.4);
 
-    let alpha = core_glow * (0.8 + 0.2 * vortex_density);
-    return vec4<f32>(color, alpha);
+    let sphere_radius = 0.72 + audio * 0.08 + sin(time * 2.0) * 0.015;
+
+    // Volumetric Raymarching loop (16 steps through the orb volume)
+    var density_accum = 0.0;
+    var emission_accum = vec3<f32>(0.0);
+    var t = 1.0;
+    let max_t = 3.0;
+    let step_size = 0.08;
+
+    for (var i = 0; i < 18; i = i + 1) {
+        if (t > max_t) {
+            break;
+        }
+
+        let p = ro + rd * t;
+        let p_rot = rot * p;
+
+        // Base sphere SDF + organic 3D turbulence displacement
+        let d = sd_sphere(p, sphere_radius);
+        let turb = fbm3d(p_rot * 3.2 - vec3<f32>(0.0, time * 1.2, 0.0));
+        let turb2 = fbm3d(p_rot * 6.5 + vec3<f32>(time * 0.8, 0.0, time * 0.5));
+
+        let volume_dist = d + (turb - 0.5) * 0.35 + (turb2 - 0.5) * 0.15;
+
+        if (volume_dist < 0.08) {
+            let sample_density = smoothstep(0.08, -0.25, volume_dist);
+            
+            // State-based dynamic color mixing
+            var plasma_col = mix(INDIGO_VORTEX, CYAN_CORE, turb);
+            
+            // Listening State: Boost Emerald & Cyan
+            if (state_id >= 0.5 && state_id < 1.5) {
+                plasma_col = mix(CYAN_CORE, EMERALD_PULSE, turb2 + audio * 0.5);
+            }
+            // Thinking / Decomposing Plan: Solar Gold + White hot core
+            else if (state_id >= 1.5 && state_id < 2.5) {
+                plasma_col = mix(SOLAR_AMBER, vec3<f32>(1.0, 0.95, 0.85), turb2 + thought * 0.4);
+            }
+            // Error Alert:
+            else if (state_id >= 5.5) {
+                plasma_col = mix(CRIMSON_ALERT, vec3<f32>(1.0, 0.4, 0.2), turb);
+            }
+
+            // Spectral Chromatic Aberration at glass boundary
+            let dispersion = vec3<f32>(1.0 + turb * 0.15, 1.0, 1.0 - turb * 0.15);
+            plasma_col *= dispersion;
+
+            let step_light = plasma_col * sample_density * (1.0 + audio * 1.4);
+            emission_accum += step_light * (1.0 - density_accum) * 0.24;
+            density_accum += sample_density * 0.14;
+
+            if (density_accum >= 0.95) {
+                break;
+            }
+        }
+
+        t += step_size;
+    }
+
+    // Optical Fresnel Rim Glow (Holographic Glass Edge)
+    let normal_approx = normalize(vec3<f32>(uv, sqrt(max(0.0, 1.0 - dist2d * dist2d))));
+    let fresnel = pow(1.0 - max(dot(normal_approx, -rd), 0.0), 3.2);
+
+    var rim_color = mix(CYAN_CORE, INDIGO_VORTEX, sin(time * 2.0) * 0.5 + 0.5);
+    if (state_id >= 1.5 && state_id < 2.5) {
+        rim_color = mix(SOLAR_AMBER, vec3<f32>(1.0, 0.8, 0.2), fresnel);
+    } else if (state_id >= 0.5 && state_id < 1.5) {
+        rim_color = mix(CYAN_CORE, EMERALD_PULSE, audio);
+    }
+
+    // Soft outer atmospheric glow
+    let atmosphere = smoothstep(0.92, 0.45, dist2d) * (0.3 + 0.7 * fresnel);
+    let final_rgb = emission_accum + rim_color * fresnel * 0.8 + rim_color * atmosphere * 0.2;
+
+    // Translucent core with solid rim
+    let final_alpha = clamp(density_accum * 0.85 + fresnel * 0.9 + atmosphere * 0.35, 0.0, 1.0);
+
+    return vec4<f32>(final_rgb * final_alpha, final_alpha);
 }
 "#;
 
@@ -421,66 +542,51 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "requires real GPU adapter — run with: cargo test -- --ignored"]
     fn test_wgpu_headless_pipeline_and_uniform_updates() {
-        let instance = wgpu::Instance::default();
-        let adapter = pollster::block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
-            power_preference: wgpu::PowerPreference::LowPower,
-            force_fallback_adapter: true,
-            compatible_surface: None,
-        }));
+        use crate::wgpu_context::WgpuSurfaceContext;
+        let ctx = WgpuSurfaceContext::shared_test_context();
+        let mut surface = HermesOrbRenderSurface::new(&ctx.device, wgpu::TextureFormat::Rgba8UnormSrgb);
+        assert_eq!(surface.uniforms().time, 0.0);
 
-        if let Some(adapter) = adapter {
-            if let Ok((device, queue)) = pollster::block_on(adapter.request_device(
-                &wgpu::DeviceDescriptor {
-                    label: Some("Test Device"),
-                    required_features: wgpu::Features::empty(),
-                    required_limits: wgpu::Limits::downlevel_webgl2_defaults(),
-                    memory_hints: Default::default(),
-                },
-                None,
-            )) {
-                let mut surface = HermesOrbRenderSurface::new(&device, wgpu::TextureFormat::Rgba8UnormSrgb);
-                assert_eq!(surface.uniforms().time, 0.0);
+        // Test tick_animation
+        surface.tick_animation(&ctx.queue, 0.016);
+        assert!((surface.uniforms().time - 0.016).abs() < 0.001);
 
-                // Test tick_animation
-                surface.tick_animation(&queue, 0.016);
-                assert!((surface.uniforms().time - 0.016).abs() < 0.001);
+        // Test update_uniforms with HermesOrbPacket
+        let packet = HermesOrbPacket::new(HermesAgentState::StreamingA2Ui)
+            .with_audio_level(0.75)
+            .with_progress(0.9);
 
-                // Test update_uniforms with HermesOrbPacket
-                let packet = HermesOrbPacket::new(HermesAgentState::StreamingA2Ui)
-                    .with_audio_level(0.75)
-                    .with_progress(0.9);
+        surface.update_uniforms(&ctx.queue, &packet);
+        assert_eq!(surface.uniforms().state_id, 3.0);
+        assert!((surface.uniforms().audio_amplitude - 0.75).abs() < 0.001);
+        assert!((surface.uniforms().thought_trigger - 0.9).abs() < 0.001);
 
-                surface.update_uniforms(&queue, &packet);
-                assert_eq!(surface.uniforms().state_id, 3.0);
-                assert!((surface.uniforms().audio_amplitude - 0.75).abs() < 0.001);
-                assert!((surface.uniforms().thought_trigger - 0.9).abs() < 0.001);
+        // Test render_to_texture
+        let texture = ctx.device.create_texture(&wgpu::TextureDescriptor {
+            label: Some("Test Render Target"),
+            size: wgpu::Extent3d {
+                width: 256,
+                height: 256,
+                depth_or_array_layers: 1,
+            },
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: wgpu::TextureFormat::Rgba8UnormSrgb,
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::COPY_SRC,
+            view_formats: &[],
+        });
+        let target_view = texture.create_view(&wgpu::TextureViewDescriptor::default());
 
-                // Test render_to_texture
-                let texture = device.create_texture(&wgpu::TextureDescriptor {
-                    label: Some("Test Render Target"),
-                    size: wgpu::Extent3d {
-                        width: 256,
-                        height: 256,
-                        depth_or_array_layers: 1,
-                    },
-                    mip_level_count: 1,
-                    sample_count: 1,
-                    dimension: wgpu::TextureDimension::D2,
-                    format: wgpu::TextureFormat::Rgba8UnormSrgb,
-                    usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::COPY_SRC,
-                    view_formats: &[],
-                });
-                let target_view = texture.create_view(&wgpu::TextureViewDescriptor::default());
+        let mut encoder = ctx.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            label: Some("Test Encoder"),
+        });
 
-                let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                    label: Some("Test Encoder"),
-                });
-
-                surface.render_to_texture(&mut encoder, &target_view);
-                queue.submit(Some(encoder.finish()));
-            }
-        }
+        surface.render_to_texture(&mut encoder, &target_view);
+        ctx.queue.submit(Some(encoder.finish()));
+        ctx.device.poll(wgpu::Maintain::Poll);
     }
 }
 

@@ -38,24 +38,48 @@ fn remove_pid_file() {
     let _ = fs::remove_file(PID_FILE);
 }
 
-/// Check if EWW daemon is responsive via IPC ping
+/// Check if EWW daemon is responsive via IPC ping with a 1-second timeout
 fn eww_daemon_alive() -> bool {
-    let ping = Command::new("eww").arg("ping").output();
-    match ping {
-        Ok(out) if out.status.success() => true,
-        _ => {
-            eprintln!("⚠ EWW daemon not responding, starting...");
+    use std::time::{Duration, Instant};
+
+    // Spawn eww ping and wait with timeout
+    let child = Command::new("eww").arg("ping").spawn();
+    match child {
+        Ok(mut c) => {
+            let deadline = Instant::now() + Duration::from_millis(1000);
+            loop {
+                match c.try_wait() {
+                    Ok(Some(status)) => return status.success(),
+                    Ok(None) => {
+                        if Instant::now() > deadline {
+                            let _ = c.kill();
+                            eprintln!("⚠ EWW daemon ping timed out — starting daemon...");
+                            start_eww_daemon();
+                            return true;
+                        }
+                        std::thread::sleep(Duration::from_millis(50));
+                    }
+                    Err(_) => {
+                        eprintln!("⚠ EWW daemon not responding — starting daemon...");
+                        start_eww_daemon();
+                        return true;
+                    }
+                }
+            }
+        }
+        Err(_) => {
+            eprintln!("⚠ EWW daemon not found — starting daemon...");
             start_eww_daemon();
             true
         }
     }
 }
 
-/// Start EWW daemon in background
+/// Start EWW daemon in background (non-blocking)
 fn start_eww_daemon() {
     let _ = Command::new("eww").arg("daemon").spawn();
-    // Give it a moment to initialize
-    std::thread::sleep(std::time::Duration::from_millis(400));
+    // Brief pause to let daemon bind its socket
+    std::thread::sleep(std::time::Duration::from_millis(350));
 }
 
 /// Send notification (works on Linux with notify-send, silent on other platforms)
@@ -214,15 +238,18 @@ pub fn open_gui(target_path: Option<&str>) {
         write_pid_file();
         let _ = fs::write(VISIBLE_FLAG, "1");
 
-        // Clean up any orphaned EWW window processes before opening
-        cleanup_orphan_windows();
+        // Flush data to EWW before the window opens for instant first-frame render
+        let payload = build_gui_payload(&session);
+        notify_eww_update(&payload);
 
         let target_win = if session.is_maximized {
             "swal_files_maximized"
         } else {
             "swal_files"
         };
-        let _ = Command::new("eww").args(["open", target_win]).status();
+        // Use spawn() — NOT status() — so the CLI returns immediately
+        // without blocking until the EWW window is closed.
+        let _ = Command::new("eww").args(["open", target_win]).spawn();
     }
 }
 
@@ -374,8 +401,81 @@ pub fn handle_command(session: &mut SessionState, args: &[String]) -> Result<Opt
         }
         "set-filter" | "set_filter" | "filter" => {
             if args.len() > 2 {
-                session.filter_type = args[2].to_lowercase();
+                let new_filter = args[2].to_lowercase();
+                session.filter_type = new_filter.clone();
+                // Remember per-path: what filter was last used in the active directory
+                let active_path = session.tabs.iter()
+                    .find(|t| t.id == session.active_tab_id)
+                    .map(|t| t.path.clone())
+                    .unwrap_or_default();
+                if !active_path.is_empty() {
+                    session.path_filter_memory.insert(active_path, new_filter);
+                }
                 state_changed = true;
+            }
+        }
+        "clear-filter" | "clear_filter" | "filter-all" => {
+            session.filter_type = "all".to_string();
+            state_changed = true;
+        }
+        // Cycle through filters: all → folders → images → documents → code → media → archives → all
+        "cycle-filter" | "cycle_filter" | "next-filter" => {
+            session.filter_type = match session.filter_type.as_str() {
+                "all"       => "folders".to_string(),
+                "folders"   => "images".to_string(),
+                "images"    => "documents".to_string(),
+                "documents" => "code".to_string(),
+                "code"      => "media".to_string(),
+                "media"     => "archives".to_string(),
+                _           => "all".to_string(),
+            };
+            state_changed = true;
+        }
+        // Save current filter+sort+group as a named preset
+        "save-filter" | "save_filter" | "filter-save" => {
+            if args.len() > 2 {
+                use crate::config::SavedFilterPreset;
+                let preset_name = args[2].clone();
+                // Remove existing preset with same name
+                session.saved_filter_presets.retain(|p| p.name != preset_name);
+                session.saved_filter_presets.push(SavedFilterPreset {
+                    name: preset_name.clone(),
+                    filter_type: session.filter_type.clone(),
+                    sort_by: session.sort_by.clone(),
+                    sort_order: session.sort_order.clone(),
+                    group_by: session.group_by.clone(),
+                });
+                eprintln!("✓ Filtro guardado como preset: \"{}\"", preset_name);
+                state_changed = true;
+            }
+        }
+        // Load a named preset
+        "load-filter" | "load_filter" | "filter-load" => {
+            if args.len() > 2 {
+                let preset_name = &args[2];
+                let preset = session.saved_filter_presets.iter().find(|p| &p.name == preset_name).cloned();
+                if let Some(p) = preset {
+                    session.filter_type = p.filter_type;
+                    session.sort_by = p.sort_by;
+                    session.sort_order = p.sort_order;
+                    session.group_by = p.group_by;
+                    eprintln!("✓ Preset de filtro cargado: \"{}\"", preset_name);
+                    state_changed = true;
+                } else {
+                    eprintln!("⚠ Preset no encontrado: \"{}\"", preset_name);
+                }
+            }
+        }
+        // Delete a saved preset
+        "delete-filter" | "delete_filter" | "filter-delete" => {
+            if args.len() > 2 {
+                let preset_name = &args[2];
+                let before = session.saved_filter_presets.len();
+                session.saved_filter_presets.retain(|p| &p.name != preset_name);
+                if session.saved_filter_presets.len() < before {
+                    eprintln!("✓ Preset eliminado: \"{}\"", preset_name);
+                    state_changed = true;
+                }
             }
         }
         "set-sort" | "set_sort" | "sort" => {
@@ -387,6 +487,7 @@ pub fn handle_command(session: &mut SessionState, args: &[String]) -> Result<Opt
                 state_changed = true;
             }
         }
+
         "set-preview-mode" | "set_preview_mode" => {
             if args.len() > 2 {
                 session.preview_mode = args[2].to_lowercase();

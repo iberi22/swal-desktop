@@ -54,6 +54,23 @@ pub struct TabStatePayload {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SavedFilterPresetPayload {
+    pub name: String,
+    pub filter_type: String,
+    pub sort_by: String,
+    pub sort_order: String,
+    pub group_by: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FilterButtonPayload {
+    pub id: String,
+    pub label: String,
+    pub icon: String,
+    pub active: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GuiPayload {
     pub current_path: String,
     pub parent_path: String,
@@ -78,7 +95,12 @@ pub struct GuiPayload {
     pub groups: Vec<GuiGroupSection>,
     pub git_status: GitRepoSummary,
     pub preview: PreviewState,
+    /// Rendered filter button bar for the toolbar
+    pub filter_buttons: Vec<FilterButtonPayload>,
+    /// User-saved filter presets for the quick-access preset menu
+    pub saved_filter_presets: Vec<SavedFilterPresetPayload>,
 }
+
 
 pub fn get_breadcrumbs(current_path: &Path) -> Vec<BreadcrumbItem> {
     let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/home/belal"));
@@ -240,6 +262,35 @@ pub fn build_gui_payload(session: &SessionState) -> GuiPayload {
         }
     }
 
+    // Build filter toolbar buttons — active state matches current filter_type
+    let filter_definitions: &[(&str, &str, &str)] = &[
+        ("all",       "Todo",       "📁"),
+        ("folders",   "Carpetas",   "📂"),
+        ("images",    "Imágenes",   "🖼"),
+        ("documents", "Documentos", "📄"),
+        ("code",      "Código",     "⌨"),
+        ("media",     "Media",      "🎬"),
+        ("archives",  "Archivos",   "📦"),
+    ];
+    let filter_buttons: Vec<FilterButtonPayload> = filter_definitions.iter().map(|(id, label, icon)| {
+        FilterButtonPayload {
+            id: id.to_string(),
+            label: label.to_string(),
+            icon: icon.to_string(),
+            active: session.filter_type == *id,
+        }
+    }).collect();
+
+    let saved_filter_presets_payload: Vec<SavedFilterPresetPayload> = session.saved_filter_presets.iter().map(|p| {
+        SavedFilterPresetPayload {
+            name: p.name.clone(),
+            filter_type: p.filter_type.clone(),
+            sort_by: p.sort_by.clone(),
+            sort_order: p.sort_order.clone(),
+            group_by: p.group_by.clone(),
+        }
+    }).collect();
+
     GuiPayload {
         current_path: current_path.to_string_lossy().to_string(),
         parent_path,
@@ -264,13 +315,17 @@ pub fn build_gui_payload(session: &SessionState) -> GuiPayload {
         groups: gui_groups,
         git_status,
         preview,
+        filter_buttons,
+        saved_filter_presets: saved_filter_presets_payload,
     }
 }
 
 pub fn notify_eww_update(payload: &GuiPayload) {
     if let Ok(json_str) = serde_json::to_string(payload) {
+        // Use spawn() so we don't block the CLI process waiting for EWW IPC
         let _ = Command::new("eww")
             .args(["update", &format!("swal_files_data={}", json_str)])
-            .status();
+            .spawn();
     }
 }
+

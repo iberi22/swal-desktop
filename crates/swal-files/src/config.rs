@@ -11,6 +11,16 @@ pub struct SidebarPin {
     pub section: String, // "pinned", "workspaces", "drives", "tags"
 }
 
+/// A named filter+sort preset saved by the user for quick recall
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct SavedFilterPreset {
+    pub name: String,
+    pub filter_type: String,
+    pub sort_by: String,
+    pub sort_order: String,
+    pub group_by: String,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FileManagerConfig {
     #[serde(default = "default_theme")]
@@ -39,7 +49,11 @@ pub struct FileManagerConfig {
     pub agent_workspaces: Vec<PathBuf>,
     #[serde(default = "default_tags")]
     pub custom_tags: Vec<String>,
+    /// Saved filter presets — restored across sessions
+    #[serde(default)]
+    pub saved_filter_presets: Vec<SavedFilterPreset>,
 }
+
 
 fn default_theme() -> String {
     "hive-dark".to_string()
@@ -126,6 +140,7 @@ impl Default for FileManagerConfig {
             pinned_locations: default_pinned(),
             agent_workspaces: default_workspaces(),
             custom_tags: default_tags(),
+            saved_filter_presets: Vec::new(),
         }
     }
 }
