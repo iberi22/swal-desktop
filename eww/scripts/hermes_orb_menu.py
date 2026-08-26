@@ -3,6 +3,7 @@
 
 import json
 import os
+import shlex
 import socket
 import subprocess
 import sys
@@ -39,7 +40,11 @@ def send_unix_socket_payload(payload: dict) -> bool:
 
 
 def dispatch_action(action: str, extra_args: str = ""):
-    """Dispatches quick action to Hermes CLI / Eww overlays and notifies IPC socket."""
+    """Dispatches quick action to Hermes CLI / Eww overlays and notifies IPC socket.
+
+    Security note: never build shell strings from user input. Arguments are
+    passed as an argv list so no command injection is possible.
+    """
     payload = {
         "event": "action_triggered",
         "action": action,
@@ -49,23 +54,20 @@ def dispatch_action(action: str, extra_args: str = ""):
 
     socket_sent = send_unix_socket_payload(payload)
 
-    # CLI Execution / Overlay triggers
+    prompts = {
+        "@summarize": "Resumir el contexto activo o selección de texto",
+        "@refactor": "Refactorizar y optimizar el código actual",
+        "@execute": "Ejecutar acción y herramientas agénticas",
+    }
+
     if action == "@chat":
         subprocess.run(["eww", "open", "--toggle", "agent_chat"])
-    elif action == "@summarize":
-        cmd = f"ghostty -e hermes --prompt 'Resumir el contexto activo o selección de texto' {extra_args}"
-        subprocess.Popen(cmd, shell=True)
-    elif action == "@refactor":
-        cmd = f"ghostty -e hermes --prompt 'Refactorizar y optimizar el código actual' {extra_args}"
-        subprocess.Popen(cmd, shell=True)
-    elif action == "@execute":
-        cmd = f"ghostty -e hermes --prompt 'Ejecutar acción y herramientas agénticas' {extra_args}"
-        subprocess.Popen(cmd, shell=True)
     else:
-        # Generic action trigger via Hermes CLI
-        prompt = action.lstrip("@")
-        cmd = f"ghostty -e hermes --prompt '{prompt}' {extra_args}"
-        subprocess.Popen(cmd, shell=True)
+        prompt = prompts.get(action, action.lstrip("@"))
+        argv = ["ghostty", "-e", "hermes", "--prompt", prompt]
+        if extra_args:
+            argv.extend(shlex.split(extra_args))
+        subprocess.Popen(argv)
 
     status_str = f"Action {action} dispatched (IPC: {'Connected' if socket_sent else 'Fallback CLI'})"
     print(json.dumps({"ok": True, "action": action, "ipc_sent": socket_sent, "message": status_str}))

@@ -24,7 +24,42 @@ pub mod desktop_bridge;
 pub mod gesture_consumer;
 use gesture_consumer::{GestureConsumer, ScreenConfig};
 
-pub const DEFAULT_CTL_SOCKET: &str = "/tmp/swal_desktop_ctl.sock";
+/// Resolves the per-user runtime directory (XDG base dir spec).
+/// Falls back to /run/user/$UID, which is a tmpfs owned by the user.
+pub fn runtime_dir() -> std::path::PathBuf {
+    if let Ok(xdg) = env::var("XDG_RUNTIME_DIR") {
+        if !xdg.trim().is_empty() {
+            return std::path::PathBuf::from(xdg);
+        }
+    }
+    let uid = unsafe { libc::getuid() };
+    std::path::PathBuf::from(format!("/run/user/{}", uid))
+}
+
+/// Per-user control socket path: `$XDG_RUNTIME_DIR/swal/ctl.sock`.
+/// Replaces the old world-readable `/tmp/swal_desktop_ctl.sock` (any local
+/// user could pre-bind or hijack it). The `swal` subdir is created 0700 and
+/// the socket itself chmod'ed 0600 after bind.
+pub fn ctl_socket_path() -> std::path::PathBuf {
+    runtime_dir().join("swal").join("ctl.sock")
+}
+
+/// Per-user telemetry socket path: `$XDG_RUNTIME_DIR/swal/telemetry.sock`.
+pub fn telemetry_socket_path() -> std::path::PathBuf {
+    runtime_dir().join("swal").join("telemetry.sock")
+}
+
+/// Creates `$XDG_RUNTIME_DIR/swal` with 0700 permissions (idempotent).
+fn ensure_swal_runtime_dir() -> std::io::Result<()> {
+    let dir = runtime_dir().join("swal");
+    std::fs::create_dir_all(&dir)?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&dir, std::fs::Permissions::from_mode(0o700))?;
+    }
+    Ok(())
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -37,9 +72,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("⚡ Starting SWAL Desktop Native Node Daemon (100% Rust / Zero-EWW)...");
 
+    // Ensure per-user runtime dir exists with safe permissions
+    let _ = ensure_swal_runtime_dir();
+    let ctl_sock = ctl_socket_path();
+
     // Clean up old socket if present
-    if Path::new(DEFAULT_CTL_SOCKET).exists() {
-        let _ = std::fs::remove_file(DEFAULT_CTL_SOCKET);
+    if Path::new(&ctl_sock).exists() {
+        let _ = std::fs::remove_file(&ctl_sock);
     }
 
     let is_running = Arc::new(AtomicBool::new(true));
@@ -54,7 +93,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // 1. Initialize Telemetry IPC Server in background
     let telemetry_handle = tokio::spawn(async {
-        let sock_path = "/run/user/1000/swal/telemetry.sock";
+        let sock_path = telemetry_socket_path();
         let server = swal_telemetry_rs::ipc::TelemetryServer::new(sock_path);
         let _ = server.run(Duration::from_millis(250)).await;
     });
@@ -73,15 +112,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 4. Start Local Unix Control Listener for instant keybind handling
     let supervisor_ctl = supervisor.clone();
     let ctl_handle = tokio::spawn(async move {
-        let listener = match UnixListener::bind(DEFAULT_CTL_SOCKET) {
+        let listener = match UnixListener::bind(&ctl_sock) {
             Ok(l) => l,
             Err(e) => {
-                eprintln!("❌ Failed to bind control socket {}: {}", DEFAULT_CTL_SOCKET, e);
+                eprintln!("❌ Failed to bind control socket {}: {}", ctl_sock.display(), e);
                 return;
             }
         };
 
-        println!("✓ Control socket active at {}", DEFAULT_CTL_SOCKET);
+        // Restrict the socket to the owning user (0600)
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let _ = std::fs::set_permissions(
+                &ctl_sock,
+                std::fs::Permissions::from_mode(0o600),
+            );
+        }
+
+        println!("✓ Control socket active at {}", ctl_sock.display());
 
         loop {
             if let Ok((mut stream, _)) = listener.accept().await {
@@ -201,7 +250,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let _ = telemetry_handle.abort();
     let _ = supervisor_mesh_handle.abort();
     let _ = supervisor_ipc.await;
-    let _ = std::fs::remove_file(DEFAULT_CTL_SOCKET);
+    let _ = std::fs::remove_file(ctl_socket_path());
 
     println!("✓ SWAL Desktop Native Node Daemon cleanly stopped.");
     Ok(())
@@ -211,7 +260,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 fn handle_client_command(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
     let cmd = args.join(" ");
 
-    match UnixStream::connect(DEFAULT_CTL_SOCKET) {
+    match UnixStream::connect(ctl_socket_path()) {
         Ok(mut stream) => {
             stream.write_all(cmd.as_bytes())?;
             stream.flush()?;
@@ -224,7 +273,7 @@ fn handle_client_command(args: &[String]) -> Result<(), Box<dyn std::error::Erro
         }
         Err(_) => {
             // Fallback if daemon is not running: execute locally or start daemon
-            eprintln!("⚠ SWAL Node Daemon not running on {}. Running fallback handler for: {}", DEFAULT_CTL_SOCKET, cmd);
+            eprintln!("⚠ SWAL Node Daemon not running on {}. Running fallback handler for: {}", ctl_socket_path().display(), cmd);
             match cmd.as_str() {
                 "toggle-dashboard" | "toggle_dashboard" => {
                     // Fallback to toggle_dashboard.sh during hybrid phase
@@ -248,5 +297,79 @@ fn handle_client_command(args: &[String]) -> Result<(), Box<dyn std::error::Erro
             }
             Ok(())
         }
+    }
+}
+
+#[cfg(test)]
+mod socket_security_tests {
+    use super::*;
+    use std::sync::{Mutex, MutexGuard, OnceLock};
+
+    /// Serializes env-mutating tests (XDG_RUNTIME_DIR is process-global).
+    fn env_lock() -> MutexGuard<'static, ()> {
+        static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+        let mutex = LOCK.get_or_init(|| Mutex::new(()));
+        mutex.lock().unwrap_or_else(|p| p.into_inner())
+    }
+
+    #[test]
+    fn ctl_socket_lives_under_xdg_runtime_dir() {
+        let _lock = env_lock();
+        std::env::set_var("XDG_RUNTIME_DIR", "/tmp/swal-test-xdg-ctl");
+        let p = ctl_socket_path();
+        assert!(p.starts_with("/tmp/swal-test-xdg-ctl"), "got: {:?}", p);
+        assert!(p.ends_with("swal/ctl.sock"));
+    }
+
+    #[test]
+    fn telemetry_socket_lives_under_xdg_runtime_dir() {
+        let _lock = env_lock();
+        std::env::set_var("XDG_RUNTIME_DIR", "/tmp/swal-test-xdg-tel");
+        let p = telemetry_socket_path();
+        assert!(p.starts_with("/tmp/swal-test-xdg-tel"), "got: {:?}", p);
+        assert!(p.ends_with("swal/telemetry.sock"));
+    }
+
+    #[test]
+    fn runtime_dir_falls_back_to_run_user_uid() {
+        let _lock = env_lock();
+        let old = std::env::var("XDG_RUNTIME_DIR").ok();
+        std::env::remove_var("XDG_RUNTIME_DIR");
+        let d = runtime_dir();
+        if let Some(v) = old {
+            std::env::set_var("XDG_RUNTIME_DIR", v);
+        }
+        let expected_prefix = format!("/run/user/{}", unsafe { libc::getuid() });
+        assert!(
+            d.starts_with(&expected_prefix),
+            "expected {:?} under {}", d, expected_prefix
+        );
+    }
+
+    #[test]
+    fn swal_runtime_dir_is_created_0700() {
+        let _lock = env_lock();
+        std::env::set_var("XDG_RUNTIME_DIR", "/tmp/swal-test-xdg-perm");
+        ensure_swal_runtime_dir().expect("create runtime dir");
+        use std::os::unix::fs::PermissionsExt;
+        let meta = std::fs::metadata("/tmp/swal-test-xdg-perm/swal").unwrap();
+        assert_eq!(meta.permissions().mode() & 0o777, 0o700);
+    }
+
+    #[test]
+    fn bound_ctl_socket_is_0600() {
+        let _lock = env_lock();
+        std::env::set_var("XDG_RUNTIME_DIR", "/tmp/swal-test-xdg-bind");
+        ensure_swal_runtime_dir().unwrap();
+        let sock_path = ctl_socket_path();
+        let _ = std::fs::remove_file(&sock_path);
+        // std UnixListener (no tokio reactor needed for the permission check)
+        let listener = std::os::unix::net::UnixListener::bind(&sock_path).expect("bind");
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&sock_path, std::fs::Permissions::from_mode(0o600)).unwrap();
+        let meta = std::fs::metadata(&sock_path).unwrap();
+        assert_eq!(meta.permissions().mode() & 0o777, 0o600);
+        drop(listener);
+        let _ = std::fs::remove_file(&sock_path);
     }
 }

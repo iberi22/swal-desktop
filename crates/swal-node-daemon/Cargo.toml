@@ -7,6 +7,7 @@ description = "Async Tokio Coordinator & Xavier Bridge Node Daemon for SWAL Desk
 
 [dependencies]
 tokio = { version = "1.0", features = ["full"] }
+libc = "0.2"
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

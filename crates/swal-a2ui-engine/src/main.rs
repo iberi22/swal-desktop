@@ -75,7 +75,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn send_ctl_command(cmd: &str) -> Result<String, Box<dyn std::error::Error>> {
-    let mut stream = UnixStream::connect("/tmp/swal_desktop_ctl.sock")?;
+    // Same per-user socket as swal-node-daemon (XDG_RUNTIME_DIR/swal/ctl.sock),
+    // with /tmp fallback for daemons still running the legacy path.
+    let xdg = std::env::var("XDG_RUNTIME_DIR").unwrap_or_default();
+    let primary = std::path::PathBuf::from(xdg).join("swal").join("ctl.sock");
+    let legacy = std::path::PathBuf::from("/tmp/swal_desktop_ctl.sock");
+    let sock = if primary.exists() { primary } else { legacy };
+    let mut stream = UnixStream::connect(sock)?;
     stream.write_all(cmd.as_bytes())?;
     stream.shutdown(std::net::Shutdown::Write)?;
     let mut response = String::new();
