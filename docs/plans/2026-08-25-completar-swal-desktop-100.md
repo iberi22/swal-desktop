@@ -750,6 +750,8 @@ Fase 0 (compila) ──► Fase 1 (seguro) ──► Fase 2 (portable) ──►
 | 2026-08-25 | Fase 0 | Task 0.3: linking gcc = entorno NixOS; fix via RUSTFLAGS `-L/-B /nix/store/…-gcc-prefix/lib`. NOTA: persistir en `.cargo/config.toml` o nix devshell para CI | ✅ |
 | 2026-08-25 | Fase 0 | Bonus: flaky test `test_mode_auto_detection_standalone_window` (carrera SWAL_HEADLESS entre tests paralelos) — serializado con mutex compartido. 76/76 swal-files lib verde ×2 pasadas; workspace completo exit 0 | ✅ |
 | — | Fase 1 | Seguridad P0 (shell=True, sockets XDG) | ⏳ |
+| 2026-08-25 | Fase 1 | Task 1.1: shell=True ×4 eliminados en hermes_orb_menu.py + test AST anti-regresión (2/2 ok) | ✅ |
+| 2026-08-25 | Fase 1 | Task 1.2+1.3: ctl+telemetry sockets → \$XDG_RUNTIME_DIR/swal/, dir 0700, socket 0600; libc dep añadida; clientes a2ui/orb con fallback legacy; 18/18 tests bin verde | ✅ |
 | — | Fase 2 | Portabilidad (32 paths /home/belal, nix module, installer) | ⏳ |
 | — | Fase 3 | Zero-EWW (toggles nativos, settings CLI, parity checklist) | ⏳ |
 | — | Fase 4 | Higiene (warnings → deny, unwraps) | ⏳ |
