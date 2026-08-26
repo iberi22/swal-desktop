@@ -1,13 +1,10 @@
 //! test_wave7_session_release_e2e.rs
 //! Comprehensive E2E Release Verification & Integration Test Suite in Rust
 
-use std::collections::HashMap;
-use std::path::PathBuf;
-use std::time::Duration;
 use tempfile::tempdir;
 
-use swal_node_daemon::session_orchestrator::{ManagedServiceConfig, SessionConfig, SessionOrchestrator, SessionPhase};
-use swal_node_daemon::nixos_integration::{NixOsServiceGenerator, RestartPolicy, SystemdUnit};
+use swal_node_daemon::session_orchestrator::{SessionConfig, SessionOrchestrator, SessionPhase};
+use swal_node_daemon::nixos_integration::NixOsServiceGenerator;
 
 #[test]
 fn test_session_orchestrator_boot_flow_e2e() {

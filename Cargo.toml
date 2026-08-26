@@ -10,3 +10,7 @@ members = [
     "crates/swal-vision-rs"
 ]
 resolver = "2"
+
+# Zero-warnings hygiene gate (Phase 4). Crates opt in via `[lints] workspace = true`.
+[workspace.lints.rust]
+warnings = "deny"

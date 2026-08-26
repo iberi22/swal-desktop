@@ -10,7 +10,6 @@ use crate::preview::{generate_preview_for_path, load_editor_state, save_editor_s
 use crate::session::{load_session, save_session, SessionState, TabState};
 
 const PID_FILE: &str = "/tmp/swal-files.pid";
-const EWWSOCK: &str = "/tmp/eww.sock";
 
 /// Portable home-directory fallback for string contexts (never a personal path).
 fn home_path_string() -> String {
@@ -123,33 +122,6 @@ fn kill_orphan_layer_shells() {
                             }
                         }
                     }
-                }
-            }
-        }
-    }
-}
-
-/// Kill orphaned EWW window processes that the daemon lost track of
-fn cleanup_orphan_windows() {
-    #[cfg(target_os = "linux")]
-    {
-        let patterns = ["eww open swal_files", "eww open swal_editor"];
-        for pattern in &patterns {
-            if let Ok(out) = Command::new("pgrep").args(["-f", pattern]).output() {
-                let pids = String::from_utf8_lossy(&out.stdout);
-                for pid_str in pids.lines() {
-                    if let Ok(pid) = pid_str.trim().parse::<u32>() {
-                        eprintln!("🧹 Killing orphaned EWW window PID {} ({})", pid, pattern);
-                        unsafe { libc::kill(pid as i32, libc::SIGKILL); }
-                    }
-                }
-            }
-        }
-        // Clean stale PID file
-        if let Ok(content) = fs::read_to_string(PID_FILE) {
-            if let Ok(pid) = content.trim().parse::<u32>() {
-                if unsafe { libc::kill(pid as i32, 0) } != 0 {
-                    let _ = fs::remove_file(PID_FILE);
                 }
             }
         }

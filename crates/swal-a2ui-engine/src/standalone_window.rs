@@ -79,7 +79,7 @@ impl StandaloneWindowFrame {
 
     /// Wraps an arbitrary content A2UI `ComponentNode` tree with titlebar, controls, and status footer.
     pub fn wrap_content_tree(&self, content_root: ComponentNode) -> ComponentNode {
-        let max_label = if self.is_maximized { "Restore" } else { "Maximize" };
+        let _max_label = if self.is_maximized { "Restore" } else { "Maximize" };
         let max_action = if self.is_maximized { "window.restore" } else { "window.maximize" };
 
         let mut header_children = Vec::new();

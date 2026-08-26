@@ -2,7 +2,7 @@ use std::env;
 use std::io::{Read, Write};
 use std::os::unix::net::UnixStream;
 use swal_a2ui_engine::native_render::{evaluate_ast_to_gpu_commands, LayoutRect};
-use swal_a2ui_engine::{compile_widget, ComponentNode, ThemePalette};
+use swal_a2ui_engine::{compile_widget, ComponentNode};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

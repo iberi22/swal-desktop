@@ -2,7 +2,7 @@ use std::env;
 use std::io::{Read, Write};
 use std::os::unix::net::UnixStream;
 use swal_ambient_orb::socket::{HermesOrbIpcServer, DEFAULT_SOCKET_PATH};
-use swal_ambient_orb::{LockFreeAudioConsumer, OrbController, OrbState};
+use swal_ambient_orb::{LockFreeAudioConsumer, OrbController};
 use tokio::time::{sleep, Duration};
 
 #[tokio::main]

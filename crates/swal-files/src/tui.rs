@@ -140,6 +140,8 @@ pub enum TuiActionResponse {
     Redrawn,
     Navigated(PathBuf),
     OpenedFile(PathBuf),
+    /// Reserved for search-as-you-type in the TUI; not yet wired up.
+    #[allow(dead_code)]
     SearchUpdated(String),
     Quit,
 }
