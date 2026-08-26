@@ -308,7 +308,10 @@ fn parse_setting_value(val: &str) -> Value {
     }
 }
 
-fn main() {
+/// Binary entrypoint for the `swal-settings` CLI (replaces eww/scripts/swal_settings.py).
+/// Exposed as a [[bin]] target so the settings window and scripts call Rust directly
+/// instead of shelling out through Python. See Plan Task 3.2.
+pub fn cli_main() {
     let args: Vec<String> = std::env::args().collect();
     let mut runner = SettingsCliRunner::new();
     let output = runner.run_cli_args(&args[1..]);
