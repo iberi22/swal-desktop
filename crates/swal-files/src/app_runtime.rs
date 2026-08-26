@@ -260,6 +260,16 @@ impl AppRuntimeDispatcher {
 mod tests {
     use super::*;
     use std::env;
+    use std::sync::{Mutex, MutexGuard, OnceLock};
+
+    /// Serializes tests that mutate process-global environment variables.
+    /// Without this, `cargo test` runs them in parallel and one test's
+    /// `SWAL_HEADLESS=1` leaks into another's mode detection (flaky).
+    fn env_lock() -> MutexGuard<'static, ()> {
+        static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+        let mutex = LOCK.get_or_init(|| Mutex::new(()));
+        mutex.lock().unwrap_or_else(|p| p.into_inner())
+    }
 
     struct EnvGuard {
         key: &'static str,
@@ -340,6 +350,7 @@ mod tests {
 
     #[test]
     fn test_mode_auto_detection_headless() {
+        let _lock = env_lock();
         let _g = EnvGuard::set("SWAL_HEADLESS", "1");
         assert_eq!(AppRuntimeDispatcher::detect_optimal_mode(), AppRuntimeMode::HeadlessDaemon);
 
@@ -349,6 +360,7 @@ mod tests {
 
     #[test]
     fn test_mode_auto_detection_web() {
+        let _lock = env_lock();
         let _g_h = EnvGuard::remove("SWAL_HEADLESS");
         let _g_w = EnvGuard::set("SWAL_WEB", "true");
         assert_eq!(AppRuntimeDispatcher::detect_optimal_mode(), AppRuntimeMode::WebCanvas);
@@ -356,6 +368,7 @@ mod tests {
 
     #[test]
     fn test_mode_auto_detection_wayland_layer_shell() {
+        let _lock = env_lock();
         let _g_h = EnvGuard::remove("SWAL_HEADLESS");
         let _g_w = EnvGuard::remove("SWAL_WEB");
         let _g_desktop = EnvGuard::set("SWAL_DESKTOP_ACTIVE", "1");
@@ -366,6 +379,7 @@ mod tests {
 
     #[test]
     fn test_mode_auto_detection_standalone_window() {
+        let _lock = env_lock();
         let _g_h = EnvGuard::remove("SWAL_HEADLESS");
         let _g_w = EnvGuard::remove("SWAL_WEB");
         let _g_desktop = EnvGuard::remove("SWAL_DESKTOP_ACTIVE");
@@ -380,6 +394,7 @@ mod tests {
 
     #[test]
     fn test_mode_auto_detection_tui() {
+        let _lock = env_lock();
         let _g_h = EnvGuard::remove("SWAL_HEADLESS");
         let _g_w = EnvGuard::remove("SWAL_WEB");
         let _g_desktop = EnvGuard::remove("SWAL_DESKTOP_ACTIVE");
@@ -393,6 +408,7 @@ mod tests {
 
     #[test]
     fn test_mode_auto_detection_fallback() {
+        let _lock = env_lock();
         let _g_h = EnvGuard::remove("SWAL_HEADLESS");
         let _g_w = EnvGuard::remove("SWAL_WEB");
         let _g_desktop = EnvGuard::remove("SWAL_DESKTOP_ACTIVE");

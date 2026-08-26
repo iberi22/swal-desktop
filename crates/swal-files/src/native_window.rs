@@ -195,6 +195,8 @@ mod tests {
             filter_type: "all".to_string(),
             preview_mode: "sidebar".to_string(),
             selected_path: None,
+            saved_filter_presets: Vec::new(),
+            path_filter_memory: std::collections::HashMap::new(),
         };
 
         let tree = NativeFilesWindowBuilder::build_native_a2ui_tree(&session);

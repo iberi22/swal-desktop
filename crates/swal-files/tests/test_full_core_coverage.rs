@@ -217,6 +217,8 @@ fn test_cli_command_handling_state_transitions() {
         filter_type: "all".to_string(),
         preview_mode: "sidebar".to_string(),
         selected_path: None,
+        saved_filter_presets: Vec::new(),
+        path_filter_memory: std::collections::HashMap::new(),
     };
 
     // 1. view-json
