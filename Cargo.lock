@@ -1669,6 +1669,7 @@ dependencies = [
 name = "swal-node-daemon"
 version = "0.1.0"
 dependencies = [
+ "dirs",
  "libc",
  "reqwest",
  "serde",
@@ -1712,6 +1713,7 @@ dependencies = [
 name = "swal-vision-rs"
 version = "0.1.0"
 dependencies = [
+ "dirs",
  "libc",
  "serde",
  "serde_json",
