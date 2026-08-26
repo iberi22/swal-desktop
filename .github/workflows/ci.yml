@@ -1,0 +1,52 @@
+name: ci
+
+on: [push, pull_request]
+
+jobs:
+  rust:
+    name: Rust — clippy + tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: Install native deps (wayland/xkb for wgpu)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwayland-dev libxkbcommon-dev libudev-dev
+      - name: Clippy (deny warnings)
+        run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: Test suite
+        run: cargo test --workspace
+      - name: cargo-audit (dependency CVEs)
+        continue-on-error: true # warn-first policy; flip to blocking once clean
+        run: |
+          cargo install cargo-audit --locked || true
+          cargo audit || true
+
+  hygiene:
+    name: Hygiene — secrets + hardcoded paths + shell injection
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history for gitleaks
+      - name: Gitleaks (secret scan incl. history)
+        uses: gacts/gitleaks@v1
+      - name: No hardcoded personal paths
+        run: |
+          chmod +x tests/test_no_hardcoded_paths.sh
+          ./tests/test_no_hardcoded_paths.sh
+      - name: No shell=True in Python scripts
+        run: |
+          pip install pytest
+          python3 -m pytest tests/test_no_shell_injection.py -v
+
+  python-tests:
+    name: Python script tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m unittest discover -s tests -p "test_*.py" -v
