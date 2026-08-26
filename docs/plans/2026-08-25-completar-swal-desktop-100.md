@@ -759,6 +759,9 @@ Fase 0 (compila) ──► Fase 1 (seguro) ──► Fase 2 (portable) ──►
 | 2026-08-25 | Fase 2 | Task 2.4: swal-node.nix → módulo parametrizado (options.services.swal-node.{enable,user,workspaceDir}, default user=belal, workspaceDir deriva de user); host (configuration.nix) wirea enable+user=bela; `nix-instantiate --parse` OK. DEV: flake.nix no requirió cambios (user pasa vía configuration.nix, que es donde vive el usuario primario) | ✅ |
 | 2026-08-25 | Fase 2 | Task 2.5: install.sh — clone-if-missing, --dry-run (solo imprime), integración NixOS opt-in tras --nixos (instrucciones manuales si no); `bash -n` + smoke `--dry-run` OK | ✅ |
 | — | Fase 3 | Zero-EWW (toggles nativos, settings CLI, parity checklist) | ⏳ |
+| 2026-08-25 | Fase 3 (parcial) | Task 3.2: bin `swal-settings` expuesto y verificado (get/--help). Task 3.4: parity checklist creado (11 ventanas: 3✅ 4🟡 4🔴) | 🟡 |
+| — | Fase 4 | Higiene (warnings → deny, unwraps) | ⏳ |
 | 2026-08-25 | Fase 4 | Task 4.1: 0 warnings `cargo check --workspace --all-targets` (unused imports/vars en a2ui-engine/ambient-orb/daemon-tests, EWWSOCK+cleanup_orphan_windows muertos, SearchUpdated allow(dead_code)); [workspace.lints.rust] warnings="deny" añadido (no rompe ningun crate). NOTA: dead `fn main` settings_cli ya resuelto por Task 3.2 (bin swal-settings, commit 0541cb8) | ✅ |
 | 2026-08-25 | Fase 4 | Task 4.2: DIFFERIDO a propósito (refactor unwrap = demasiado grande para este batch; gate gradual clippy::unwrap_used en top-5). Pendiente para siguiente wave | ⏳ |
 | — | Fase 5 | Publicar (CI, gitleaks, push + tag v1.3.0) | ⏳ |
+| 2026-08-25 | Fase 5 (parcial) | CI pipeline creado (.github/workflows/ci.yml), gitignore endurecido. Verificación final: 36 suites ok / 0 failed / 428 tests; gates verde; autores normalizados a Belalcazar <iberi22@gmail.com> vía filter-branch (16 commits reescritos). PENDIENTE: gitleaks sobre historia completa + push + tag (requiere aprobación del usuario) | 🟡 |
