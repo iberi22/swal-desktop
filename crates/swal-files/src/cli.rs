@@ -94,21 +94,27 @@ fn kill_orphan_layer_shells() {
 const VISIBLE_FLAG: &str = "/tmp/swal_files_visible.flag";
 
 pub fn is_window_open() -> bool {
-    if Path::new(VISIBLE_FLAG).exists() {
-        return true;
+    // Zero-Eww: a window is "open" iff a live swal-files --gui process owns it.
+    // The PID file is the single source of truth (the --gui process writes it on
+    // startup and removes it on exit). No flag files, no eww, no hyprctl scraping.
+    if let Ok(content) = fs::read_to_string(PID_FILE) {
+        if let Ok(pid) = content.trim().parse::<i32>() {
+            return unsafe { libc::kill(pid, 0) == 0 };
+        }
     }
-    if let Ok(out) = Command::new("hyprctl").arg("layers").output() {
-        let text = String::from_utf8_lossy(&out.stdout);
-        text.contains("1080 660") || text.contains("swal_files")
-    } else {
-        false
-    }
+    false
 }
 
 pub fn close_gui() {
-    let _ = Command::new("eww").args(["close", "swal_files"]).status();
-    let _ = Command::new("eww").args(["close", "swal_files_maximized"]).status();
-    let _ = fs::remove_file(VISIBLE_FLAG);
+    // Zero-Eww: signal the live --gui process to exit; it cleans its own files.
+    if let Ok(content) = fs::read_to_string(PID_FILE) {
+        if let Ok(pid) = content.trim().parse::<i32>() {
+            unsafe {
+                libc::kill(pid, libc::SIGTERM);
+            }
+        }
+    }
+    fs::remove_file(VISIBLE_FLAG).ok();
     remove_pid_file();
 }
 
@@ -443,25 +449,8 @@ pub fn handle_command(session: &mut SessionState, args: &[String]) -> Result<Opt
         "toggle-maximize" | "toggle_maximize" | "maximize" => {
             session.is_maximized = !session.is_maximized;
             state_changed = true;
-
-            let active_win = Command::new("eww").arg("active-windows").output();
-            let is_open = if let Ok(out) = active_win {
-                let text = String::from_utf8_lossy(&out.stdout);
-                text.contains("swal_files")
-            } else {
-                false
-            };
-
-            if is_open {
-                let _ = Command::new("eww").args(["close", "swal_files"]).status();
-                let _ = Command::new("eww").args(["close", "swal_files_maximized"]).status();
-                let next_win = if session.is_maximized {
-                    "swal_files_maximized"
-                } else {
-                    "swal_files"
-                };
-                let _ = Command::new("eww").args(["open", next_win]).status();
-            }
+            // Zero-Eww: the live --gui process re-reads session on SIGUSR1
+            // (window state is persisted by save_session below). No eww calls.
         }
         "tab-new" | "tab_new" => {
             let home = home_path_string();
@@ -560,8 +549,12 @@ pub fn handle_command(session: &mut SessionState, args: &[String]) -> Result<Opt
                             state_changed = true;
                         }
                         "quit" | "q" => {
-                            let _ = Command::new("eww").args(["close", "swal_files"]).status();
-                            let _ = Command::new("eww").args(["close", "swal_files_maximized"]).status();
+                            // Zero-Eww: signal the live --gui process to exit.
+                            if let Ok(content) = fs::read_to_string(PID_FILE) {
+                                if let Ok(pid) = content.trim().parse::<i32>() {
+                                    unsafe { libc::kill(pid, libc::SIGTERM); }
+                                }
+                            }
                             // Clean up PID file to prevent zombie detection
                             remove_pid_file();
                             return Ok(None);

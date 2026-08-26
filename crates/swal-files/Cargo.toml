@@ -18,6 +18,7 @@ swal-a2ui-engine = { path = "../swal-a2ui-engine" }
 tar = "0.4"
 flate2 = "1.0"
 zip = { version = "0.6", default-features = false, features = ["deflate"] }
+crossterm = "0.28"
 
 
 

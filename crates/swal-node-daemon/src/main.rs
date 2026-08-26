@@ -176,16 +176,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     surface: NativeSurfaceKind::SwalFiles,
                                     command: "open_gui".to_string(),
                                 });
-                                // Detached spawn: the daemon must NOT become the
-                                // parent of swal-files, or it accumulates zombie
-                                // children (swal-files outlives the keypress and
-                                // the daemon never waitpid()s it).
+                                // Zero-Eww: launch the TUI GUI inside a floating
+                                // ghostty window so it's actually visible. The
+                                // --gui process registers its PID for toggling.
                                 std::thread::spawn(move || {
-                                    use std::os::unix::process::CommandExt;
-                                    let _ = std::process::Command::new(swal_files_bin())
-                                        .arg("--gui")
-                                        .process_group(0)
-                                        .spawn();
+                                   let _ = std::process::Command::new("ghostty")
+                                       .args([
+                                           "--class=swal-files",
+                                           "-e",
+                                           swal_files_bin().to_string_lossy().as_ref(),
+                                           "--gui",
+                                       ])
+                                       .spawn();
                                 });
                                 let _ = stream.write_all(b"ok\n").await;
                             }
