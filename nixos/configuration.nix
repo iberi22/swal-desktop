@@ -2,7 +2,7 @@
 
 let
   swal-config-menu = pkgs.writeShellScriptBin "swal-config-menu" ''
-    export PATH=${lib.makeBinPath (with pkgs; [ rofi libnotify hyprland niri eww findutils swww hyprpaper ghostty kitty curl jq procps systemd utillinux coreutils bash ])}:$PATH
+    export PATH=${lib.makeBinPath (with pkgs; [ rofi libnotify hyprland niri findutils swww hyprpaper ghostty kitty curl jq procps systemd utillinux coreutils bash ])}:$PATH
     exec ${pkgs.bash}/bin/bash ${../scripts/swal-config-menu.sh} "$@"
   '';
   swal-session = pkgs.writeShellScriptBin "swal-session" ''
@@ -224,7 +224,7 @@ in
     wl-clipboard
     wlogout
     swww
-    eww
+    # eww  # Zero-Eww: disabled — native Rust shell replaces it (restore if rollback needed)
     swal-config-menu
     swal-session
 

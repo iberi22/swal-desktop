@@ -154,23 +154,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                         match cmd.as_str() {
                             "toggle-dashboard" | "toggle_dashboard" => {
+                                // Zero-Eww: native-only dispatch. The TelemetryBar
+                                // surface (render-pipeline layer shell) handles the
+                                // toggle via its IPC router — no eww fallback.
                                 let _ = supervisor_ctl.broadcast_event(ShellEvent::Command {
                                     surface: NativeSurfaceKind::TelemetryBar,
                                     command: "toggle_dashboard".to_string(),
                                 });
-                                let _ = std::process::Command::new(paths::eww_scripts_dir().join("toggle_dashboard.sh"))
-                                    .arg("toggle")
-                                    .status();
                                 let _ = stream.write_all(b"ok\n").await;
                             }
                             "close-all" | "close_all" => {
+                                // Zero-Eww: native-only close via surface router.
                                 let _ = supervisor_ctl.broadcast_event(ShellEvent::Command {
                                     surface: NativeSurfaceKind::TelemetryBar,
                                     command: "close_all".to_string(),
                                 });
-                                let _ = std::process::Command::new(paths::eww_scripts_dir().join("toggle_dashboard.sh"))
-                                    .arg("close")
-                                    .status();
                                 let _ = stream.write_all(b"ok\n").await;
                             }
                             "open-files" | "files" => {
@@ -178,7 +176,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     surface: NativeSurfaceKind::SwalFiles,
                                     command: "open_gui".to_string(),
                                 });
-                                let _ = std::process::Command::new(swal_files_bin()).spawn();
+                                // Detached spawn: the daemon must NOT become the
+                                // parent of swal-files, or it accumulates zombie
+                                // children (swal-files outlives the keypress and
+                                // the daemon never waitpid()s it).
+                                std::thread::spawn(move || {
+                                    use std::os::unix::process::CommandExt;
+                                    let _ = std::process::Command::new(swal_files_bin())
+                                        .arg("--gui")
+                                        .process_group(0)
+                                        .spawn();
+                                });
                                 let _ = stream.write_all(b"ok\n").await;
                             }
                             "close-files" | "close_files" => {
@@ -189,13 +197,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 let _ = stream.write_all(b"ok\n").await;
                             }
                             "toggle-a2ui" | "toggle-agent-monitor" | "a2ui" => {
+                                // Zero-Eww: A2UI overlay toggled natively by the
+                                // TelemetryBar surface renderer.
                                 let _ = supervisor_ctl.broadcast_event(ShellEvent::Command {
                                     surface: NativeSurfaceKind::TelemetryBar,
                                     command: "toggle_a2ui".to_string(),
                                 });
-                                let _ = std::process::Command::new(paths::eww_scripts_dir().join("toggle_dashboard.sh"))
-                                    .arg("toggle")
-                                    .status();
                                 let _ = stream.write_all(b"ok\n").await;
                             }
                             "orb-thinking" => {
@@ -213,12 +220,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 let _ = stream.write_all(b"ok\n").await;
                             }
                             "toggle-orb-hud" | "toggle_orb_hud" | "toggle-orb" | "orb" => {
+                                // Zero-Eww: the native swal-orb surface (HermesOrb)
+                                // consumes toggle_hud directly from its socket feed.
                                 let _ = supervisor_ctl.broadcast_event(ShellEvent::Command {
                                     surface: NativeSurfaceKind::HermesOrb,
                                     command: "toggle_hud".to_string(),
                                 });
-                                let _ = std::process::Command::new(paths::eww_scripts_dir().join("toggle_orb_hud.sh"))
-                                    .spawn();
                                 let _ = stream.write_all(b"ok\n").await;
                             }
                             "orb-speaking" => {
@@ -288,19 +295,22 @@ fn handle_client_command(args: &[String]) -> Result<(), Box<dyn std::error::Erro
             eprintln!("⚠ SWAL Node Daemon not running on {}. Running fallback handler for: {}", ctl_socket_path().display(), cmd);
             match cmd.as_str() {
                 "toggle-dashboard" | "toggle_dashboard" => {
-                    // Fallback to toggle_dashboard.sh during hybrid phase
-                    let _ = std::process::Command::new(paths::eww_scripts_dir().join("toggle_dashboard.sh"))
-                        .arg("toggle")
-                        .status();
+                    // Zero-Eww: no dashboard without the daemon. Hint the user.
+                    eprintln!("  → Start it with: swal-node-daemon --daemon &");
                 }
                 "open-files" | "files" => {
                     let _ = std::process::Command::new("swal-files").status();
                 }
                 "close-files" | "close_files" => {
-                    let _ = std::process::Command::new("eww")
-                        .args(["close", "swal_files"]).status();
-                    let _ = std::process::Command::new("eww")
-                        .args(["close", "swal_files_maximized"]).status();
+                    // Zero-Eww: swal-files is a native window; close via its PID file.
+                    let pid_file = std::env::var("XDG_RUNTIME_DIR")
+                        .map(|d| std::path::PathBuf::from(d).join("swal-files.pid"))
+                        .unwrap_or_else(|_| std::path::PathBuf::from("/tmp/swal-files.pid"));
+                    if let Ok(content) = std::fs::read_to_string(&pid_file) {
+                        if let Ok(pid) = content.trim().parse::<i32>() {
+                            unsafe { libc::kill(pid, libc::SIGTERM); }
+                        }
+                    }
                 }
                 "toggle-orb-hud" | "toggle_orb_hud" => {
                     let _ = std::process::Command::new("swal-vision").spawn();

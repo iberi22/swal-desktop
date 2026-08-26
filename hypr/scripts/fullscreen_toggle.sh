@@ -1,13 +1,9 @@
 #!/usr/bin/env bash
 # ⚡ SWAL Smart Fullscreen / Maximize Toggle
-# Supports native Hyprland windows, SWAL Files and SWAL QuickLook Editor
+# Zero-Eww: native swal-files handles its own maximize; everything else is Hyprland fullscreen.
 
-ACTIVE_EWW=$(eww active-windows 2>/dev/null)
-
-if echo "$ACTIVE_EWW" | grep -qE "swal_files|swal_files_maximized"; then
-    swal-files toggle-maximize
-elif echo "$ACTIVE_EWW" | grep -q "swal_editor"; then
-    eww close swal_editor
+if pgrep -x swal-files >/dev/null 2>&1; then
+    swal-files toggle-maximize 2>/dev/null || hyprctl dispatch fullscreen 0
 else
     hyprctl dispatch fullscreen 0
 fi

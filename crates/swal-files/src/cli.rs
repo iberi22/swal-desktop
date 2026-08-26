@@ -45,48 +45,11 @@ fn remove_pid_file() {
     let _ = fs::remove_file(PID_FILE);
 }
 
-/// Check if EWW daemon is responsive via IPC ping with a 1-second timeout
+/// Check if EWW daemon is responsive via IPC ping with a 1-second timeout.
+/// Zero-Eww: EWW is no longer part of the shell — this is a no-op kept only
+/// so the GUI launch path stays identical. Never starts eww again.
 fn eww_daemon_alive() -> bool {
-    use std::time::{Duration, Instant};
-
-    // Spawn eww ping and wait with timeout
-    let child = Command::new("eww").arg("ping").spawn();
-    match child {
-        Ok(mut c) => {
-            let deadline = Instant::now() + Duration::from_millis(1000);
-            loop {
-                match c.try_wait() {
-                    Ok(Some(status)) => return status.success(),
-                    Ok(None) => {
-                        if Instant::now() > deadline {
-                            let _ = c.kill();
-                            eprintln!("⚠ EWW daemon ping timed out — starting daemon...");
-                            start_eww_daemon();
-                            return true;
-                        }
-                        std::thread::sleep(Duration::from_millis(50));
-                    }
-                    Err(_) => {
-                        eprintln!("⚠ EWW daemon not responding — starting daemon...");
-                        start_eww_daemon();
-                        return true;
-                    }
-                }
-            }
-        }
-        Err(_) => {
-            eprintln!("⚠ EWW daemon not found — starting daemon...");
-            start_eww_daemon();
-            true
-        }
-    }
-}
-
-/// Start EWW daemon in background (non-blocking)
-fn start_eww_daemon() {
-    let _ = Command::new("eww").arg("daemon").spawn();
-    // Brief pause to let daemon bind its socket
-    std::thread::sleep(std::time::Duration::from_millis(350));
+    false
 }
 
 /// Send notification (works on Linux with notify-send, silent on other platforms)
@@ -222,14 +185,10 @@ pub fn open_gui(target_path: Option<&str>) {
         let payload = build_gui_payload(&session);
         notify_eww_update(&payload);
 
-        let target_win = if session.is_maximized {
-            "swal_files_maximized"
-        } else {
-            "swal_files"
-        };
-        // Use spawn() — NOT status() — so the CLI returns immediately
-        // without blocking until the EWW window is closed.
-        let _ = Command::new("eww").args(["open", target_win]).spawn();
+        // Zero-Eww: the native GPU window is swal-files itself (render-pipeline
+        // layer shell). `swal-files --gui` re-execs in window mode and detaches.
+        let exe = std::env::current_exe().unwrap_or_else(|_| PathBuf::from("swal-files"));
+        let _ = Command::new(exe).arg("--gui").spawn();
     }
 }
 
