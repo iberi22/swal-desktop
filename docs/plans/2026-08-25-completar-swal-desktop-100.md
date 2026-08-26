@@ -746,9 +746,11 @@ Fase 0 (compila) ──► Fase 1 (seguro) ──► Fase 2 (portable) ──►
 | Fecha | Fase | Acción | Estado |
 |---|---|---|---|
 | 2026-08-25 | Audit | Diagnóstico completo (compilación rota E0063+linking, 32 paths, shell=True×4, sin CI) | ✅ |
-| — | Fase 0 | Desbloquear compilación | ⏳ |
-| — | Fase 1 | Seguridad P0 | ⏳ |
-| — | Fase 2 | Portabilidad | ⏳ |
-| — | Fase 3 | Zero-EWW | ⏳ |
-| — | Fase 4 | Higiene | ⏳ |
-| — | Fase 5 | Publicar | ⏳ |
+| 2026-08-25 | Fase 0 | Task 0.1+0.2: E0063 ×3 corregidos | ✅ |
+| 2026-08-25 | Fase 0 | Task 0.3: linking gcc = entorno NixOS; fix via RUSTFLAGS `-L/-B /nix/store/…-gcc-prefix/lib`. NOTA: persistir en `.cargo/config.toml` o nix devshell para CI | ✅ |
+| 2026-08-25 | Fase 0 | Bonus: flaky test `test_mode_auto_detection_standalone_window` (carrera SWAL_HEADLESS entre tests paralelos) — serializado con mutex compartido. 76/76 swal-files lib verde ×2 pasadas; workspace completo exit 0 | ✅ |
+| — | Fase 1 | Seguridad P0 (shell=True, sockets XDG) | ⏳ |
+| — | Fase 2 | Portabilidad (32 paths /home/belal, nix module, installer) | ⏳ |
+| — | Fase 3 | Zero-EWW (toggles nativos, settings CLI, parity checklist) | ⏳ |
+| — | Fase 4 | Higiene (warnings → deny, unwraps) | ⏳ |
+| — | Fase 5 | Publicar (CI, gitleaks, push + tag v1.3.0) | ⏳ |
