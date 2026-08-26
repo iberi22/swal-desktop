@@ -1,5 +1,6 @@
 pub mod agent_config_ipc;
 pub mod desktop_bridge;
+pub mod discovery;
 pub mod paths;
 pub mod doctor_engine;
 pub mod hermes_stream;

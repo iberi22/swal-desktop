@@ -8,6 +8,7 @@ use crate::git::{detect_git_status_for_dir, GitRepoSummary};
 use crate::preview::{generate_preview_for_path, sanitize_preview_text, PreviewState};
 use crate::scanner::{group_entries, scan_directory, GroupBy, ScanOptions, SortBy};
 use crate::session::SessionState;
+use crate::storage::scan_mounted_drives;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BreadcrumbItem {
@@ -99,6 +100,20 @@ pub struct GuiPayload {
     pub filter_buttons: Vec<FilterButtonPayload>,
     /// User-saved filter presets for the quick-access preset menu
     pub saved_filter_presets: Vec<SavedFilterPresetPayload>,
+    /// Live disk usage for sidebar (populated from /proc/mounts + statvfs)
+    pub disks: Vec<DiskPayload>,
+}
+
+/// Compact disk info for EWW sidebar rendering
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DiskPayload {
+    pub mount: String,
+    pub label: String,
+    pub icon: String,
+    pub used: String,
+    pub total: String,
+    pub used_pct: f32,
+    pub is_removable: bool,
 }
 
 
@@ -177,7 +192,28 @@ pub fn build_gui_payload(session: &SessionState) -> GuiPayload {
         group_by,
     };
 
-    let scanned_entries = scan_directory(&current_path, &scan_opts).unwrap_or_default();
+    let mut scanned_entries = scan_directory(&current_path, &scan_opts).unwrap_or_default();
+
+    // Defensive fallback: if a non-"all" filter yields 0 results on a non-empty dir,
+    // the session state is stale/corrupted. Auto-reset to "all" to avoid black panels.
+    let effective_filter = if scanned_entries.is_empty()
+        && session.filter_type != "all"
+        && current_path.is_dir()
+    {
+        let fallback_opts = ScanOptions {
+            show_hidden: session.show_hidden,
+            sort_by,
+            ascending,
+            filter_query: None,
+            filter_category: "all".to_string(),
+            group_by,
+        };
+        scanned_entries = scan_directory(&current_path, &fallback_opts).unwrap_or_default();
+        "all".to_string()
+    } else {
+        session.filter_type.clone()
+    };
+
     let grouped = group_entries(&scanned_entries, group_by);
 
     let selected_path_str = session.selected_path.as_deref().unwrap_or("");
@@ -291,6 +327,33 @@ pub fn build_gui_payload(session: &SessionState) -> GuiPayload {
         }
     }).collect();
 
+    // Build disk payload for sidebar
+    let disks: Vec<DiskPayload> = scan_mounted_drives()
+        .into_iter()
+        .take(6)
+        .map(|d| {
+            let icon = if d.is_removable { "󱊲".to_string() } else { "󰋊".to_string() };
+            let label = if d.mount_point == "/" {
+                "Root (/)".to_string()
+            } else {
+                d.mount_point
+                    .rsplit('/')
+                    .next()
+                    .unwrap_or(&d.mount_point)
+                    .to_string()
+            };
+            DiskPayload {
+                mount: d.mount_point.clone(),
+                label,
+                icon,
+                used: d.formatted_used(),
+                total: d.formatted_total(),
+                used_pct: d.used_percentage,
+                is_removable: d.is_removable,
+            }
+        })
+        .collect();
+
     GuiPayload {
         current_path: current_path.to_string_lossy().to_string(),
         parent_path,
@@ -304,7 +367,7 @@ pub fn build_gui_payload(session: &SessionState) -> GuiPayload {
         sort_by: session.sort_by.clone(),
         sort_order: session.sort_order.clone(),
         group_by: session.group_by.clone(),
-        filter_type: session.filter_type.clone(),
+        filter_type: effective_filter,
         preview_mode: session.preview_mode.clone(),
         is_maximized: session.is_maximized,
         is_current_pinned,
@@ -317,6 +380,7 @@ pub fn build_gui_payload(session: &SessionState) -> GuiPayload {
         preview,
         filter_buttons,
         saved_filter_presets: saved_filter_presets_payload,
+        disks,
     }
 }
 

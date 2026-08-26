@@ -19,76 +19,9 @@ fn home_path_string() -> String {
         .to_string()
 }
 
-/// Check if an existing swal-files instance is running via PID file
-fn is_instance_running() -> bool {
-    if let Ok(content) = fs::read_to_string(PID_FILE) {
-        if let Ok(pid) = content.trim().parse::<u32>() {
-            // Check if process is still alive (kill signal 0)
-            let alive = unsafe { libc::kill(pid as i32, 0) == 0 };
-            if alive {
-                return true;
-            }
-            // Stale PID file — clean it up
-            let _ = fs::remove_file(PID_FILE);
-        }
-    }
-    false
-}
-
-/// Write our PID to the lock file
-fn write_pid_file() {
-    let _ = fs::write(PID_FILE, std::process::id().to_string());
-}
-
 /// Remove PID file on clean exit
 fn remove_pid_file() {
     let _ = fs::remove_file(PID_FILE);
-}
-
-/// Check if EWW daemon is responsive via IPC ping with a 1-second timeout.
-/// Zero-Eww: EWW is no longer part of the shell — this is a no-op kept only
-/// so the GUI launch path stays identical. Never starts eww again.
-fn eww_daemon_alive() -> bool {
-    false
-}
-
-/// Send notification (works on Linux with notify-send, silent on other platforms)
-fn send_notification(summary: &str, body: &str) {
-    #[cfg(target_os = "linux")]
-    {
-        let _ = Command::new("notify-send")
-            .args([
-                "--icon=folder-open",
-                "--app-name=SWAL Files",
-                "-t",
-                "2000",
-                summary,
-                body,
-            ])
-            .status();
-    }
-}
-
-/// Clean up dead layer shells if their PID no longer exists in /proc
-fn kill_orphan_layer_shells() {
-    #[cfg(target_os = "linux")]
-    {
-        if let Ok(out) = Command::new("hyprctl").arg("layers").output() {
-            let text = String::from_utf8_lossy(&out.stdout);
-            for line in text.lines() {
-                if line.contains("gtk-layer-shell") && line.contains("pid:") {
-                    if let Some(pid_str) = line.split("pid:").nth(1) {
-                        if let Ok(pid) = pid_str.trim().parse::<u32>() {
-                            let proc_path = format!("/proc/{}", pid);
-                            if !Path::new(&proc_path).exists() {
-                                eprintln!("🧹 Layer shell PID {} is dead, cleaning up", pid);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
 }
 
 const VISIBLE_FLAG: &str = "/tmp/swal_files_visible.flag";
@@ -119,84 +52,62 @@ pub fn close_gui() {
 }
 
 pub fn open_gui(target_path: Option<&str>) {
-    // If opening without arguments and window is already open, toggle close it
-    if target_path.is_none() && is_window_open() {
-        close_gui();
-        return;
-    }
+    // EWW-based toggle: open or close the swal_files EWW overlay.
+    // The native Wayland renderer (wl_shm) is still WIP — EWW is the stable path.
 
-    let mut session = load_session();
-
-    // Handle target path — add as new tab or switch to existing tab
+    // If a target path is given, navigate there first then open
     if let Some(target) = target_path {
         let p = PathBuf::from(target);
-        if let Ok(canon) = fs::canonicalize(&p) {
-            let path_str = canon.to_string_lossy().to_string();
-            let title = canon
-                .file_name()
-                .map(|n| n.to_string_lossy().to_string())
-                .unwrap_or_else(|| "/".to_string());
-
-            // Check if this path already has a tab
-            let mut found = false;
-            for t in session.tabs.iter_mut() {
-                if t.path == path_str {
-                    session.active_tab_id = t.id;
-                    found = true;
-                    break;
-                }
-            }
-
+        if p.exists() {
+            let path_str = p.to_string_lossy().to_string();
+            let mut session = load_session();
+            let found = session.tabs.iter_mut().any(|t| {
+                if t.path == path_str { true } else { false }
+            });
             if !found {
                 let next_id = session.tabs.iter().map(|t| t.id).max().unwrap_or(0) + 1;
-                session.tabs.push(TabState {
-                    id: next_id,
-                    title,
-                    path: path_str,
-                    active: true,
-                });
+                let title = p.file_name()
+                    .map(|n| n.to_string_lossy().to_string())
+                    .unwrap_or_else(|| "/".to_string());
+                session.tabs.push(TabState { id: next_id, title, path: path_str, active: true });
                 session.active_tab_id = next_id;
             }
+            save_session(&session);
         }
     }
 
-    save_session(&session);
-
-    // Kill any orphan layer shells from previous daemon crashes
-    kill_orphan_layer_shells();
-
-    // Ensure EWW daemon is alive before doing anything
-    eww_daemon_alive();
-
-    // Check if another swal-files instance is already managing the window
-    let already_running = is_instance_running();
-
-    if already_running && is_window_open() {
-        // Another instance is handling it — just update data
-        if let Some(target) = target_path {
-            let display = Path::new(target)
-                .file_name()
-                .map(|n| n.to_string_lossy().to_string())
-                .unwrap_or_else(|| target.to_string());
-            send_notification("📂 SWAL Files", &format!("Abriendo en nueva pestaña: {}", display));
-        }
-        let payload = build_gui_payload(&session);
-        notify_eww_update(&payload);
-    } else {
-        // We are the primary instance — claim the PID file and open the window
-        write_pid_file();
-        let _ = fs::write(VISIBLE_FLAG, "1");
-
-        // Flush data to EWW before the window opens for instant first-frame render
-        let payload = build_gui_payload(&session);
-        notify_eww_update(&payload);
-
-        // Zero-Eww: the native GPU window is swal-files itself (render-pipeline
-        // layer shell). `swal-files --gui` re-execs in window mode and detaches.
-        let exe = std::env::current_exe().unwrap_or_else(|_| PathBuf::from("swal-files"));
-        let _ = Command::new(exe).arg("--gui").spawn();
-    }
+    launch_gui_window();
 }
+
+/// Toggles the EWW swal_files overlay open/closed.
+/// EWW is the stable render path while the native Wayland renderer is WIP.
+fn launch_gui_window() {
+    let _ = Command::new("eww")
+        .args(["open", "--toggle", "swal_files"])
+        .spawn();
+}
+
+
+/// True if the live --gui process has NO terminal window attached
+/// (ghostty closed and reparented it to init, PPID == 1).
+fn gui_process_is_orphaned() -> bool {
+    let pid = fs::read_to_string(PID_FILE)
+        .ok()
+        .and_then(|c| c.trim().parse::<i32>().ok());
+    let Some(pid) = pid else {
+        return false;
+    };
+    // Parse PPID from /proc/<pid>/stat (field 4, after comm in parens)
+    let stat = fs::read_to_string(format!("/proc/{}/stat", pid)).unwrap_or_default();
+    let rest = stat.rsplit(')').next().unwrap_or("");
+    let fields: Vec<&str> = rest.split_whitespace().collect();
+    fields
+        .get(1) // after ")": state is 0, ppid is 1
+        .and_then(|ppid| ppid.parse::<i32>().ok())
+        .map(|ppid| ppid == 1)
+        .unwrap_or(false)
+}
+
 
 pub fn handle_command(session: &mut SessionState, args: &[String]) -> Result<Option<String>, String> {
     if args.len() < 2 {
@@ -563,6 +474,24 @@ pub fn handle_command(session: &mut SessionState, args: &[String]) -> Result<Opt
                     },
                 }
             }
+        }
+        "reset-session" | "reset" => {
+            // Emergency reset: navigate home, clear all filters/groups/search
+            let home = home_path_string();
+            let home_title = "Home".to_string();
+            for t in session.tabs.iter_mut() {
+                if t.id == session.active_tab_id {
+                    t.path = home.clone();
+                    t.title = home_title.clone();
+                }
+            }
+            session.filter_type = "all".to_string();
+            session.group_by = "none".to_string();
+            session.search_query.clear();
+            session.selected_path = None;
+            session.path_filter_memory.clear();
+            eprintln!("✓ Sesión reseteada → Home, filtro: all, grupo: none");
+            state_changed = true;
         }
         _ => {
             open_gui(Some(cmd));

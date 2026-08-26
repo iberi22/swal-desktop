@@ -384,6 +384,120 @@ impl SettingsWindowBuilder {
     }
 
     fn build_xavier_panel(settings: &SwalSystemSettings) -> ComponentNode {
+        // Daemons locales — auto-discovery section (OLA-S3.15)
+        let daemons_locales_section = ComponentNode::Card {
+            title: Some("🔍 Daemons locales".to_string()),
+            elevation: Some("flat".to_string()),
+            children: vec![
+                ComponentNode::Button {
+                    label: "Detectar".to_string(),
+                    action: "daemons.discover".to_string(),
+                    variant: Some("primary".to_string()),
+                },
+                ComponentNode::Grid {
+                    columns: 4,
+                    gap: 8,
+                    children: vec![
+                        ComponentNode::MetricPill {
+                            label: "Servicio".to_string(),
+                            value: "xavier-api".to_string(),
+                            unit: None,
+                            trend: None,
+                            color: Some("#06b6d4".to_string()),
+                        },
+                        ComponentNode::MetricPill {
+                            label: "URL".to_string(),
+                            value: "http://127.0.0.1:8006/health".to_string(),
+                            unit: None,
+                            trend: None,
+                            color: Some("#6b7280".to_string()),
+                        },
+                        ComponentNode::StatusBadge {
+                            status: "pending".to_string(),
+                            label: "● pending".to_string(),
+                            color: Some("#f59e0b".to_string()),
+                        },
+                        ComponentNode::MetricPill {
+                            label: "Latencia".to_string(),
+                            value: "-- ms".to_string(),
+                            unit: None,
+                            trend: None,
+                            color: Some("#6b7280".to_string()),
+                        },
+                    ],
+                },
+                ComponentNode::Grid {
+                    columns: 4,
+                    gap: 8,
+                    children: vec![
+                        ComponentNode::MetricPill {
+                            label: "Servicio".to_string(),
+                            value: "oauth-proxy".to_string(),
+                            unit: None,
+                            trend: None,
+                            color: Some("#06b6d4".to_string()),
+                        },
+                        ComponentNode::MetricPill {
+                            label: "URL".to_string(),
+                            value: "http://127.0.0.1:8200/health".to_string(),
+                            unit: None,
+                            trend: None,
+                            color: Some("#6b7280".to_string()),
+                        },
+                        ComponentNode::StatusBadge {
+                            status: "pending".to_string(),
+                            label: "● pending".to_string(),
+                            color: Some("#f59e0b".to_string()),
+                        },
+                        ComponentNode::MetricPill {
+                            label: "Latencia".to_string(),
+                            value: "-- ms".to_string(),
+                            unit: None,
+                            trend: None,
+                            color: Some("#6b7280".to_string()),
+                        },
+                    ],
+                },
+                ComponentNode::Grid {
+                    columns: 4,
+                    gap: 8,
+                    children: vec![
+                        ComponentNode::MetricPill {
+                            label: "Servicio".to_string(),
+                            value: "xavier-mcp".to_string(),
+                            unit: None,
+                            trend: None,
+                            color: Some("#06b6d4".to_string()),
+                        },
+                        ComponentNode::MetricPill {
+                            label: "URL".to_string(),
+                            value: "http://127.0.0.1:8100".to_string(),
+                            unit: None,
+                            trend: None,
+                            color: Some("#6b7280".to_string()),
+                        },
+                        ComponentNode::StatusBadge {
+                            status: "pending".to_string(),
+                            label: "● pending".to_string(),
+                            color: Some("#f59e0b".to_string()),
+                        },
+                        ComponentNode::MetricPill {
+                            label: "Latencia".to_string(),
+                            value: "-- ms".to_string(),
+                            unit: None,
+                            trend: None,
+                            color: Some("#6b7280".to_string()),
+                        },
+                    ],
+                },
+                ComponentNode::Button {
+                    label: "Guardar endpoints elegidos".to_string(),
+                    action: "daemons.persist_endpoints".to_string(),
+                    variant: Some("subtle".to_string()),
+                },
+            ],
+        };
+
         ComponentNode::Card {
             title: Some("🧠 Xavier Cognitive Memory Core & Doctor Diagnostic".to_string()),
             elevation: Some("flat".to_string()),
@@ -407,6 +521,7 @@ impl SettingsWindowBuilder {
                     action: "xavier.run_doctor".to_string(),
                     variant: Some("primary".to_string()),
                 },
+                daemons_locales_section,
             ],
         }
     }

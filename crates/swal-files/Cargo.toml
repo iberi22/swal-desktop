@@ -19,6 +19,10 @@ tar = "0.4"
 flate2 = "1.0"
 zip = { version = "0.6", default-features = false, features = ["deflate"] }
 crossterm = "0.28"
+wayland-client = "0.31.14"
+xkeysym = "0.2.1"
+smithay-client-toolkit = { version = "0.19.2", default-features = false, features = ["calloop"] }
+ab_glyph = "0.2.32"
 
 
 

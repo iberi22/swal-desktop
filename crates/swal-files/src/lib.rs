@@ -14,6 +14,7 @@ pub mod git;
 pub mod gui;
 pub mod memory_graph;
 pub mod native_window;
+pub mod native_window_app;
 pub mod omnibar;
 pub mod platform;
 pub mod plugin_system;
