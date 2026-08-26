@@ -753,6 +753,12 @@ Fase 0 (compila) ──► Fase 1 (seguro) ──► Fase 2 (portable) ──►
 | 2026-08-25 | Fase 1 | Task 1.1: shell=True ×4 eliminados en hermes_orb_menu.py + test AST anti-regresión (2/2 ok) | ✅ |
 | 2026-08-25 | Fase 1 | Task 1.2+1.3: ctl+telemetry sockets → \$XDG_RUNTIME_DIR/swal/, dir 0700, socket 0600; libc dep añadida; clientes a2ui/orb con fallback legacy; 18/18 tests bin verde | ✅ |
 | — | Fase 2 | Portabilidad (32 paths /home/belal, nix module, installer) | ⏳ |
+| 2026-08-25 | Fase 2 | Task 2.1: paths.rs canónico (home/config/eww/local-bin) + dirs dep; 3/3 tests lib verde | ✅ |
+| 2026-08-25 | Fase 2 | Task 2.2: 32× /home/belal → dirs::home_dir()/paths helpers en crates/*/src (main.rs, cli/gui/config/session/preview/omnibar, gesture_ipc); gate `tests/test_no_hardcoded_paths.sh` creado y verde | ✅ |
+| 2026-08-25 | Fase 2 | Task 2.3: tests → env!("CARGO_MANIFEST_DIR")/dirs/temp; gate extendido a crates/*/tests; 0 hits repo-wide | ✅ |
+| 2026-08-25 | Fase 2 | Task 2.4: swal-node.nix → módulo parametrizado (options.services.swal-node.{enable,user,workspaceDir}, default user=belal, workspaceDir deriva de user); host (configuration.nix) wirea enable+user=bela; `nix-instantiate --parse` OK. DEV: flake.nix no requirió cambios (user pasa vía configuration.nix, que es donde vive el usuario primario) | ✅ |
+| 2026-08-25 | Fase 2 | Task 2.5: install.sh — clone-if-missing, --dry-run (solo imprime), integración NixOS opt-in tras --nixos (instrucciones manuales si no); `bash -n` + smoke `--dry-run` OK | ✅ |
 | — | Fase 3 | Zero-EWW (toggles nativos, settings CLI, parity checklist) | ⏳ |
-| — | Fase 4 | Higiene (warnings → deny, unwraps) | ⏳ |
+| 2026-08-25 | Fase 4 | Task 4.1: 0 warnings `cargo check --workspace --all-targets` (unused imports/vars en a2ui-engine/ambient-orb/daemon-tests, EWWSOCK+cleanup_orphan_windows muertos, SearchUpdated allow(dead_code)); [workspace.lints.rust] warnings="deny" añadido (no rompe ningun crate). NOTA: dead `fn main` settings_cli ya resuelto por Task 3.2 (bin swal-settings, commit 0541cb8) | ✅ |
+| 2026-08-25 | Fase 4 | Task 4.2: DIFFERIDO a propósito (refactor unwrap = demasiado grande para este batch; gate gradual clippy::unwrap_used en top-5). Pendiente para siguiente wave | ⏳ |
 | — | Fase 5 | Publicar (CI, gitleaks, push + tag v1.3.0) | ⏳ |
