@@ -98,6 +98,14 @@ in
   services.dbus.enable = true;
   services.udisks2.enable = true;
 
+  # ─── SWAL Node (Xavier + Edge-Mesh) ──────────────────────────────────────
+  # Parametrized module (nixos/swal-node.nix): user = primary OS user (bela),
+  # workspaceDir defaults to /home/<user>/proyectosSWAL.
+  services.swal-node = {
+    enable = true;
+    user = "bela";
+  };
+
   # ─── Virtualization ────────────────────────────────────────────────────────
   # virtualisation.docker.enable = true;
   # Deshabilitado en VM para evitar problemas
