@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
 use crate::git::detect_git_status_for_dir;
-use crate::session::EDITOR_STATE_FILE;
+use crate::session::editor_state_file_path;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PreviewState {
@@ -28,7 +28,7 @@ pub struct PreviewState {
 impl Default for PreviewState {
     fn default() -> Self {
         Self {
-            path: "/home/belal".to_string(),
+            path: dirs::home_dir().unwrap_or_default().to_string_lossy().to_string(),
             file_name: "README.md".to_string(),
             file_type: "Documento Markdown".to_string(),
             size_formatted: "1.2 KB".to_string(),
@@ -213,7 +213,7 @@ pub fn generate_preview_for_path(target_path: &Path) -> PreviewState {
 }
 
 pub fn load_editor_state() -> PreviewState {
-    load_editor_state_from_path(Path::new(EDITOR_STATE_FILE))
+    load_editor_state_from_path(&editor_state_file_path())
 }
 
 pub fn load_editor_state_from_path(path: &Path) -> PreviewState {
@@ -226,7 +226,7 @@ pub fn load_editor_state_from_path(path: &Path) -> PreviewState {
 }
 
 pub fn save_editor_state(state: &PreviewState) {
-    save_editor_state_to_path(state, Path::new(EDITOR_STATE_FILE));
+    save_editor_state_to_path(state, &editor_state_file_path());
 }
 
 pub fn save_editor_state_to_path(state: &PreviewState, path: &Path) {

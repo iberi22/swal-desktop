@@ -1,9 +1,17 @@
 use crate::hand_tracker::{GestureKind, HandState};
 use serde::{Deserialize, Serialize};
-use std::path::Path;
+use std::path::PathBuf;
 
 pub const GESTURE_SOCKET: &str = "/tmp/swal_gesture.sock";
-pub const GESTURE_CONFIG_PATH: &str = "/home/belal/.config/swal/gesture.json";
+
+/// Canonical per-user gesture config path (never a personal path):
+/// `$XDG_CONFIG_HOME/swal/gesture.json`, falling back to `~/.config/swal/gesture.json`.
+pub fn gesture_config_path() -> PathBuf {
+    std::env::var("XDG_CONFIG_HOME")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| dirs::home_dir().unwrap_or_default().join(".config"))
+        .join("swal/gesture.json")
+}
 
 /// Configuración global de visión, gestos y detección de presencia
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -62,8 +70,8 @@ impl Default for GestureConfig {
 impl GestureConfig {
     /// Carga la configuración desde `~/.config/swal/gesture.json`.
     pub fn load_or_default() -> Self {
-        let path = Path::new(GESTURE_CONFIG_PATH);
-        if let Ok(content) = std::fs::read_to_string(path) {
+        let path = gesture_config_path();
+        if let Ok(content) = std::fs::read_to_string(&path) {
             serde_json::from_str(&content).unwrap_or_default()
         } else {
             let config = Self::default();
@@ -71,7 +79,7 @@ impl GestureConfig {
                 let _ = std::fs::create_dir_all(parent);
             }
             if let Ok(json) = serde_json::to_string_pretty(&config) {
-                let _ = std::fs::write(path, json);
+                let _ = std::fs::write(&path, json);
             }
             config
         }
@@ -79,7 +87,7 @@ impl GestureConfig {
 
     /// Guarda la configuración actual al disco
     pub fn save(&self) -> std::io::Result<()> {
-        let path = Path::new(GESTURE_CONFIG_PATH);
+        let path = gesture_config_path();
         if let Some(parent) = path.parent() {
             std::fs::create_dir_all(parent)?;
         }

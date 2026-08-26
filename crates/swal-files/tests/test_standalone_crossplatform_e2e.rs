@@ -257,12 +257,12 @@ fn test_cross_platform_path_and_system_folders_matrix() {
     let normalized_win = normalize_cross_platform_path(win_path);
     assert_eq!(normalized_win.to_string_lossy(), "C:/Users/swal/Documents/projects/code.rs");
 
-    let nix_path = "/home/belal/proyectosSWAL/periferia/swal-desktop";
+    let nix_path = env!("CARGO_MANIFEST_DIR");
     let normalized_nix = normalize_cross_platform_path(nix_path);
-    assert_eq!(normalized_nix.to_string_lossy(), "/home/belal/proyectosSWAL/periferia/swal-desktop");
+    assert_eq!(normalized_nix.to_string_lossy(), env!("CARGO_MANIFEST_DIR"));
 
     // 2. Detection of home/documents/drives
-    let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/home/belal"));
+    let home = dirs::home_dir().unwrap_or_default();
     assert!(home.is_absolute());
 
     let drives = scan_mounted_drives();

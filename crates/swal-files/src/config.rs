@@ -78,7 +78,7 @@ fn default_preview_mode() -> String {
 }
 
 fn default_pinned() -> Vec<SidebarPin> {
-    let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/home/belal"));
+    let home = dirs::home_dir().unwrap_or_default();
     vec![
         SidebarPin {
             name: "Home".to_string(),
@@ -108,7 +108,7 @@ fn default_pinned() -> Vec<SidebarPin> {
 }
 
 fn default_workspaces() -> Vec<PathBuf> {
-    let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/home/belal"));
+    let home = dirs::home_dir().unwrap_or_default();
     vec![
         home.join("proyectosSWAL"),
         home.join(".config/swal"),
@@ -147,7 +147,7 @@ impl Default for FileManagerConfig {
 
 impl FileManagerConfig {
     pub fn config_path() -> PathBuf {
-        let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/home/belal"));
+        let home = dirs::home_dir().unwrap_or_default();
         home.join(".config/swal/files/config.json")
     }
 

@@ -90,8 +90,8 @@ fn test_git_status_detection_branches_and_non_repo() {
     assert!(!non_repo.is_git_repo);
     assert_eq!(non_repo.summary, "Sin Git");
 
-    // Existing repository check on current swal-desktop
-    let repo_path = Path::new("/home/belal/proyectosSWAL/periferia/swal-desktop");
+    // Existing repository check on current swal-desktop (repo root via crate manifest dir)
+    let repo_path = Path::new(env!("CARGO_MANIFEST_DIR"));
     if repo_path.exists() {
         let repo_status = detect_git_status_for_dir(repo_path);
         assert!(repo_status.is_git_repo);
@@ -186,7 +186,7 @@ fn test_omnibar_advanced_parsing() {
     assert_eq!(res_root, OmnibarIntent::Navigate(PathBuf::from("/")));
 
     // 5. Tilde expansion '~'
-    let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/home/belal"));
+    let home = dirs::home_dir().unwrap_or_default();
     let res_home = parse_omnibar_input("~", current);
     assert_eq!(res_home, OmnibarIntent::Navigate(home));
 
@@ -382,7 +382,7 @@ fn test_scanner_sorting_and_grouping_matrix() {
 
 #[test]
 fn test_breadcrumbs_and_gui_payload_building() {
-    let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/home/belal"));
+    let home = dirs::home_dir().unwrap_or_default();
 
     // 1. Breadcrumbs for Home
     let bc_home = get_breadcrumbs(&home);

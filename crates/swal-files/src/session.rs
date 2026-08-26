@@ -7,21 +7,28 @@ use std::path::{Path, PathBuf};
 pub use crate::config::{FileManagerConfig, SavedFilterPreset};
 
 pub fn get_session_file_path() -> PathBuf {
-    let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/home/belal"));
+    let home = dirs::home_dir().unwrap_or_default();
     let dir = home.join(".config/swal/files");
     let _ = fs::create_dir_all(&dir);
     dir.join("session.json")
 }
 
 pub fn get_editor_session_file_path() -> PathBuf {
-    let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/home/belal"));
+    let home = dirs::home_dir().unwrap_or_default();
     let dir = home.join(".config/swal/files");
     let _ = fs::create_dir_all(&dir);
     dir.join("editor_session.json")
 }
 
-pub const STATE_FILE: &str = "/home/belal/.config/swal/files/session.json";
-pub const EDITOR_STATE_FILE: &str = "/home/belal/.config/swal/files/editor_session.json";
+/// Portable `~/.config/swal/files/session.json` path (never a personal path).
+pub fn state_file_path() -> PathBuf {
+    get_session_file_path()
+}
+
+/// Portable `~/.config/swal/files/editor_session.json` path.
+pub fn editor_state_file_path() -> PathBuf {
+    get_editor_session_file_path()
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TabState {
@@ -60,7 +67,7 @@ impl Default for SessionState {
     fn default() -> Self {
         let cfg = FileManagerConfig::load();
         let home = dirs::home_dir()
-            .unwrap_or_else(|| PathBuf::from("/home/belal"))
+            .unwrap_or_default()
             .to_string_lossy()
             .to_string();
 
@@ -101,7 +108,7 @@ impl Default for SessionState {
 }
 
 pub fn load_session() -> SessionState {
-    load_session_from_path(Path::new(STATE_FILE))
+    load_session_from_path(&state_file_path())
 }
 
 pub fn load_session_from_path(path: &Path) -> SessionState {
@@ -114,7 +121,7 @@ pub fn load_session_from_path(path: &Path) -> SessionState {
 }
 
 pub fn save_session(session: &SessionState) {
-    save_session_to_path(session, Path::new(STATE_FILE));
+    save_session_to_path(session, &state_file_path());
 }
 
 pub fn save_session_to_path(session: &SessionState, path: &Path) {

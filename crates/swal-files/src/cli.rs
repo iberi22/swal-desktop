@@ -12,6 +12,14 @@ use crate::session::{load_session, save_session, SessionState, TabState};
 const PID_FILE: &str = "/tmp/swal-files.pid";
 const EWWSOCK: &str = "/tmp/eww.sock";
 
+/// Portable home-directory fallback for string contexts (never a personal path).
+fn home_path_string() -> String {
+    dirs::home_dir()
+        .unwrap_or_default()
+        .to_string_lossy()
+        .to_string()
+}
+
 /// Check if an existing swal-files instance is running via PID file
 fn is_instance_running() -> bool {
     if let Ok(content) = fs::read_to_string(PID_FILE) {
@@ -343,7 +351,7 @@ pub fn handle_command(session: &mut SessionState, args: &[String]) -> Result<Opt
         }
         "pin" | "add-pin" | "pin-add" => {
             let mut cfg = FileManagerConfig::load();
-            let active_path = session.tabs.iter().find(|t| t.id == session.active_tab_id).map(|t| t.path.clone()).unwrap_or_else(|| "/home/belal".to_string());
+            let active_path = session.tabs.iter().find(|t| t.id == session.active_tab_id).map(|t| t.path.clone()).unwrap_or_else(home_path_string);
             let target_str = if args.len() > 2 {
                 &args[2]
             } else {
@@ -358,7 +366,7 @@ pub fn handle_command(session: &mut SessionState, args: &[String]) -> Result<Opt
         }
         "unpin" | "remove-pin" | "pin-remove" => {
             let mut cfg = FileManagerConfig::load();
-            let active_path = session.tabs.iter().find(|t| t.id == session.active_tab_id).map(|t| t.path.clone()).unwrap_or_else(|| "/home/belal".to_string());
+            let active_path = session.tabs.iter().find(|t| t.id == session.active_tab_id).map(|t| t.path.clone()).unwrap_or_else(home_path_string);
             let target_str = if args.len() > 2 {
                 &args[2]
             } else {
@@ -371,7 +379,7 @@ pub fn handle_command(session: &mut SessionState, args: &[String]) -> Result<Opt
         }
         "pin-current" | "toggle-pin-current" | "toggle-pin" => {
             let mut cfg = FileManagerConfig::load();
-            let active_path = session.tabs.iter().find(|t| t.id == session.active_tab_id).map(|t| t.path.clone()).unwrap_or_else(|| "/home/belal".to_string());
+            let active_path = session.tabs.iter().find(|t| t.id == session.active_tab_id).map(|t| t.path.clone()).unwrap_or_else(home_path_string);
             let target_str = if args.len() > 2 {
                 &args[2]
             } else {
@@ -525,10 +533,7 @@ pub fn handle_command(session: &mut SessionState, args: &[String]) -> Result<Opt
             }
         }
         "tab-new" | "tab_new" => {
-            let home = dirs::home_dir()
-                .unwrap_or_else(|| PathBuf::from("/home/belal"))
-                .to_string_lossy()
-                .to_string();
+            let home = home_path_string();
             let next_id = session.tabs.iter().map(|t| t.id).max().unwrap_or(0) + 1;
             session.tabs.push(TabState {
                 id: next_id,
@@ -582,7 +587,7 @@ pub fn handle_command(session: &mut SessionState, args: &[String]) -> Result<Opt
                         .iter()
                         .find(|t| t.id == session.active_tab_id)
                         .map(|t| t.path.clone())
-                        .unwrap_or_else(|| "/home/belal".to_string()),
+                        .unwrap_or_else(home_path_string),
                 );
 
                 let parsed = parse_omnibar_input(input, &current);

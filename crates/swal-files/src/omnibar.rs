@@ -31,7 +31,7 @@ pub fn parse_omnibar_input(input: &str, current_dir: &Path) -> OmnibarIntent {
     let candidate = if trimmed.starts_with('/') {
         PathBuf::from(trimmed)
     } else if trimmed.starts_with('~') {
-        let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/home/belal"));
+        let home = dirs::home_dir().unwrap_or_default();
         home.join(trimmed.trim_start_matches("~/").trim_start_matches('~'))
     } else {
         current_dir.join(trimmed)

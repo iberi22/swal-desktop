@@ -103,7 +103,7 @@ pub struct GuiPayload {
 
 
 pub fn get_breadcrumbs(current_path: &Path) -> Vec<BreadcrumbItem> {
-    let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/home/belal"));
+    let home = dirs::home_dir().unwrap_or_default();
     let mut parts = Vec::new();
 
     if current_path == home {
@@ -152,7 +152,7 @@ pub fn get_breadcrumbs(current_path: &Path) -> Vec<BreadcrumbItem> {
 }
 
 pub fn build_gui_payload(session: &SessionState) -> GuiPayload {
-    let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/home/belal"));
+    let home = dirs::home_dir().unwrap_or_default();
     let active_tab = session
         .tabs
         .iter()

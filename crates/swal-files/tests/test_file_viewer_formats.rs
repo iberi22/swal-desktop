@@ -188,10 +188,10 @@ fn test_pin_and_unpin_favorites_lifecycle() {
     let mut cfg = FileManagerConfig::default();
 
     // Default pins contain Home, Descargas, Documentos, Proyectos SWAL
-    assert!(cfg.is_pinned(&std::path::PathBuf::from("/home/belal/Documents")) || cfg.is_pinned(&dirs::home_dir().unwrap().join("Documents")));
+    assert!(cfg.is_pinned(&dirs::home_dir().unwrap_or_default().join("Documents")));
 
     // User unpins "Documentos"
-    let docs_path = dirs::home_dir().unwrap_or_else(|| std::path::PathBuf::from("/home/belal")).join("Documents");
+    let docs_path = dirs::home_dir().unwrap_or_default().join("Documents");
     assert!(cfg.remove_pin(&docs_path));
     assert!(!cfg.is_pinned(&docs_path));
 

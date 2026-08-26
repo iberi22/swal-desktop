@@ -18,11 +18,23 @@ use tokio::net::UnixListener;
 use tokio::time::sleep;
 
 use swal_node_daemon::native_shell::{NativeShellSupervisor, NativeSurfaceKind, ShellEvent};
+use swal_node_daemon::paths;
 use swal_node_daemon::{DaemonConfig, SwalNodeDaemon};
 
 pub mod desktop_bridge;
 pub mod gesture_consumer;
 use gesture_consumer::{GestureConsumer, ScreenConfig};
+
+/// Resolves the `swal-files` binary: prefers `~/.local/bin/swal-files`,
+/// falls back to a plain PATH lookup (`Command::new("swal-files")`).
+fn swal_files_bin() -> std::path::PathBuf {
+    let candidate = paths::local_bin_dir().join("swal-files");
+    if candidate.exists() {
+        candidate
+    } else {
+        std::path::PathBuf::from("swal-files")
+    }
+}
 
 /// Resolves the per-user runtime directory (XDG base dir spec).
 /// Falls back to /run/user/$UID, which is a tmpfs owned by the user.
@@ -146,7 +158,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     surface: NativeSurfaceKind::TelemetryBar,
                                     command: "toggle_dashboard".to_string(),
                                 });
-                                let _ = std::process::Command::new("/home/belal/.config/eww/scripts/toggle_dashboard.sh")
+                                let _ = std::process::Command::new(paths::eww_scripts_dir().join("toggle_dashboard.sh"))
                                     .arg("toggle")
                                     .status();
                                 let _ = stream.write_all(b"ok\n").await;
@@ -156,7 +168,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     surface: NativeSurfaceKind::TelemetryBar,
                                     command: "close_all".to_string(),
                                 });
-                                let _ = std::process::Command::new("/home/belal/.config/eww/scripts/toggle_dashboard.sh")
+                                let _ = std::process::Command::new(paths::eww_scripts_dir().join("toggle_dashboard.sh"))
                                     .arg("close")
                                     .status();
                                 let _ = stream.write_all(b"ok\n").await;
@@ -166,7 +178,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     surface: NativeSurfaceKind::SwalFiles,
                                     command: "open_gui".to_string(),
                                 });
-                                let _ = std::process::Command::new("/home/belal/.local/bin/swal-files").spawn();
+                                let _ = std::process::Command::new(swal_files_bin()).spawn();
                                 let _ = stream.write_all(b"ok\n").await;
                             }
                             "close-files" | "close_files" => {
@@ -181,7 +193,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     surface: NativeSurfaceKind::TelemetryBar,
                                     command: "toggle_a2ui".to_string(),
                                 });
-                                let _ = std::process::Command::new("/home/belal/.config/eww/scripts/toggle_dashboard.sh")
+                                let _ = std::process::Command::new(paths::eww_scripts_dir().join("toggle_dashboard.sh"))
                                     .arg("toggle")
                                     .status();
                                 let _ = stream.write_all(b"ok\n").await;
@@ -205,7 +217,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                     surface: NativeSurfaceKind::HermesOrb,
                                     command: "toggle_hud".to_string(),
                                 });
-                                let _ = std::process::Command::new("/home/belal/.config/eww/scripts/toggle_orb_hud.sh")
+                                let _ = std::process::Command::new(paths::eww_scripts_dir().join("toggle_orb_hud.sh"))
                                     .spawn();
                                 let _ = stream.write_all(b"ok\n").await;
                             }
@@ -277,7 +289,7 @@ fn handle_client_command(args: &[String]) -> Result<(), Box<dyn std::error::Erro
             match cmd.as_str() {
                 "toggle-dashboard" | "toggle_dashboard" => {
                     // Fallback to toggle_dashboard.sh during hybrid phase
-                    let _ = std::process::Command::new("/home/belal/.config/eww/scripts/toggle_dashboard.sh")
+                    let _ = std::process::Command::new(paths::eww_scripts_dir().join("toggle_dashboard.sh"))
                         .arg("toggle")
                         .status();
                 }
