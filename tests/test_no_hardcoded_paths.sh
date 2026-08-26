@@ -7,7 +7,7 @@
 # std::env::temp_dir(), or the paths helpers instead.
 set -euo pipefail
 
-HITS=$(grep -rn "/home/belal" crates/*/src/ || true)
+HITS=$(grep -rn "/home/belal" crates/*/src/ crates/*/tests/ || true)
 if [ -n "$HITS" ]; then
   echo "❌ Paths hardcodeados detectados:"
   echo "$HITS"
