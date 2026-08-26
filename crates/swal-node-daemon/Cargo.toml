@@ -6,6 +6,7 @@ authors = ["SouthWest AI Labs <agent@southwest-ai-labs.com>"]
 description = "Async Tokio Coordinator & Xavier Bridge Node Daemon for SWAL Desktop"
 
 [dependencies]
+dirs = "5.0"
 tokio = { version = "1.0", features = ["full"] }
 libc = "0.2"
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
