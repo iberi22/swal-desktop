@@ -38,19 +38,23 @@ use smithay_client_toolkit::shell::xdg::XdgSurface;
 
 use ab_glyph::{Font, FontArc, PxScale, ScaleFont};
 
+use crate::gui::build_gui_payload;
 use crate::scanner::{scan_directory, ScanOptions};
 use crate::session::{load_session, save_session, TabState};
-use crate::storage::DiskUsageScanner;
 
-// ── SWAL edge-hive dark palette (source of truth: @swal/ui tokens) ──────
-const BG: u32 = 0xFF020617; // deep slate
-const ELEVATED: u32 = 0xFF0f172a; // card surface
-const ACCENT: u32 = 0xFF06b6d4; // cyan
-const SUCCESS: u32 = 0xFF10b981;
-const TEXT: u32 = 0xFFf1f5f9;
-const TEXT_DIM: u32 = 0xFF64748b;
-const SELECTED: u32 = 0xFF1e293b;
-const DIR_COLOR: u32 = 0xFF60cdff;
+// ── SWAL cyber-neon palette (source of truth: @swal/ui tokens) ──────
+const BG: u32       = 0xFF0A0F1D;  // rgba(10, 15, 29, 1) — main bg
+const ELEVATED: u32 = 0xFF111827;  // sidebar/card surface
+const ACCENT: u32   = 0xFF00FF88;  // cyber-neon green (primary)
+const ACCENT2: u32  = 0xFF00CCFF;  // cyan (secondary)
+const DANGER: u32   = 0xFFFF4444;
+const WARNING: u32  = 0xFFFFBB00;
+const SUCCESS: u32  = 0xFF00FF88;  // same as ACCENT
+const TEXT: u32     = 0xFFE2E8F0;
+const TEXT_DIM: u32 = 0xFF94A3B8;
+const SELECTED: u32 = 0xFF1A3D2B;  // semi-dark green highlight (no real alpha in wl_shm)
+const BORDER: u32   = 0xFF1E2A3A;  // subtle border
+const DIR_COLOR: u32 = 0xFF60CDFF;
 
 pub fn run_native_window() {
     let conn = Connection::connect_to_env().expect("WAYLAND_DISPLAY o XDG_RUNTIME_DIR requeridos");
@@ -97,6 +101,8 @@ pub fn run_native_window() {
         selected_index: 0,
         scroll_offset: 0,
         font,
+        tabs: session.tabs.clone(),
+        active_tab_id: session.active_tab_id,
         _dummy: (),
     };
     app.reload_dir();
@@ -165,6 +171,8 @@ struct SwalFilesApp {
     selected_index: usize,
     scroll_offset: usize,
     font: FontArc,
+    tabs: Vec<TabState>,
+    active_tab_id: usize,
     _dummy: (),
 }
 
@@ -229,50 +237,129 @@ impl SwalFilesApp {
         }
         let mut buf: Vec<u32> = vec![BG; w * h];
 
-        // Layout
+        let session_state = load_session();
+        let session = build_gui_payload(&session_state);
+
+        // Layout dimensions
         let sidebar_w = ((w as f32) * 0.18).max(140.0) as usize;
         let preview_w = ((w as f32) * 0.28) as usize;
         let content_x = sidebar_w;
-        let content_w = w - sidebar_w - preview_w;
+        let content_w = w.saturating_sub(sidebar_w + preview_w);
 
-        // Sidebar
-        fill_rect(&mut buf, w, h, 0, 0, sidebar_w, h, ELEVATED);
-        let mut y = 24;
-        let home = home_path();
-        for (label, target) in [
-            ("📌 Home", Some(home)),
-            ("📁 Descargas", None),
-            ("📁 Documentos", None),
-            ("📂 Proyectos SWAL", None),
-            ("🖴 /", Some(PathBuf::from("/"))),
-        ] {
-            if target.is_some() {
-                fill_rect(&mut buf, w, h, 0, y - 4, 4, 20, ACCENT);
+        // ── 1. Tab strip (height=32px, above toolbar) ──────────────────
+        fill_rect(&mut buf, w, h, 0, 0, w, 32, ELEVATED);
+        let tab_w = 160usize;
+        for (i, tab) in self.tabs.iter().enumerate() {
+            let tab_x = i * tab_w;
+            if tab_x + tab_w > w {
+                break;
             }
-            draw_text(&mut buf, w, h, &self.font, 15.0, 12, y, label, TEXT_DIM, false);
-            y += 24;
+            let is_active = tab.id == self.active_tab_id || tab.active;
+            let bg_col = if is_active { ELEVATED } else { BG };
+            fill_rect(&mut buf, w, h, tab_x, 0, tab_w, 32, bg_col);
+            if is_active {
+                fill_rect(&mut buf, w, h, tab_x, 30, tab_w, 2, ACCENT);
+            } else {
+                draw_line_h(&mut buf, w, h, tab_x, 31, tab_w, BORDER);
+            }
+            let title_trunc: String = tab.title.chars().take(16).collect();
+            let text_col = if is_active { TEXT } else { TEXT_DIM };
+            draw_text_trunc(&mut buf, w, h, &self.font, 13.0, tab_x + 12, 8, &title_trunc, text_col, is_active, tab_w - 20);
+            draw_separator_v(&mut buf, w, h, tab_x + tab_w - 1, 0, 32, BORDER);
         }
-        y += 8;
-        let pct = DiskUsageScanner::new()
-            .scan_mounted_drives()
-            .first()
-            .map(|d| d.used_percentage)
-            .unwrap_or(0.0) as u8;
-        draw_text(&mut buf, w, h, &self.font, 13.0, 12, y, &format!("🖴 SISTEMA {}%", pct), TEXT_DIM, false);
-        fill_rect(&mut buf, w, h, 12, y + 18, sidebar_w - 24, 6, SELECTED);
-        fill_rect(&mut buf, w, h, 12, y + 18, ((sidebar_w - 24) as f32 * (pct as f32 / 100.0)) as usize, 6, SUCCESS);
-        draw_text(&mut buf, w, h, &self.font, 12.0, 12, h - 22, "SWAL Files (native)", ACCENT, false);
+        let plus_x = self.tabs.len() * tab_w + 12;
+        if plus_x < w {
+            draw_text(&mut buf, w, h, &self.font, 15.0, plus_x, 7, "+", TEXT_DIM, false);
+            draw_line_h(&mut buf, w, h, self.tabs.len() * tab_w, 31, w.saturating_sub(self.tabs.len() * tab_w), BORDER);
+        }
 
-        // Content header
-        draw_text_trunc(
-            &mut buf, w, h, &self.font, 15.0, content_x + 12, 10,
-            &format!("{}  ⮜ ⮝", self.current_path.display()),
-            TEXT, true, content_w - 24,
-        );
+        // ── 2. Toolbar / breadcrumb strip (height=28px) ───────────────
+        fill_rect(&mut buf, w, h, 0, 32, w, 28, BG);
+        // Action buttons
+        draw_text(&mut buf, w, h, &self.font, 13.0, content_x + 10, 38, "⮜  ⮝  ⟳", TEXT_DIM, false);
+        draw_separator_v(&mut buf, w, h, content_x + 75, 34, 24, BORDER);
 
-        // File list with scroll
+        // Breadcrumb path display
+        let breadcrumbs = session.breadcrumbs.clone();
+        let mut bx = content_x + 85;
+        for (i, item) in breadcrumbs.iter().enumerate() {
+            if bx >= content_x + content_w - 80 {
+                break;
+            }
+            let is_last = i + 1 == breadcrumbs.len();
+            let col = if is_last { ACCENT } else { TEXT_DIM };
+            draw_text_trunc(&mut buf, w, h, &self.font, 13.0, bx, 38, &item.name, col, is_last, 120);
+            bx += item.name.len() * 7 + 10;
+            if !is_last {
+                draw_text(&mut buf, w, h, &self.font, 13.0, bx, 38, "›", TEXT_DIM, false);
+                bx += 14;
+            }
+        }
+        let filter_label = format!("[{}]", session.filter_type);
+        draw_text(&mut buf, w, h, &self.font, 12.0, content_x + content_w - 75, 38, &filter_label, ACCENT2, false);
+        draw_line_h(&mut buf, w, h, 0, 59, w, BORDER);
+
+        // ── 3. Sidebar (pins + disk meters from session) ───────────────
+        fill_rect(&mut buf, w, h, 0, 60, sidebar_w, h.saturating_sub(80), ELEVATED);
+        draw_separator_v(&mut buf, w, h, sidebar_w - 1, 60, h.saturating_sub(80), BORDER);
+
+        let mut sy = 68usize;
+        // Section: FAVORITOS
+        draw_text(&mut buf, w, h, &self.font, 10.0, 12, sy, "FAVORITOS", TEXT_DIM, true);
+        sy += 18;
+        for fav in &session.favorites {
+            if sy + 22 > h - 140 {
+                break;
+            }
+            let is_act = fav.is_active || fav.path == self.current_path.to_string_lossy();
+            if is_act {
+                fill_rect(&mut buf, w, h, 0, sy - 2, 3, 18, ACCENT);
+            }
+            let col = if is_act { TEXT } else { TEXT_DIM };
+            let line = format!("{} {}", fav.icon, fav.name);
+            draw_text_trunc(&mut buf, w, h, &self.font, 13.0, 12, sy, &line, col, is_act, sidebar_w - 20);
+            sy += 22;
+        }
+
+        // Section: ESPACIOS
+        sy += 6;
+        draw_text(&mut buf, w, h, &self.font, 10.0, 12, sy, "ESPACIOS", TEXT_DIM, true);
+        sy += 18;
+        for ws_item in &session.workspaces {
+            if sy + 22 > h - 100 {
+                break;
+            }
+            let is_act = ws_item.is_active || ws_item.path == self.current_path.to_string_lossy();
+            if is_act {
+                fill_rect(&mut buf, w, h, 0, sy - 2, 3, 18, ACCENT);
+            }
+            let col = if is_act { TEXT } else { TEXT_DIM };
+            let line = format!("{} {}", ws_item.icon, ws_item.name);
+            draw_text_trunc(&mut buf, w, h, &self.font, 13.0, 12, sy, &line, col, is_act, sidebar_w - 20);
+            sy += 22;
+        }
+
+        // Section: UNIDADES
+        sy += 6;
+        draw_text(&mut buf, w, h, &self.font, 10.0, 12, sy, "UNIDADES", TEXT_DIM, true);
+        sy += 18;
+        for disk in &session.disks {
+            if sy + 32 > h - 30 {
+                break;
+            }
+            let label = format!("{} {} ({}%)", disk.icon, disk.label, disk.used_pct as u8);
+            draw_text_trunc(&mut buf, w, h, &self.font, 11.0, 12, sy, &label, TEXT_DIM, false, sidebar_w - 20);
+            sy += 16;
+            fill_rect(&mut buf, w, h, 12, sy, sidebar_w - 24, 5, SELECTED);
+            let bar_w = ((sidebar_w - 24) as f32 * (disk.used_pct / 100.0).clamp(0.0, 1.0)) as usize;
+            let bar_col = if disk.used_pct > 90.0 { DANGER } else { SUCCESS };
+            fill_rect(&mut buf, w, h, 12, sy, bar_w, 5, bar_col);
+            sy += 14;
+        }
+
+        // ── 4. File list with scroll ────────────────────────────────────
         let row_h = 24usize;
-        let list_top = 42usize;
+        let list_top = 62usize;
         let visible_rows = (h.saturating_sub(list_top + 24)) / row_h;
         if self.selected_index < self.scroll_offset {
             self.scroll_offset = self.selected_index;
@@ -299,9 +386,10 @@ impl SwalFilesApp {
             y += row_h;
         }
 
-        // Preview panel
-        fill_rect(&mut buf, w, h, content_x + content_w, 0, preview_w, h, ELEVATED);
-        draw_text(&mut buf, w, h, &self.font, 14.0, content_x + content_w + 12, 10, "Vista Previa", TEXT_DIM, false);
+        // ── 5. Preview panel ───────────────────────────────────────────
+        fill_rect(&mut buf, w, h, content_x + content_w, 60, preview_w, h.saturating_sub(80), ELEVATED);
+        draw_separator_v(&mut buf, w, h, content_x + content_w, 60, h.saturating_sub(80), BORDER);
+        draw_text(&mut buf, w, h, &self.font, 14.0, content_x + content_w + 12, 68, "Vista Previa", TEXT_DIM, false);
         if let Some(name) = self.raw_name(self.selected_index) {
             let p = self.current_path.join(&name);
             let mut lines: Vec<String> = Vec::new();
@@ -312,9 +400,9 @@ impl SwalFilesApp {
             } else {
                 lines.push("(binario — sin preview de texto)".to_string());
             }
-            let mut py = 42;
+            let mut py = 92;
             for (i, line) in lines.iter().enumerate() {
-                if py + 16 > h || i > 60 {
+                if py + 16 > h - 24 || i > 60 {
                     break;
                 }
                 let lineno = format!("{:>3} │ {}", i + 1, line);
@@ -323,15 +411,19 @@ impl SwalFilesApp {
             }
         }
 
-        // Footer
+        // ── 6. Status bar (bottom 20px) ─────────────────────────────────
+        fill_rect(&mut buf, w, h, 0, h - 20, w, 20, ELEVATED);
+        draw_line_h(&mut buf, w, h, 0, h - 20, w, BORDER);
         draw_text(
-            &mut buf, w, h, &self.font, 12.0, 12, h - 20,
-            &format!(
-                "{} items · j/k navegar · enter abrir · h arriba · r reload · q salir",
-                self.items.len()
-            ),
+            &mut buf, w, h, &self.font, 12.0, 12, h - 15,
+            &format!("{} elementos", self.items.len()),
             TEXT_DIM, false,
         );
+        if session.git_status.is_git_repo {
+            let git_info = format!(" {}", session.git_status.branch);
+            draw_text(&mut buf, w, h, &self.font, 12.0, w / 2 - 40, h - 15, &git_info, ACCENT2, false);
+        }
+        draw_text(&mut buf, w, h, &self.font, 12.0, w - 110, h - 15, "SWAL Files ⚡", ACCENT, true);
 
         // Present via wl_shm
         let (w32, h32) = (w as i32, h as i32);
@@ -360,14 +452,17 @@ impl SwalFilesApp {
 
     fn save_current_path(&self) {
         let mut session = load_session();
-        session.active_tab_id = 1;
-        if let Some(first) = session.tabs.first_mut() {
+        session.active_tab_id = self.active_tab_id;
+        if let Some(tab) = session.tabs.iter_mut().find(|t| t.id == self.active_tab_id) {
+            tab.path = self.current_path.to_string_lossy().to_string();
+            tab.title = self.current_path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| "/".to_string());
+        } else if let Some(first) = session.tabs.first_mut() {
             first.path = self.current_path.to_string_lossy().to_string();
-            first.title = self.current_path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
+            first.title = self.current_path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| "/".to_string());
         } else {
             session.tabs.push(TabState {
                 id: 1,
-                title: "Home".to_string(),
+                title: self.current_path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| "/".to_string()),
                 path: self.current_path.to_string_lossy().to_string(),
                 active: true,
             });
@@ -377,6 +472,27 @@ impl SwalFilesApp {
 }
 
 // ── drawing helpers ──────────────────────────────────────────────────────
+
+fn draw_line_h(buf: &mut [u32], w: usize, _h: usize, x: usize, y: usize, len: usize, color: u32) {
+    if y >= _h { return; }
+    let end_x = (x + len).min(w);
+    let row_start = y * w;
+    for px in x.min(w)..end_x {
+        buf[row_start + px] = color;
+    }
+}
+
+fn draw_separator_v(buf: &mut [u32], w: usize, h: usize, x: usize, y: usize, len: usize, color: u32) {
+    if x >= w { return; }
+    let end_y = (y + len).min(h);
+    for py in y.min(h)..end_y {
+        buf[py * w + x] = color;
+    }
+}
+
+fn draw_badge_dot(buf: &mut [u32], w: usize, h: usize, cx: usize, cy: usize, color: u32) {
+    fill_rect(buf, w, h, cx.saturating_sub(2), cy.saturating_sub(2), 4, 4, color);
+}
 
 fn fill_rect(buf: &mut [u32], w: usize, h: usize, x: usize, y: usize, rw: usize, rh: usize, color: u32) {
     let x1 = (x + rw).min(w);
@@ -637,12 +753,15 @@ impl ProvidesRegistryState for SwalFilesApp {
 
 impl SwalFilesApp {
     fn hit_test(&mut self, sx: usize, sy: usize) {
-        let sidebar_w = ((self.width as f32) * 0.18).max(140.0) as usize;
-        if sx < sidebar_w || sy < 42 {
+        let (w, h) = (self.width as usize, self.height as usize);
+        let sidebar_w = ((w as f32) * 0.18).max(140.0) as usize;
+        let preview_w = ((w as f32) * 0.28) as usize;
+        let content_w = w.saturating_sub(sidebar_w + preview_w);
+        if sx < sidebar_w || sx >= sidebar_w + content_w || sy < 60 || sy >= h.saturating_sub(20) {
             return;
         }
         let row_h = 24usize;
-        let row = (sy - 42) / row_h;
+        let row = (sy - 60) / row_h;
         let idx = self.scroll_offset + row;
         if idx < self.items.len() {
             self.selected_index = idx;
