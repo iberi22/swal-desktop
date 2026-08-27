@@ -51,6 +51,7 @@ const TEXT: u32 = 0xFFf1f5f9;
 const TEXT_DIM: u32 = 0xFF64748b;
 const SELECTED: u32 = 0xFF1e293b;
 const DIR_COLOR: u32 = 0xFF60cdff;
+const HOVER_BG: u32 = 0xFF162235;
 
 pub fn run_native_window() {
     let conn = Connection::connect_to_env().expect("WAYLAND_DISPLAY o XDG_RUNTIME_DIR requeridos");
@@ -96,6 +97,16 @@ pub fn run_native_window() {
         items: Vec::new(),
         selected_index: 0,
         scroll_offset: 0,
+        hover_index: None,
+        pointer_x: 0.0,
+        pointer_y: 0.0,
+        last_click_ms: 0,
+        layout_sidebar_w: 140,
+        layout_list_top: 42,
+        layout_row_h: 24,
+        layout_content_x: 140,
+        layout_tab_strip_h: 0,
+        layout_toolbar_h: 0,
         font,
         _dummy: (),
     };
@@ -164,6 +175,16 @@ struct SwalFilesApp {
     items: Vec<String>,
     selected_index: usize,
     scroll_offset: usize,
+    hover_index: Option<usize>,
+    pointer_x: f64,
+    pointer_y: f64,
+    last_click_ms: u64,
+    layout_sidebar_w: usize,
+    layout_list_top: usize,
+    layout_row_h: usize,
+    layout_content_x: usize,
+    layout_tab_strip_h: usize,
+    layout_toolbar_h: usize,
     font: FontArc,
     _dummy: (),
 }
@@ -273,6 +294,12 @@ impl SwalFilesApp {
         // File list with scroll
         let row_h = 24usize;
         let list_top = 42usize;
+
+        self.layout_sidebar_w = sidebar_w;
+        self.layout_list_top = list_top;
+        self.layout_row_h = row_h;
+        self.layout_content_x = content_x;
+
         let visible_rows = (h.saturating_sub(list_top + 24)) / row_h;
         if self.selected_index < self.scroll_offset {
             self.scroll_offset = self.selected_index;
@@ -283,8 +310,11 @@ impl SwalFilesApp {
         let mut y = list_top;
         for i in self.scroll_offset..self.items.len().min(self.scroll_offset + visible_rows) {
             let is_sel = i == self.selected_index;
+            let is_hovered = Some(i) == self.hover_index && !is_sel;
             if is_sel {
                 fill_rect(&mut buf, w, h, content_x, y - 2, content_w, row_h, SELECTED);
+            } else if is_hovered {
+                fill_rect(&mut buf, w, h, content_x, y - 2, content_w, row_h, HOVER_BG);
             }
             if let Some(line) = self.items.get(i) {
                 let color = if is_sel {
@@ -336,8 +366,12 @@ impl SwalFilesApp {
         // Present via wl_shm
         let (w32, h32) = (w as i32, h as i32);
         let stride = w32 * 4;
+        let needed = w * h * 4;
+        if self.pool.as_ref().map(|p| p.len() < needed).unwrap_or(false) {
+            self.pool = None;
+        }
         let mut pool = self.pool.take().unwrap_or_else(|| {
-            smithay_client_toolkit::shm::slot::SlotPool::new((w * h * 4) as usize, &self.shm).expect("pool")
+            smithay_client_toolkit::shm::slot::SlotPool::new(needed, &self.shm).expect("pool")
         });
         let buffer = pool
             .create_buffer(w32, h32, stride, wl_shm::Format::Argb8888)
@@ -587,18 +621,73 @@ impl Dispatch<wl_keyboard::WlKeyboard, ()> for SwalFilesApp {
 }
 
 impl PointerHandler for SwalFilesApp {
-    fn pointer_frame(&mut self, _: &Connection, _: &QueueHandle<Self>, _: &wl_pointer::WlPointer, events: &[PointerEvent]) {
+    fn pointer_frame(
+        &mut self,
+        _conn: &Connection,
+        _qh: &QueueHandle<Self>,
+        _pointer: &wl_pointer::WlPointer,
+        events: &[PointerEvent],
+    ) {
         for event in events {
-            if &event.surface != self.window.wl_surface() {
-                continue;
-            }
             match event.kind {
-                PointerEventKind::Motion { .. } => {
-                    let (sx, sy) = event.position;
-                    self.hit_test(sx as usize, sy as usize);
+                PointerEventKind::Motion { time: _ } => {
+                    self.pointer_x = event.position.0;
+                    self.pointer_y = event.position.1;
+                    // Calculate hover row
+                    let y = event.position.1 as usize;
+                    let x = event.position.0 as usize;
+                    if x > self.layout_content_x && y > self.layout_list_top {
+                        let row = self.scroll_offset + (y - self.layout_list_top) / self.layout_row_h.max(1);
+                        let new_hover = if row < self.items.len() { Some(row) } else { None };
+                        if new_hover != self.hover_index {
+                            self.hover_index = new_hover;
+                            self.redraw = true;
+                        }
+                    } else {
+                        if self.hover_index.is_some() {
+                            self.hover_index = None;
+                            self.redraw = true;
+                        }
+                    }
                 }
-                PointerEventKind::Press { button: 0x110, .. } => {
-                    self.open_selected();
+                PointerEventKind::Press { button, .. } => {
+                    if button == 272 { // BTN_LEFT
+                        let y = event.position.1 as usize;
+                        let x = event.position.0 as usize;
+                        // Click on file list
+                        if x > self.layout_content_x && y > self.layout_list_top {
+                            let row = self.scroll_offset + (y - self.layout_list_top) / self.layout_row_h.max(1);
+                            if row < self.items.len() {
+                                let now_ms = std::time::SystemTime::now()
+                                    .duration_since(std::time::UNIX_EPOCH)
+                                    .unwrap_or_default()
+                                    .as_millis() as u64;
+                                let double_click = self.selected_index == row
+                                    && now_ms.saturating_sub(self.last_click_ms) < 500;
+                                self.selected_index = row;
+                                self.last_click_ms = now_ms;
+                                if double_click {
+                                    self.open_selected();
+                                }
+                                self.redraw = true;
+                            }
+                        }
+                    }
+                }
+                PointerEventKind::Axis { vertical, .. } => {
+                    let value = if vertical.discrete != 0 {
+                        vertical.discrete as f64
+                    } else {
+                        vertical.absolute
+                    };
+                    if value > 0.0 {
+                        self.scroll_offset = self.scroll_offset
+                            .saturating_add(3)
+                            .min(self.items.len().saturating_sub(1));
+                    } else if value < 0.0 {
+                        self.scroll_offset = self.scroll_offset.saturating_sub(3);
+                    }
+                    self.redraw = true;
                 }
                 _ => {}
             }
