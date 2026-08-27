@@ -105,9 +105,8 @@ pub fn run_native_window() {
     let _ = std::fs::write("/tmp/swal-files.pid", pid.to_string());
     let _ = std::fs::write("/tmp/swal_files_visible.flag", "1");
 
-    // Initial blank frame so the window maps even before configure arrives
-    app.draw_frame();
     event_queue.blocking_dispatch(&mut app).unwrap();
+    app.draw_frame();
     while !app.exit {
         if app.redraw {
             app.draw_frame();
@@ -125,25 +124,31 @@ fn home_path() -> PathBuf {
 }
 
 fn load_font() -> FontArc {
-    // Path exacto verificado (probe: gids H=43 e=72 o=82 correctos, upem 2048).
-    // NO escanear /nix/store completo: hay variantes corruptas/parciales.
-    let candidates = [
-        "/nix/store/ang6yzsv32vnkdq7bqr41dgna2knkz8w-dejavu-fonts-minimal-2.37/share/fonts/truetype/DejaVuSans.ttf",
-        "/nix/store/xvy8dq43r9hi9qrnwgg7kjjny8y0lr0g-dejavu-fonts-minimal-2.37/share/fonts/truetype/DejaVuSans.ttf",
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-        "/usr/share/fonts/DejaVuSans.ttf",
-    ];
-    for c in candidates {
+    // Priority: system fonts via /run/current-system (NixOS), then common paths
+    let candidates: Vec<std::path::PathBuf> = {
+        let mut v = vec![];
+        // NixOS: scan /run/current-system/sw/share/fonts recursively
+        for entry in walkdir::WalkDir::new("/run/current-system/sw/share/fonts").into_iter().flatten() {
+            let p = entry.path().to_path_buf();
+            if p.extension().map(|x| x == "ttf").unwrap_or(false) {
+                v.push(p);
+            }
+        }
+        // Common fallbacks
+        v.push("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf".into());
+        v.push("/usr/share/fonts/TTF/DejaVuSans.ttf".into());
+        v
+    };
+    for c in &candidates {
         if let Ok(data) = std::fs::read(c) {
             if let Ok(font) = FontArc::try_from_vec(data) {
-                // Sanity check: 'H' debe existir (gid != 0)
                 if font.glyph_id('H').0 != 0 {
                     return font;
                 }
             }
         }
     }
-    panic!("No se encontró un DejaVuSans.ttf válido — SWAL Files necesita una fuente TTF");
+    panic!("No valid TTF font found. Searched: {:?}", candidates);
 }
 
 struct SwalFilesApp {
@@ -336,8 +341,12 @@ impl SwalFilesApp {
         // Present via wl_shm
         let (w32, h32) = (w as i32, h as i32);
         let stride = w32 * 4;
+        let needed = w * h * 4;
+        if self.pool.as_ref().map(|p| p.len() < needed).unwrap_or(false) {
+            self.pool = None;
+        }
         let mut pool = self.pool.take().unwrap_or_else(|| {
-            smithay_client_toolkit::shm::slot::SlotPool::new((w * h * 4) as usize, &self.shm).expect("pool")
+            smithay_client_toolkit::shm::slot::SlotPool::new(needed, &self.shm).expect("pool")
         });
         let buffer = pool
             .create_buffer(w32, h32, stride, wl_shm::Format::Argb8888)
@@ -619,8 +628,13 @@ impl WindowHandler for SwalFilesApp {
     }
     fn configure(&mut self, _: &Connection, _: &QueueHandle<Self>, _: &Window, configure: WindowConfigure, serial: u32) {
         if let (Some(w), Some(h)) = (configure.new_size.0, configure.new_size.1) {
-            self.width = w.get().max(200);
-            self.height = h.get().max(200);
+            let new_w = w.get();
+            let new_h = h.get();
+            if new_w != self.width || new_h != self.height {
+                self.pool = None; // force pool resize
+            }
+            self.width = new_w;
+            self.height = new_h;
         }
         self.configured = true;
         self.redraw = true;
