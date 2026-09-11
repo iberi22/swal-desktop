@@ -1177,7 +1177,8 @@
         ;; Preview Actions Footer (icon-only para no inflar el panel)
         (box :class "yazi-preview-actions" :orientation "h" :space-evenly true :spacing 4
           (button :class "yazi-act-btn" :tooltip "Abrir terminal en esta carpeta" :onclick "ghostty --working-directory='${swal_files_data.preview.path}' &" "󰆍")
-          (button :class "yazi-act-btn" :tooltip "Copiar contenido del archivo (texto/código) o su ruta" :onclick "bash /home/belal/.config/eww/scripts/swal_preview_copy.sh" "📋")
+          (button :class "yazi-act-btn" :tooltip "Copiar TODO el contenido del archivo (o su ruta si no es texto)" :onclick "bash /home/belal/.config/eww/scripts/swal_preview_copy.sh" "📋")
+          (button :class "yazi-act-btn" :tooltip "Ver para copiar con el mouse (pager de SOLO LECTURA, no editable)" :visible "${swal_files_data.preview.is_text}" :onclick "bash /home/belal/.config/eww/scripts/swal_preview_view.sh" "⧉")
           (button :class "yazi-act-btn ${swal_files_data.preview_wrap ? 'active' : ''}" :tooltip "Wrap: ${swal_files_data.preview_wrap ? 'ON (lineas ajustadas)' : 'OFF (lineas cortadas)'} — clic para cambiar" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files toggle-wrap" "↩")
           (button :class "yazi-act-btn" :tooltip "Editar (Sublime) / Abrir con app por defecto" :visible "${swal_files_data.preview.is_dir ? false : true}" :onclick "bash /home/belal/.config/eww/scripts/swal_preview_edit.sh" "✎")
           (button :class "yazi-act-btn accent" :tooltip "Abrir carpeta / QuickLook" :onclick "${swal_files_data.preview.is_dir ? 'swal-files nav \'' + swal_files_data.preview.path + '\'' : 'swal-files open-editor \'' + swal_files_data.preview.path + '\''}"
