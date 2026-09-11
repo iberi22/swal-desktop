@@ -8,6 +8,7 @@ use crate::gui::{build_gui_payload, notify_eww_update};
 use crate::omnibar::{parse_omnibar_input, OmnibarIntent};
 use crate::preview::{generate_preview_for_path, load_editor_state, save_editor_state};
 use crate::session::{load_session, save_session, SessionState, TabState};
+use crate::trash_ops;
 
 const PID_FILE: &str = "/tmp/swal-files.pid";
 
@@ -493,6 +494,15 @@ pub fn handle_command(session: &mut SessionState, args: &[String]) -> Result<Opt
             eprintln!("✓ Sesión reseteada → Home, filtro: all, grupo: none");
             state_changed = true;
         }
+        "trash-item" | "trash_item" | "delete-item" | "delete_item" | "trash-status" | "trash_status" => {
+            let res = trash_ops::handle_cli(args, session);
+            if let Some(ref msg) = res {
+                if msg.starts_with("Error:") || msg.starts_with("error:") {
+                    return Err(msg.clone());
+                }
+            }
+            return Ok(res);
+        }
         _ => {
             open_gui(Some(cmd));
         }
@@ -512,6 +522,9 @@ pub fn run_cli(args: &[String]) {
     match handle_command(&mut session, args) {
         Ok(Some(output)) => println!("{}", output),
         Ok(None) => {},
-        Err(e) => eprintln!("Error: {}", e),
+        Err(e) => {
+            eprintln!("{}", e);
+            std::process::exit(1);
+        }
     }
 }
