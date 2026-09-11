@@ -1,0 +1,12 @@
+[package]
+name = "swal-pointer"
+version = "0.1.0"
+edition = "2021"
+description = "SWAL hold-to-move pointer daemon for Hyprland: SUPER+arrows with acceleration, tap-to-snap, minimal std-only core"
+
+[[bin]]
+name = "swal-pointer"
+path = "src/main.rs"
+
+[lints]
+workspace = true

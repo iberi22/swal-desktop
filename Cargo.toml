@@ -7,7 +7,8 @@ members = [
     "crates/swal-widget-vault",
     "crates/swal-render-pipeline",
     "crates/swal-files",
-    "crates/swal-vision-rs"
+    "crates/swal-vision-rs",
+    "crates/swal-pointer",
 ]
 resolver = "2"
 
