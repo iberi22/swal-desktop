@@ -115,6 +115,10 @@ pub fn handle_command(session: &mut SessionState, args: &[String]) -> Result<Opt
         return Ok(None);
     }
 
+    if let Some(text_viewer_output) = crate::text_viewer::handle_cli(args, session) {
+        return Ok(Some(text_viewer_output));
+    }
+
     let cmd = args[1].as_str();
 
     // Direct path argument

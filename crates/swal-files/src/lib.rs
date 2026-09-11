@@ -23,6 +23,7 @@ pub mod scanner;
 pub mod session;
 pub mod storage;
 pub mod tabs_extended;
+pub mod text_viewer;
 pub mod tui;
 pub mod watcher;
 
