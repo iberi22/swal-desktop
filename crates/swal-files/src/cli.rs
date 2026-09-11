@@ -785,6 +785,16 @@ pub fn handle_command(session: &mut SessionState, args: &[String]) -> Result<Opt
             eprintln!("✓ Sesión reseteada → Home, filtro: all, grupo: none");
             state_changed = true;
         }
+        "rename-item" | "rename_item" | "rename"
+        | "new-folder" | "new_folder" | "mkdir"
+        | "duplicate-item" | "duplicate_item" | "duplicate" => {
+            if let Some(msg) = crate::file_ops::handle_cli(args, session) {
+                save_session(session);
+                let payload = build_gui_payload(session);
+                notify_eww_update(&payload);
+                return Ok(Some(msg));
+            }
+        }
         _ => {
             open_gui(Some(cmd));
         }
