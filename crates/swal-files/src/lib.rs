@@ -6,6 +6,7 @@ pub mod agent_protocol;
 pub mod app_runtime;
 pub mod archive;
 pub mod cli;
+pub mod clipboard_ops;
 pub mod cloud_sync;
 pub mod config;
 pub mod dual_pane;

@@ -123,6 +123,11 @@ pub fn handle_command(session: &mut SessionState, args: &[String]) -> Result<Opt
         return Ok(None);
     }
 
+    // Try dispatching clipboard commands first
+    if let Some(res) = crate::clipboard_ops::handle_cli(args, session) {
+        return Ok(Some(res));
+    }
+
     let mut state_changed = false;
 
     match cmd {
