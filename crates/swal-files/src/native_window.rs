@@ -195,6 +195,7 @@ mod tests {
             filter_type: "all".to_string(),
             preview_mode: "sidebar".to_string(),
             selected_path: None,
+            selected_paths: Vec::new(),
             saved_filter_presets: Vec::new(),
             path_filter_memory: std::collections::HashMap::new(),
             col_chars: crate::session::default_col_chars(),

@@ -54,6 +54,8 @@ pub struct SessionState {
     pub filter_type: String,
     pub preview_mode: String,
     pub selected_path: Option<String>,
+    #[serde(default)]
+    pub selected_paths: Vec<String>,
     /// User-defined saved filter presets (persisted across restarts)
     #[serde(default)]
     pub saved_filter_presets: Vec<SavedFilterPreset>,
@@ -130,6 +132,7 @@ impl Default for SessionState {
             filter_type: cfg.filter_type,
             preview_mode: cfg.preview_mode,
             selected_path: None,
+            selected_paths: Vec::new(),
             saved_filter_presets,
             path_filter_memory: HashMap::new(),
             col_chars: default_col_chars(),
