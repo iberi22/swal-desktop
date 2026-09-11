@@ -19,6 +19,7 @@ pub mod omnibar;
 pub mod platform;
 pub mod plugin_system;
 pub mod preview;
+pub mod properties;
 pub mod scanner;
 pub mod session;
 pub mod storage;
