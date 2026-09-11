@@ -403,6 +403,15 @@ pub fn handle_command(session: &mut SessionState, args: &[String]) -> Result<Opt
             // Zero-Eww: the live --gui process re-reads session on SIGUSR1
             // (window state is persisted by save_session below). No eww calls.
         }
+        // Fija el flag sin ambiguedad (lo usa swal_files_maximize.sh, que decide por la
+        // ventana realmente abierta y luego sincroniza el flag).
+        "set-maximize" | "set_maximize" => {
+            if args.len() > 2 {
+                session.is_maximized =
+                    matches!(args[2].to_lowercase().as_str(), "on" | "true" | "1");
+                state_changed = true;
+            }
+        }
         "tab-new" | "tab_new" => {
             let home = home_path_string();
             let next_id = session.tabs.iter().map(|t| t.id).max().unwrap_or(0) + 1;
