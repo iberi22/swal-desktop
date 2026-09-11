@@ -126,6 +126,10 @@ pub fn handle_command(session: &mut SessionState, args: &[String]) -> Result<Opt
     let mut state_changed = false;
 
     match cmd {
+        "apps-json" | "apps_json" | "open-with" | "open_with" | "reveal-terminal" | "reveal_terminal" | "terminal-here" | "terminal_here" => {
+            let res = crate::open_with::handle_cli(args, session);
+            return Ok(res);
+        }
         "view-json" | "view_json" | "json" => {
             let payload = build_gui_payload(session);
             return Ok(Some(serde_json::to_string(&payload).map_err(|e| e.to_string())?));
