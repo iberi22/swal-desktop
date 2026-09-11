@@ -170,6 +170,7 @@ in
     starship
     neovim
     vim
+    zed-editor
 
     # ── Dev Tools ────────────────────────────────────────────────────────
     git
