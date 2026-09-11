@@ -276,6 +276,13 @@ pub fn handle_command(session: &mut SessionState, args: &[String]) -> Result<Opt
             let editor = load_editor_state();
             return Ok(Some(serde_json::to_string(&editor).map_err(|e| e.to_string())?));
         }
+        "properties-json" | "properties_json" | "properties" => {
+            if let Some(json_out) = crate::properties::handle_cli(args, session) {
+                return Ok(Some(json_out));
+            } else {
+                return Err("Failed to compute item properties".to_string());
+            }
+        }
         "nav" => {
             if args.len() > 2 {
                 let target = PathBuf::from(&args[2]);
