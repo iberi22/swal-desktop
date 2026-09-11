@@ -221,6 +221,7 @@ fn test_cli_command_handling_state_transitions() {
         path_filter_memory: std::collections::HashMap::new(),
         col_chars: swal_files::session::default_col_chars(),
         preview_wrap: true,
+        row_density: "comfortable".to_string(),
     };
 
     // 1. view-json

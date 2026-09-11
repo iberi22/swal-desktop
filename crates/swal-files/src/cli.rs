@@ -357,6 +357,23 @@ pub fn handle_command(session: &mut SessionState, args: &[String]) -> Result<Opt
             };
             state_changed = true;
         }
+        // Densidad de filas de la lista: compact (mas filas visibles) <-> comfortable
+        "toggle-density" | "toggle_density" => {
+            session.row_density = match session.row_density.as_str() {
+                "compact" => "comfortable".to_string(),
+                _ => "compact".to_string(),
+            };
+            state_changed = true;
+        }
+        "set-density" | "set_density" => {
+            if args.len() > 2 {
+                session.row_density = match args[2].to_lowercase().as_str() {
+                    "compact" | "compacta" => "compact".to_string(),
+                    _ => "comfortable".to_string(),
+                };
+                state_changed = true;
+            }
+        }
         // Wrap del panel de preview: ON = las lineas largas se ajustan a la ventana
         "toggle-wrap" | "toggle_wrap" | "wrap" => {
             session.preview_wrap = !session.preview_wrap;

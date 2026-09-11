@@ -106,6 +106,8 @@ pub struct GuiPayload {
     pub col_chars: std::collections::HashMap<String, i64>,
     /// Wrap del texto del preview (true = ajusta lineas a la ventana)
     pub preview_wrap: bool,
+    /// Densidad de filas: "comfortable" | "compact"
+    pub row_density: String,
 }
 
 /// Compact disk info for EWW sidebar rendering
@@ -417,6 +419,7 @@ pub fn build_gui_payload(session: &SessionState) -> GuiPayload {
         disks,
         col_chars: session.col_chars.clone(),
         preview_wrap: session.preview_wrap,
+        row_density: session.row_density.clone(),
     }
 }
 

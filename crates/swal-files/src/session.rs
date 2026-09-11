@@ -68,6 +68,9 @@ pub struct SessionState {
     /// Wrap del texto en el panel de preview: true = ajusta las lineas a la ventana.
     #[serde(default = "default_true")]
     pub preview_wrap: bool,
+    /// Densidad de las filas de la lista: "comfortable" (default) o "compact".
+    #[serde(default = "default_density")]
+    pub row_density: String,
 }
 
 /// Default column widths (characters) — matches the historical hardcoded layout.
@@ -82,6 +85,10 @@ pub fn default_col_chars() -> HashMap<String, i64> {
 
 fn default_true() -> bool {
     true
+}
+
+fn default_density() -> String {
+    "comfortable".to_string()
 }
 
 
@@ -127,6 +134,7 @@ impl Default for SessionState {
             path_filter_memory: HashMap::new(),
             col_chars: default_col_chars(),
             preview_wrap: true,
+            row_density: default_density(),
         }
     }
 }
