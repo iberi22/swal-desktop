@@ -58,40 +58,6 @@
   :focusable true
   (ram_panel_container))
 
-(defwindow a2ui_desktop
-  :monitor 0
-  :geometry (geometry :x "0%" :y "0%" :width "92%" :height "86%" :anchor "center")
-  :stacking "overlay"
-  :wm-type "dialog"
-  :exclusive false
-  :focusable true
-  (a2ui_desktop_container))
-
-
-(defwindow cortana_orb
-  :monitor 0
-  :geometry (geometry :x "24px" :y "24px" :width "240px" :height "260px" :anchor "bottom right")
-  :stacking "overlay"
-  :wm-type "dock"
-  :exclusive false
-  :focusable false
-  (cortana_orb_widget))
-
-(defvar orb_status "LISTENING")
-(defvar orb_agent "HERMES")
-
-(defwidget cortana_orb_widget []
-  (box :class "cortana-widget-root" :orientation "v" :space-evenly false :halign "center" :valign "center"
-    (box :class "cortana-halo-stage" :halign "center" :valign "center"
-      (box :class "cortana-outer-ring" :halign "center" :valign "center"
-        (box :class "cortana-middle-ring" :halign "center" :valign "center"
-          (box :class "cortana-inner-ring" :halign "center" :valign "center"
-            (box :class "cortana-core")))))
-    (box :class "cortana-pill" :orientation "h" :spacing 6 :space-evenly false :halign "center"
-      (label :text "●" :class "cortana-dot")
-      (label :text "${orb_agent} • ${orb_status}" :class "cortana-pill-text"))))
-
-
 (defwidget chip [label icon onclick active tooltip]
   (button :onclick onclick :tooltip tooltip :class {active ? "chip on" : "chip"} :hexpand true :vexpand false
           :style "padding:1px 2px;min-height:0px;"
@@ -126,8 +92,6 @@
         (label :text "📂" :style "color:#06b6d4;font-size:12.5px;margin-right:2px;"))
       (button :onclick "eww open --toggle swal_settings" :class "icon-btn" :vexpand false :tooltip "Configuracion Manual del Sistema (SWAL Settings)"
         (label :text "⚙" :style "color:#f97316;font-size:13.5px;margin-right:3px;"))
-      (button :onclick "eww open --toggle event_panel" :class "icon-btn" :vexpand false :tooltip "Eventos del sistema (bitacora)"
-        (label :text "📋" :style "color:#E3B341;font-size:12.5px;margin-right:2px;"))
       (button :onclick "/home/belal/.config/eww/scripts/toggle_dashboard.sh close" :class "close-btn" :vexpand false :tooltip "Cerrar Dashboard"
         (label :text "󰅖" :class "close-lbl")))
 
@@ -137,10 +101,7 @@
       (chip :label "BT" :icon "󰂯" :tooltip "Bluetooth" :onclick "/home/belal/.config/eww/scripts/toggles.sh bt toggle" :active {bt_active == "true"})
       (chip :label "Night" :icon "󰖨" :tooltip "Luz nocturna" :onclick "/home/belal/.config/eww/scripts/toggles.sh nightlight toggle" :active {night_active == "true"})
       (chip :label "Dark" :icon "󰔎" :tooltip "Modo oscuro" :onclick "/home/belal/.config/eww/scripts/toggles.sh darkmode toggle" :active {dark_active == "true"})
-      (chip :label "DND" :icon "󰂛" :tooltip "No molestar" :onclick "/home/belal/.config/eww/scripts/toggles.sh dnd toggle" :active {dnd_active == "true"})
-      (chip :label "Idle" :icon "󰒲" :tooltip "Suspension auto (pantalla 45min + hibernar 50min)" :onclick "/home/belal/.config/eww/scripts/idle_toggle.sh toggle" :active {idle_active == "true"})
-      (chip :label "Ptr" :icon "🖱" :tooltip "Puntero con teclado SUPER+flechas (click para activar/desactivar)" :onclick "/home/belal/.config/eww/scripts/hands_toggle.sh pointer toggle" :active {pointer_active == "true"})
-      (chip :label "Voz" :icon "🎙" :tooltip "Dictado por voz SUPER CTRL+D (click para activar/desactivar)" :onclick "/home/belal/.config/eww/scripts/hands_toggle.sh ptt toggle" :active {ptt_active == "true"}))
+      (chip :label "DND" :icon "󰂛" :tooltip "No molestar" :onclick "/home/belal/.config/eww/scripts/toggles.sh dnd toggle" :active {dnd_active == "true"}))
 
     ;; --- HARDWARE, RED & SENSORES ---
     (box :class "card hw-grid" :orientation "v" :spacing 2 :space-evenly false :vexpand false
@@ -449,17 +410,14 @@
     (box :class "ram-footer" :orientation "h" :spacing 6 :space-evenly false :valign "center" :vexpand false
       (button :onclick "bash -c 'bash /home/belal/.config/eww/scripts/ram_optimize.sh; sleep 0.5; eww update RAM_PANEL=\"$(python3 /home/belal/.config/eww/scripts/ram_panel.py)\"' &"
               :class "act send-btn" :hexpand true :vexpand false
-        (label :text "󰃢 Limpiar RAM" :class "act-lbl"))
-      (button :onclick "bash -c '/home/belal/.local/bin/swal-vram-optimizer boost; sleep 0.5; eww update RAM_PANEL=\"$(python3 /home/belal/.config/eww/scripts/ram_panel.py)\"' &"
-              :class "act warn" :hexpand true :vexpand false :tooltip "Liberar VRAM de GPU (Caché + suspender buffers GPU navegadores)"
-        (label :text "󰢮 Boost VRAM" :class "act-lbl"))
-      (button :onclick "bash -c '/home/belal/.local/bin/swal-vram-optimizer prompt; sleep 0.5; eww update RAM_PANEL=\"$(python3 /home/belal/.config/eww/scripts/ram_panel.py)\"' &"
-              :class "act danger" :hexpand true :vexpand false :tooltip "Elegir app pesada para cerrar y recuperar VRAM"
-        (label :text "󰆴 Cerrar App GPU" :class "act-lbl"))
+        (label :text "󰃢 Limpiar Caché" :class "act-lbl"))
+      (button :onclick "bash -c 'bash /home/belal/.config/eww/scripts/ram_kill_top.sh; sleep 0.5; eww update RAM_PANEL=\"$(python3 /home/belal/.config/eww/scripts/ram_panel.py)\"' &"
+              :class "act danger" :hexpand true :vexpand false
+        (label :text "󰆴 Matar Top 1" :class "act-lbl"))
       (button :onclick "ghostty -e bash -c 'btop || fastfetch; read -n1' &"
               :class "act" :hexpand true :vexpand false
-        (label :text "󰘚 Terminal" :class "act-lbl"))
-      (label :text {vram_opt.ok ? "GPU: +${vram_opt.freed_mb}MB" : (ram_opt.ok ? "RAM: ${ram_opt.freed}" : "Listo")}
+        (label :text "󰘚 Analizar en Terminal" :class "act-lbl"))
+      (label :text {ram_opt.ok ? "Liberados: ${ram_opt.freed}" : "Listo"}
              :style "color:#00FF88;font-size:9.5px;font-weight:bold;margin-left:6px;"))
   ))
 
@@ -525,86 +483,6 @@
               (label :visible {item.running_action != ""} :text "${item.running_action}"
                      :style "color:#00CCFF;font-size:9px;" :xalign 0))))))))
 
-(defwidget a2ui_desktop_container []
-  (box :class "a2ui-workspace-root" :orientation "v" :spacing 10 :space-evenly false :vexpand true :hexpand true
-    ;; Header Bar
-    (box :class "a2ui-header" :orientation "h" :space-evenly false :vexpand false
-      (box :orientation "h" :spacing 8 :space-evenly false :halign "start"
-        (label :text "⚡ SWAL A2UI AGENTIC DESKTOP" :class "a2ui-title")
-        (box :class "badge active" (label :text "LIVE ECOSYSTEM")))
-      (box :hexpand true)
-      (box :orientation "h" :spacing 6 :space-evenly false :halign "end"
-        (button :onclick "ghostty -e hermes &" :class "a2ui-btn-primary" (label :text "󰆍 Spawn Hermes"))
-        (button :onclick "ghostty -e hermes -c &" :class "a2ui-btn" (label :text "󰑖 Continue Session"))
-        (button :onclick "eww close a2ui_desktop" :class "icon-btn" (label :text "✕"))))
-
-    ;; 3-Column Main Grid
-    (box :orientation "h" :spacing 10 :space-evenly true :vexpand true :hexpand true
-      ;; Column 1: Agent Sessions & Crons
-      (box :class "a2ui-col" :orientation "v" :spacing 8 :space-evenly false :vexpand true
-        (box :orientation "h" :space-evenly false
-          (label :text "󰚩 AGENT SESSIONS" :class "a2ui-col-title")
-          (box :hexpand true)
-          (label :text "${ag_live} LIVE / ${ag_sub} SUB" :class "a2ui-badge-cyan"))
-        (scroll :vscroll true :hscroll false :vexpand true :class "a2ui-scroll"
-          (box :orientation "v" :spacing 6 :space-evenly false
-            (for item in {jq(agents_data, ".sessions")}
-              (box :class "a2ui-card ${item.status}" :orientation "v" :spacing 4 :space-evenly false
-                (box :orientation "h" :spacing 4 :space-evenly false
-                  (label :text {item.title} :class "sess-title" :hexpand true :xalign 0 :limit-width 36 :show-truncated true)
-                  (label :text {item.status_desc} :class "badge ${item.status}"))
-                (label :text "${item.model} · ${item.duration}" :class "sess-meta" :xalign 0)
-                (box :orientation "h" :spacing 4 :space-evenly false
-                  (button :onclick "ghostty -e hermes --resume ${item.id} &" :class "sess-btn" (label :text "󰆍 Resume"))
-                  (button :onclick "bash -c 'python3 /home/belal/.config/eww/scripts/agent_control.py delete ${item.id}; eww update agents_data=\"$(python3 /home/belal/.config/eww/scripts/agent_control.py json)\"' &"
-                          :class "sess-btn danger" (label :text "󰆴 Kill"))))))))
-
-      ;; Column 2: Live A2UI AST Surface & Cognition
-      (box :class "a2ui-col" :orientation "v" :spacing 8 :space-evenly false :vexpand true
-        (box :orientation "h" :space-evenly false
-          (label :text "󰧑 A2UI DYNAMIC CANVAS" :class "a2ui-col-title")
-          (box :hexpand true)
-          (label :text "${ag_active}" :class "a2ui-badge-green"))
-        (box :class "a2ui-card active" :orientation "v" :spacing 6 :space-evenly false :vexpand true
-          (label :text "AST Visualizer & Event Stream" :class "section-title" :xalign 0)
-          (scroll :vscroll true :hscroll false :vexpand true :class "a2ui-scroll"
-            (box :orientation "v" :spacing 6 :space-evenly false
-              (label :text ag_tree :class "a2ui-ast-text" :xalign 0 :wrap true)))
-          (box :orientation "h" :spacing 6 :space-evenly false :vexpand false
-            (button :onclick "bash -c 'python3 /home/belal/.config/eww/scripts/agent_control.py cron-pause-all; eww update ag_cron=\"0\"' &"
-                    :class "act warn" :hexpand true (label :text "⏸ Pause All Crons"))
-            (button :onclick "bash -c 'python3 /home/belal/.config/eww/scripts/agent_control.py cron-resume-all' &"
-                    :class "act" :hexpand true (label :text "▶ Resume Crons")))))
-
-      ;; Column 3: Telemetry & Memory
-      (box :class "a2ui-col" :orientation "v" :spacing 8 :space-evenly false :vexpand true
-        (box :orientation "h" :space-evenly false
-          (label :text "󰘚 SYSTEM & MEMORY" :class "a2ui-col-title")
-          (box :hexpand true)
-          (label :text "${power_cost}" :class "a2ui-badge-amber"))
-        (box :class "a2ui-card" :orientation "v" :spacing 6 :space-evenly false
-          (label :text "RAPL CPU & GPU Load" :class "section-title" :xalign 0)
-          (box :orientation "h" :spacing 8 :space-evenly true
-            (box :class "stat-pill hl" :orientation "v" :spacing 2
-              (label :text "CPU TEMP" :class "stat-lbl")
-              (label :text "${jq(RAM_PANEL, '.cpu.temp_str')}" :class "stat-val"))
-            (box :class "stat-pill hl" :orientation "v" :spacing 2
-              (label :text "GPU LOAD" :class "stat-lbl")
-              (label :text "${jq(RAM_PANEL, '.gpu.load')}%" :class "stat-val"))
-            (box :class "stat-pill hl" :orientation "v" :spacing 2
-              (label :text "RAM" :class "stat-lbl")
-              (label :text "${jq(RAM_PANEL, '.used')}G" :class "stat-val"))))
-        (box :class "a2ui-card" :orientation "v" :spacing 4 :space-evenly false :vexpand true
-          (label :text "Particiones de Almacenamiento" :class "section-title" :xalign 0)
-          (scroll :vscroll true :hscroll false :vexpand true :class "a2ui-scroll"
-            (box :orientation "v" :spacing 4 :space-evenly false
-              (for disk in disks_list
-                (box :orientation "h" :spacing 6 :space-evenly false :class "disk-row"
-                  (label :text "${disk.mount}" :class "disk-mount" :hexpand true :xalign 0)
-                  (label :text "${disk.used} / ${disk.total}" :class "disk-usage")
-                  (label :text "${disk.pct}%" :class "badge ${disk.pct > 85 ? 'danger' : 'active'}"))))))))
-    ))
-
 (defwidget osd_container []
   (box :class "osd-body" :orientation "h" :spacing 6 :halign "center" :valign "center" :space-evenly false
     (label :text osd_icon :class "osd-icon")
@@ -645,10 +523,6 @@
 (defpoll night_active :interval "5s" "/home/belal/.config/eww/scripts/toggles.sh nightlight active")
 (defpoll dark_active :interval "5s" "/home/belal/.config/eww/scripts/toggles.sh darkmode active")
 (defpoll dnd_active :interval "5s" "/home/belal/.config/eww/scripts/toggles.sh dnd active")
-(defpoll toggle_idle :interval "5s" "/home/belal/.config/eww/scripts/idle_toggle.sh icon")
-(defpoll idle_active :interval "5s" "/home/belal/.config/eww/scripts/idle_toggle.sh active")
-(defpoll pointer_active :interval "5s" "/home/belal/.config/eww/scripts/hands_toggle.sh pointer active")
-(defpoll ptt_active :interval "5s" "/home/belal/.config/eww/scripts/hands_toggle.sh ptt active")
 (defpoll system_profile :interval "3s" "cat /home/belal/.config/system-profiles/.current_state 2>/dev/null | grep '^PROFILE=' | cut -d= -f2 || echo 'default'")
 (defpoll power_cost :interval "30s" :initial "0.00 kWh | $0" "python3 /home/belal/.config/eww/scripts/power_session.py")
 (defpoll pomo_state :interval "1s" :initial "WORK 25:00 R1 [pausa]" "python3 /home/belal/.config/eww/scripts/pomodoro.py status")
@@ -664,9 +538,6 @@
 (defpoll ram_opt :interval "3s"
   :initial '{"ok":false,"freed":"—","available":"—","ts":""}'
   "bash /home/belal/.config/eww/scripts/ram_opt_status.sh")
-(defpoll vram_opt :interval "3s"
-  :initial '{"ok":false,"level":0,"freed_mb":0,"free_mb":0,"action":"Listo"}'
-  "bash /home/belal/.config/eww/scripts/vram_opt_status.sh")
 
 (defvar confirm_action "")
 (defvar confirm_label "")
@@ -712,13 +583,7 @@
           (keybind_row :keys "SUPER + 1..4" :desc "Ir a Escritorio (Workspace 1 - 4)")
           (keybind_row :keys "SUPER + SHIFT + 1..4" :desc "Mover Ventana a Escritorio 1 - 4")
           (keybind_row :keys "ALT + TAB" :desc "Rotar entre Escritorios")
-          (keybind_row :keys "SUPER + ALT + Flechas" :desc "Mover Foco entre Ventanas (atajo completo)")
-          (keybind_row :keys "SUPER + L,K,J" :desc "Mover Foco der/arriba/abajo (izq: SUPER+ALT+Flecha)")
-          (keybind_row :keys "SUPER + Flechas (mantener)" :desc "Mover Puntero (acelera solo; watchdog 5s)")
-          (keybind_row :keys "SUPER + Flechas (tap)" :desc "Saltito Fino del Puntero (48px)")
-          (keybind_row :keys "SUPER + TAB" :desc "Click Izquierdo del Puntero")
-          (keybind_row :keys "SUPER + SHIFT + TAB" :desc "Click Derecho del Puntero")
-          (keybind_row :keys "SUPER + CTRL + D (mantener)" :desc "Dictar por Voz y Pegar en el Input")
+          (keybind_row :keys "SUPER + Flechas / H,J,K,L" :desc "Mover Foco entre Ventanas")
           (keybind_row :keys "SUPER + SHIFT + Flechas" :desc "Mover Posición de Ventana")
           (keybind_row :keys "SUPER + CTRL + Flechas" :desc "Redimensionar Ventana Activa")
           (keybind_row :keys "SUPER + S" :desc "Ventana Especial (Scratchpad)")
@@ -733,8 +598,7 @@
           (keybind_row :keys "SUPER + B" :desc "Historial de Portapapeles")
           (keybind_row :keys "SUPER + SHIFT + S" :desc "Captura de Pantalla (Área)")
           (keybind_row :keys "SUPER + C" :desc "Selector de Color (Colorpicker)")
-          (keybind_row :keys "SUPER + I" :desc "Información del Sistema (Fastfetch)")
-          (keybind_row :keys "SUPER + SHIFT + L" :desc "Eventos del Sistema (Bitácora)"))
+          (keybind_row :keys "SUPER + I" :desc "Información del Sistema (Fastfetch)"))
 
         (box :visible {keybind_tab == "ai"} :orientation "v" :spacing 4 :space-evenly false
           (keybind_row :keys "SUPER + ESCAPE" :desc "Abrir / Cerrar Dashboard SWAL")
@@ -952,7 +816,8 @@
 ;; =========================================================================
 ;; SWAL FILES — Modern Minimalist Agentic File Manager (Files & Yazi inspired)
 ;; =========================================================================
-(defpoll swal_files_data :interval "2s" :initial '{\"current_path\":\"/home/belal\",\"parent_path\":\"/home\",\"total_items\":0,\"active_tab_id\":1,\"tabs\":[],\"breadcrumbs\":[],\"view_mode\":\"details\",\"show_hidden\":false,\"dual_pane\":false,\"sort_by\":\"name\",\"sort_order\":\"asc\",\"group_by\":\"none\",\"filter_type\":\"all\",\"preview_mode\":\"sidebar\",\"is_maximized\":false,\"is_current_pinned\":false,\"theme_id\":\"hive-dark\",\"favorites\":[],\"workspaces\":[],\"entries\":[],\"groups\":[],\"disks\":[],\"git_status\":{\"is_git_repo\":false,\"branch\":\"\",\"ahead\":0,\"behind\":0,\"staged_count\":0,\"modified_count\":0,\"untracked_count\":0,\"conflicted_count\":0,\"is_clean\":true,\"summary\":\"\",\"badge\":\"\"},\"preview\":{\"path\":\"\",\"file_name\":\"Cargando...\",\"file_type\":\"\",\"size_formatted\":\"\",\"date_modified\":\"\",\"is_image\":false,\"is_text\":false,\"is_dir\":false,\"is_git_repo\":false,\"image_path\":\"\",\"line_count\":0,\"content\":\"\",\"gutter_lines\":\"\",\"git_status_summary\":\"\"},\"col_chars\":{\"name\":30,\"date\":16,\"type\":12,\"size\":8},\"preview_wrap\":true,\"row_density\":\"comfortable\"}' "bash /home/belal/.config/eww/scripts/swal_filesPoll.sh")
+(defpoll swal_files_data :interval "2s" "swal-files view-json")
+(defpoll swal_files_data_ctx :interval "1s" :initial '{"actions":[],"target":""}' "swal-files menu-json")
 
 (defwindow swal_files
   :monitor 0
@@ -979,55 +844,53 @@
       (box :class "files-tabs-container" :orientation "h" :space-evenly false :spacing 3
         (for tab in "${swal_files_data.tabs}"
           (box :class "files-tab ${tab.active ? 'active' : 'inactive'}" :orientation "h" :space-evenly false :spacing 4
-            (button :class "files-tab-btn" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files tab-switch '${tab.id}'"
+            (button :class "files-tab-btn" :onclick "swal-files tab-switch '${tab.id}'"
               (box :orientation "h" :space-evenly false :spacing 4
                 (label :class "files-tab-icon" :text "📂")
                 (label :class "files-tab-title" :text "${tab.title}" :limit-width 18)))
-            (button :class "files-tab-close" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files tab-close '${tab.id}'" "✕"))))
-      (button :class "files-new-tab-btn" :tooltip "Nueva Pestana (Ctrl+T)" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files tab-new" "+")
+            (button :class "files-tab-close" :onclick "swal-files tab-close '${tab.id}'" "✕"))))
+      (button :class "files-new-tab-btn" :tooltip "Nueva Pestana (Ctrl+T)" :onclick "swal-files tab-new" "+")
       (box :hexpand true)
       ;; Window Controls
       (box :class "files-win-controls" :orientation "h" :space-evenly false :spacing 4
-        (button :class "files-win-btn" :onclick "bash /home/belal/.config/eww/scripts/swal_files_close.sh" "─")
-        (button :class "files-win-btn" :onclick "bash /home/belal/.config/eww/scripts/swal_files_maximize.sh" "□")
-        (button :class "files-win-btn close" :onclick "bash /home/belal/.config/eww/scripts/swal_files_close.sh" "✕")))
+        (button :class "files-win-btn" :onclick "eww close swal_files; eww close swal_files_maximized" "─")
+        (button :class "files-win-btn" :onclick "swal-files toggle-maximize" "□")
+        (button :class "files-win-btn close" :onclick "eww close swal_files; eww close swal_files_maximized" "✕")))
 
     ;; 2. COMMAND TOOLBAR & OMNIBAR
     ;; 2. COMMAND TOOLBAR & OMNIBAR
     (box :class "files-toolbar" :orientation "h" :space-evenly false :spacing 4
       ;; Nav cluster
       (box :class "files-nav-cluster" :orientation "h" :space-evenly false :spacing 2
-        (button :class "files-tool-btn" :tooltip "Atras" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files nav '${swal_files_data.parent_path}'" "󰁍")
-        (button :class "files-tool-btn" :tooltip "Subir de nivel" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files nav '${swal_files_data.parent_path}'" "󰁝")
-        (button :class "files-tool-btn" :tooltip "Refrescar" :onclick "eww poll swal_files_data" "󰑐"))
+        (button :class "files-tool-btn" :tooltip "Atras" :onclick "swal-files nav '${swal_files_data.parent_path}'" "󰁍")
+        (button :class "files-tool-btn" :tooltip "Subir de nivel" :onclick "swal-files nav '${swal_files_data.parent_path}'" "󰁝")
+        (button :class "files-tool-btn" :tooltip "Refrescar" :onclick "swal-files view-json" "󰑐"))
 
       ;; Breadcrumbs Address Bar (Pills)
       (box :class "files-address-bar" :orientation "h" :space-evenly false :spacing 2 :hexpand true
         (for crumb in "${swal_files_data.breadcrumbs}"
           (box :orientation "h" :space-evenly false :spacing 2
-            (button :class "files-crumb-pill" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files nav '${crumb.path}'" "${crumb.name}")
+            (button :class "files-crumb-pill" :onclick "swal-files nav '${crumb.path}'" "${crumb.name}")
             (label :class "files-crumb-sep" :text "›"))))
 
       ;; Pin / Unpin Active Folder
-      (button :class "files-tool-btn pin-pill ${swal_files_data.is_current_pinned ? 'pinned' : ''}" :tooltip "${swal_files_data.is_current_pinned ? 'Despinear carpeta actual' : 'Pinear carpeta actual a Favoritos'}" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files toggle-pin-current"
+      (button :class "files-tool-btn pin-pill ${swal_files_data.is_current_pinned ? 'pinned' : ''}" :tooltip "${swal_files_data.is_current_pinned ? 'Despinear carpeta actual' : 'Pinear carpeta actual a Favoritos'}" :onclick "swal-files toggle-pin-current"
         "${swal_files_data.is_current_pinned ? '󰤱 Despinear' : '📌 Pinear'}")
 
       ;; Filter & Grouping Pills
-      (button :class "files-tool-btn group-pill" :tooltip "Cambiar Agrupamiento" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files set-group '${swal_files_data.group_by == 'none' ? 'type' : (swal_files_data.group_by == 'type' ? 'date' : (swal_files_data.group_by == 'date' ? 'size' : 'none'))}'"
+      (button :class "files-tool-btn group-pill" :tooltip "Cambiar Agrupamiento" :onclick "swal-files set-group '${swal_files_data.group_by == 'none' ? 'type' : (swal_files_data.group_by == 'type' ? 'date' : (swal_files_data.group_by == 'date' ? 'size' : 'none'))}'"
         "󰒺 Grupo: ${swal_files_data.group_by}")
 
-      (button :class "files-tool-btn filter-pill" :tooltip "Filtrar por tipo" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files set-filter '${swal_files_data.filter_type == 'all' ? 'code' : (swal_files_data.filter_type == 'code' ? 'documents' : (swal_files_data.filter_type == 'documents' ? 'images' : 'all'))}'"
+      (button :class "files-tool-btn filter-pill" :tooltip "Filtrar por tipo" :onclick "swal-files set-filter '${swal_files_data.filter_type == 'all' ? 'code' : (swal_files_data.filter_type == 'code' ? 'documents' : (swal_files_data.filter_type == 'documents' ? 'images' : 'all'))}'"
         "󰈲 Filtro: ${swal_files_data.filter_type}")
 
       ;; Preview Mode Switcher (Yazi Sidebar on/off)
-      (button :class "files-tool-btn preview-mode ${swal_files_data.preview_mode == 'sidebar' ? 'active' : ''}" :tooltip "Alternar Panel Lateral Yazi" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files toggle-preview-mode"
+      (button :class "files-tool-btn preview-mode ${swal_files_data.preview_mode == 'sidebar' ? 'active' : ''}" :tooltip "Alternar Panel Lateral Yazi" :onclick "swal-files toggle-preview-mode"
         "${swal_files_data.preview_mode == 'sidebar' ? '󰍹 Panel Lateral' : '󰍺 Panel Oculto'}")
 
-      ;; Densidad de filas (compacta <-> comoda)
-      (button :class "files-tool-btn density ${swal_files_data.row_density == 'compact' ? 'active' : ''}"
-              :tooltip "Densidad de filas: ${swal_files_data.row_density == 'compact' ? 'COMPACTA (clic = comoda)' : 'COMODA (clic = compacta)'}"
-              :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files toggle-density"
-              "${swal_files_data.row_density == 'compact' ? '▤' : '▦'}"))
+      ;; Action cluster (Agent prompt & View switcher)
+      (button :class "files-tool-btn agent" :tooltip "Consultar Agente sobre esta carpeta" :onclick "notify-send 'SWAL Xavier Agent' 'Analizando directorio actual con GraphRAG...' &" "🤖 Xavier AI")
+      (button :class "files-tool-btn" :tooltip "Alternar Vista (Detalles/Grid)" :onclick "swal-files toggle-view" "🔲"))
 
     ;; 3. MAIN 3-PANEL WORKSPACE (1. SIDEBAR | 2. FILE LIST / GROUPS | 3. YAZI PREVIEW)
     (box :class "files-main-layout" :orientation "h" :space-evenly false :vexpand true
@@ -1039,15 +902,15 @@
             (box :class "files-side-section" :orientation "v" :space-evenly false
               (box :class "files-side-header-box" :orientation "h" :space-evenly false
                 (label :class "files-side-header" :text "FAVORITOS" :xalign 0 :hexpand true)
-                (button :class "files-pin-add-btn" :tooltip "Pinear carpeta actual a Favoritos" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files pin-current" "+"))
+                (button :class "files-pin-add-btn" :tooltip "Pinear carpeta actual a Favoritos" :onclick "swal-files pin-current" "+"))
               (box :class "files-side-list" :orientation "v" :space-evenly false
                 (for fav in "${swal_files_data.favorites}"
                   (box :class "files-side-item ${fav.is_active ? 'active' : ''}" :orientation "h" :space-evenly false
-                    (button :class "files-side-btn" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files nav '${fav.path}'" :hexpand true
+                    (button :class "files-side-btn" :onclick "swal-files nav '${fav.path}'" :hexpand true
                       (box :orientation "h" :space-evenly false :spacing 6
                         (label :text "${fav.icon}" :class "side-ico")
                         (label :text "${fav.name}" :xalign 0 :limit-width 13)))
-                    (button :class "files-unpin-btn" :tooltip "Despinear '${fav.name}'" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files unpin '${fav.path}'" "✕")))))
+                    (button :class "files-unpin-btn" :tooltip "Despinear '${fav.name}'" :onclick "swal-files unpin '${fav.path}'" "✕")))))
 
             ;; Section 2: Espacios Agénticos
             (box :class "files-side-section" :orientation "v" :space-evenly false
@@ -1056,11 +919,11 @@
               (box :class "files-side-list" :orientation "v" :space-evenly false
                 (for ws in "${swal_files_data.workspaces}"
                   (box :class "files-side-item ${ws.is_active ? 'active' : ''}" :orientation "h" :space-evenly false
-                    (button :class "files-side-btn" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files nav '${ws.path}'" :hexpand true
+                    (button :class "files-side-btn" :onclick "swal-files nav '${ws.path}'" :hexpand true
                       (box :orientation "h" :space-evenly false :spacing 6
                         (label :text "${ws.icon}" :class "side-ico")
                         (label :text "${ws.name}" :xalign 0 :limit-width 13)))
-                    (button :class "files-unpin-btn" :tooltip "Despinear workspace" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files unpin '${ws.path}'" "✕")))))
+                    (button :class "files-unpin-btn" :tooltip "Despinear workspace" :onclick "swal-files unpin '${ws.path}'" "✕")))))
 
             ;; Section 3: Etiquetas AI
             (box :class "files-side-section" :orientation "v" :space-evenly false
@@ -1070,67 +933,25 @@
               (box :class "files-side-tag" :orientation "h" :space-evenly false :spacing 4 (label :text "🟣") (label :text "Memory/Xavier" :class "tag-lbl"))
               (box :class "files-side-tag" :orientation "h" :space-evenly false :spacing 4 (label :text "🟠") (label :text "WIP" :class "tag-lbl")))
 
-            ;; Section 4: Unidades (dinámico desde Rust backend)
+            ;; Section 4: Unidades
             (box :class "files-side-section" :orientation "v" :space-evenly false
               (label :class "files-side-header" :text "UNIDADES" :xalign 0)
-              (for disk in "${swal_files_data.disks}"
-                (box :class "files-disk-entry" :orientation "v" :space-evenly false
-                  (button :class "files-side-btn" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files nav '${disk.mount}'"
-                    (box :orientation "h" :space-evenly false :spacing 6
-                      (label :text "${disk.icon}" :class "side-ico")
-                      (label :text "${disk.label}" :xalign 0 :hexpand true)
-                      (label :class "files-disk-meta" :text "${disk.used_pct}%" :limit-width 6 :show-truncated true)))
-                  (box :class "files-disk-bar-track" :orientation "h" :space-evenly false
-                    (box :class "files-disk-bar-fill ${disk.used_pct > 90 ? 'danger' : (disk.used_pct > 75 ? 'warn' : '')}"
-                         :hexpand false
-                         :style "min-width: ${disk.used_pct * 1.6}px;"))))))))
+              (button :class "files-side-btn" :onclick "swal-files nav '/'"
+                (box :orientation "h" :space-evenly false :spacing 6 (label :text "󰋊" :class "side-ico") (label :text "NVMe Root (/)" :xalign 0)))))))
+
 
       ;; Column 2: File Browser Pane (File Rows + Group Headers)
       (box :class "files-content-pane" :orientation "v" :space-evenly false :vexpand true :hexpand true
-        ;; Buscador local (filtra por nombre en el directorio actual)
-        (box :class "files-search-box" :orientation "h" :space-evenly false :spacing 4 :hexpand true
-          (label :class "files-search-ico" :text "🔍")
-          (input :class "files-search-input"
-                 :onchange "bash /home/belal/.config/eww/scripts/swal_files_search.sh {}"
-                 :onaccept "bash /home/belal/.config/eww/scripts/swal_files_search.sh {}"))
-        ;; Columns Header — scroll sobre cada titulo = redimensionar esa columna
+        ;; Columns Header
         (box :class "files-col-header" :orientation "h" :space-evenly false :spacing 8
-          (eventbox :class "col-hdr" :hexpand true :cursor "ew-resize"
-            :tooltip "Ancho Nombre: ${swal_files_data.col_chars.name} chars (rueda/clic=+2, clic der=-2)"
-            :onscroll "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-width name {}"
-            :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-width name up"
-            :onrightclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-width name down"
-            (label :class "col-name" :text "Nombre" :xalign 0))
-          (eventbox :class "col-hdr" :cursor "ew-resize"
-            :tooltip "Ancho Fecha: ${swal_files_data.col_chars.date} chars (rueda/clic=+2, clic der=-2)"
-            :onscroll "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-width date {}"
-            :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-width date up"
-            :onrightclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-width date down"
-            (label :class "col-date" :text "Fecha" :xalign 0))
-          (eventbox :class "col-hdr" :cursor "ew-resize"
-            :tooltip "Ancho Tipo: ${swal_files_data.col_chars.type} chars (rueda/clic=+2, clic der=-2)"
-            :onscroll "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-width type {}"
-            :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-width type up"
-            :onrightclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-width type down"
-            (label :class "col-type" :text "Tipo" :xalign 0))
-          (eventbox :class "col-hdr" :cursor "ew-resize"
-            :tooltip "Ancho Tamano: ${swal_files_data.col_chars.size} chars (rueda/clic=+2, clic der=-2)"
-            :onscroll "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-width size {}"
-            :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-width size up"
-            :onrightclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-width size down"
-            (label :class "col-size" :text "Tamaño" :xalign 1)))
+          (label :class "col-name" :text "Nombre" :xalign 0 :hexpand true)
+          (label :class "col-date" :text "Modificado" :xalign 0)
+          (label :class "col-type" :text "Tipo" :xalign 0)
+          (label :class "col-size" :text "Tamaño" :xalign 1))
 
         ;; File Rows / Groups
         (scroll :class "files-items-scroll" :vscroll true :hscroll false :vexpand true
           (box :class "files-items-list" :orientation "v" :space-evenly false
-            ;; Empty state — shown when no entries (corrupted filter or empty dir)
-            (box :class "files-empty-state" :orientation "v" :space-evenly true :vexpand true
-                 :visible "${arraylength(swal_files_data.groups) == 0}"
-              (label :class "files-empty-ico" :text "📂")
-              (label :class "files-empty-lbl" :text "Sin resultados · filtro activo: ${swal_files_data.filter_type}")
-              (button :class "files-empty-btn"
-                :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files reset-session"
-                "🔄 Limpiar filtros y volver a Home"))
             (for group in "${swal_files_data.groups}"
               (box :orientation "v" :space-evenly false
                 ;; Optional Group Header when grouped
@@ -1139,15 +960,15 @@
                   (label :class "files-group-count" :text "(${group.count})"))
                 ;; Entries in this group
                 (for item in "${group.entries}"
-                  (button :class "files-row-btn ${swal_files_data.row_density == 'compact' ? 'compact' : ''} ${item.is_selected ? 'selected' : ''}" :onclick "${item.is_dir ? 'swal-files nav \'' + item.path + '\'' : 'swal-files select-item \'' + item.path + '\''}"
+                  (button :class "files-row-btn ${item.is_selected ? 'selected' : ''}" :onclick "${item.is_dir ? 'swal-files nav \'' + item.path + '\'' : 'swal-files select-item \'' + item.path + '\''}" :ondblclick "swal-files open-item '${item.path}'" :onrightclick "swal-files context-open '${item.path}'"
                     (box :class "files-row" :orientation "h" :space-evenly false :spacing 8
                       (box :class "col-name-cell" :orientation "h" :space-evenly false :spacing 6 :hexpand true
                         (label :class "item-ico" :text "${item.icon}")
-                        (label :class "item-txt" :text "${item.name}" :xalign 0 :limit-width 64 :show-truncated true)
+                        (label :class "item-txt" :text "${item.name}" :xalign 0 :limit-width 24)
                         (label :class "git-badge ${item.git_status}" :text "${item.git_badge}"))
-                      (label :class "col-date-cell" :text "${item.date_modified}" :xalign 0 :limit-width 64 :show-truncated true)
-                      (label :class "col-type-cell" :text "${item.type}" :xalign 0 :limit-width 64 :show-truncated true)
-                      (label :class "col-size-cell" :text "${item.size}" :xalign 1 :limit-width 64 :show-truncated true)))))))))
+                      (label :class "col-date-cell" :text "${item.date_modified}" :xalign 0)
+                      (label :class "col-type-cell" :text "${item.type}" :xalign 0)
+                      (label :class "col-size-cell" :text "${item.size}" :xalign 1)))))))))
 
       ;; Column 3: Yazi-Style Right Preview Panel (Visible when preview_mode == "sidebar")
       (box :class "files-yazi-preview" :visible "${swal_files_data.preview_mode == 'sidebar'}" :orientation "v" :space-evenly false
@@ -1155,34 +976,24 @@
         (box :class "yazi-preview-header" :orientation "h" :space-evenly false :spacing 6
           (label :class "yazi-file-icon" :text "${swal_files_data.preview.is_dir ? '📁' : (swal_files_data.preview.is_image ? '🖼️' : '📝')}")
           (box :orientation "v" :space-evenly false :hexpand true
-            (label :class "yazi-file-title" :text "${swal_files_data.preview.file_name}" :limit-width 18 :xalign 0)
+            (label :class "yazi-file-title" :text "${swal_files_data.preview.file_name}" :limit-width 22 :xalign 0)
             (label :class "yazi-file-meta" :text "${swal_files_data.preview.file_type} · ${swal_files_data.preview.size_formatted}" :xalign 0))
-          (button :class "yazi-popout-btn" :tooltip "Abrir en Ventana Flotante" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files open-editor '${swal_files_data.preview.path}'" "🗖"))
+          (button :class "yazi-popout-btn" :tooltip "Abrir en Ventana Flotante" :onclick "swal-files open-editor '${swal_files_data.preview.path}'" "🗖"))
 
-        ;; Preview Body (Imagen real / Código / Hex Dump)
+        ;; Preview Body (Code Lines / Hex Dump / Git Card)
         (box :class "yazi-preview-body" :orientation "h" :space-evenly false :vexpand true
-          ;; Imagen (widget image nativo de EWW)
-          (box :class "yazi-image-frame" :orientation "v" :space-evenly false :vexpand true :hexpand true
-               :halign "fill" :valign "fill" :visible "${swal_files_data.preview.is_image}"
-            (image :class "yazi-image" :path "${swal_files_data.preview.image_path == '' ? '/home/belal/.config/eww/assets/empty.png' : swal_files_data.preview.image_path}"
-                   :image-width 200 :preserve-aspect-ratio true)
-            (label :class "yazi-image-caption" :text "${swal_files_data.preview.file_type} · ${swal_files_data.preview.size_formatted}" :xalign 0.5))
-          ;; Contenido de texto/codigo — modo WRAP (lineas ajustadas a la ventana)
-          (scroll :class "yazi-content-scroll" :visible "${swal_files_data.preview.is_text ? swal_files_data.preview_wrap : false}" :vscroll true :hscroll false :hexpand true :vexpand true
-            (label :class "yazi-code-view" :text "${swal_files_data.preview.content}" :xalign 0 :yalign 0 :wrap true :wrap-mode "wordchar"))
-          ;; Contenido de texto/codigo — modo NO-WRAP (linea completa + scroll horizontal)
-          (scroll :class "yazi-content-scroll" :visible "${swal_files_data.preview.is_text ? (swal_files_data.preview_wrap ? false : true) : false}" :vscroll true :hscroll true :hexpand true :vexpand true
+          (scroll :class "yazi-gutter-scroll" :visible "${swal_files_data.preview.is_text}" :vscroll true :hscroll false :vexpand true
+            (label :class "yazi-gutter" :text "${swal_files_data.preview.gutter_lines}" :xalign 1))
+          (scroll :class "yazi-content-scroll" :vscroll true :hscroll true :hexpand true :vexpand true
             (label :class "yazi-code-view" :text "${swal_files_data.preview.content}" :xalign 0 :yalign 0 :wrap false)))
 
-        ;; Preview Actions Footer (icon-only para no inflar el panel)
+        ;; Preview Actions Footer
         (box :class "yazi-preview-actions" :orientation "h" :space-evenly true :spacing 4
-          (button :class "yazi-act-btn" :tooltip "Abrir terminal en esta carpeta" :onclick "ghostty --working-directory='${swal_files_data.preview.path}' &" "󰆍")
-          (button :class "yazi-act-btn" :tooltip "Copiar TODO el contenido del archivo (o su ruta si no es texto)" :onclick "bash /home/belal/.config/eww/scripts/swal_preview_copy.sh" "📋")
-          (button :class "yazi-act-btn" :tooltip "Ver para copiar con el mouse (pager de SOLO LECTURA, no editable)" :visible "${swal_files_data.preview.is_text}" :onclick "bash /home/belal/.config/eww/scripts/swal_preview_view.sh" "⧉")
-          (button :class "yazi-act-btn ${swal_files_data.preview_wrap ? 'active' : ''}" :tooltip "Wrap: ${swal_files_data.preview_wrap ? 'ON (lineas ajustadas)' : 'OFF (lineas cortadas)'} — clic para cambiar" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files toggle-wrap" "↩")
-          (button :class "yazi-act-btn" :tooltip "Editar (Sublime) / Abrir con app por defecto" :visible "${swal_files_data.preview.is_dir ? false : true}" :onclick "bash /home/belal/.config/eww/scripts/swal_preview_edit.sh" "✎")
-          (button :class "yazi-act-btn accent" :tooltip "Abrir carpeta / QuickLook" :onclick "${swal_files_data.preview.is_dir ? 'swal-files nav \'' + swal_files_data.preview.path + '\'' : 'swal-files open-editor \'' + swal_files_data.preview.path + '\''}"
-            "${swal_files_data.preview.is_dir ? '📂' : '󰏫'}"))))
+          (button :class "yazi-act-btn" :onclick "ghostty --working-directory='${swal_files_data.preview.path}' &" "󰆍 Terminal")
+          (button :class "yazi-act-btn" :tooltip "Copiar TODO el contenido del archivo al portapapeles" :onclick "wl-copy '${swal_files_data.preview.path}' && notify-send 'SWAL Files' 'Ruta copiada al portapapeles' &" "📋 Copiar")
+          (button :class "yazi-act-btn" :tooltip "Copiar texto en visor read-only" :onclick "swal-files view-text '${swal_files_data.preview.path}'" "⧉ Text")
+          (button :class "yazi-act-btn accent" :onclick "${swal_files_data.preview.is_dir ? 'swal-files nav \'' + swal_files_data.preview.path + '\'' : 'swal-files open-editor \'' + swal_files_data.preview.path + '\''}"
+            "${swal_files_data.preview.is_dir ? '📂 Entrar' : '󰏫 Editor'}"))))
 
 
     ;; 4. STATUS BAR (WITH LIVE GIT STATUS)
@@ -1191,14 +1002,13 @@
       (box :hexpand true)
       (label :class "stat-git" :text "${swal_files_data.git_status.summary}")
       (label :class "stat-sep" :text " · ")
-      (label :class "stat-agent" :text "⚡ Xavier GraphRAG (:8006) · 100% Indexado")
-      (button :class "stat-colreset" :tooltip "Restaurar anchos de columna" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-reset" "⇔"))))
+      (label :class "stat-agent" :text "⚡ Xavier GraphRAG (:8006)"))))
 
 
 ;; =========================================================================
 ;; SWAL MINIMALIST EDITOR & QUICKLOOK VIEWER (Sublime Text Aesthetic)
 ;; =========================================================================
-(defpoll swal_editor_data :interval "5s" :initial '{\"path\":\"\",\"file_name\":\"Cargando...\",\"file_type\":\"\",\"size_formatted\":\"\",\"date_modified\":\"\",\"is_image\":false,\"is_text\":false,\"is_dir\":false,\"is_git_repo\":false,\"image_path\":\"\",\"line_count\":0,\"content\":\"\",\"gutter_lines\":\"\",\"git_status_summary\":\"\"}' "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files editor-json")
+(defpoll swal_editor_data :interval "5s" "swal-files editor-json")
 
 (defwindow swal_editor
   :monitor 0
@@ -1218,19 +1028,13 @@
       (label :class "editor-file-type" :text "[${swal_editor_data.file_type}]")
       (box :hexpand true)
       (label :class "editor-file-path" :text "${swal_editor_data.path}" :limit-width 50)
-      (button :class "yazi-act-btn ${swal_files_data.preview_wrap ? 'active' : ''}" :tooltip "Wrap: ${swal_files_data.preview_wrap ? 'ON' : 'OFF'}" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files toggle-wrap" "↩")
       (button :class "files-win-btn close" :onclick "eww close swal_editor" "✕"))
 
-    ;; Body (Imagen / Código)
+    ;; Body
     (box :class "editor-body" :orientation "h" :space-evenly false :vexpand true :hexpand true
-      (box :class "editor-image-frame" :orientation "v" :space-evenly false :vexpand true :hexpand true
-           :halign "fill" :valign "fill" :visible "${swal_editor_data.is_image}"
-        (image :class "editor-image" :path "${swal_editor_data.image_path == '' ? '/home/belal/.config/eww/assets/empty.png' : swal_editor_data.image_path}"
-               :image-width 420 :preserve-aspect-ratio true)
-        (label :class "editor-image-caption" :text "${swal_editor_data.file_type} · ${swal_editor_data.size_formatted}" :xalign 0.5))
-      (scroll :class "editor-content-scroll" :visible "${swal_editor_data.is_image ? false : (swal_files_data.preview_wrap ? true : false)}" :vscroll true :hscroll false :hexpand true :vexpand true
-        (label :class "editor-code-view" :text "${swal_editor_data.content}" :xalign 0 :yalign 0 :wrap true :wrap-mode "wordchar"))
-      (scroll :class "editor-content-scroll" :visible "${swal_editor_data.is_image ? false : (swal_files_data.preview_wrap ? false : true)}" :vscroll true :hscroll true :hexpand true :vexpand true
+      (scroll :class "editor-gutter-scroll" :vscroll true :hscroll false :vexpand true
+        (label :class "editor-gutter" :text "${swal_editor_data.gutter_lines}" :xalign 1))
+      (scroll :class "editor-content-scroll" :vscroll true :hscroll true :hexpand true :vexpand true
         (label :class "editor-code-view" :text "${swal_editor_data.content}" :xalign 0 :yalign 0 :wrap false)))
 
     ;; Status Footer
@@ -1240,39 +1044,26 @@
       (label :class "stat-agent" :text "⚡ SWAL Minimalist QuickLook Viewer"))))
 
 ;; =========================================================================
-;; EVENT PANEL - Bitacora de eventos del sistema (sentinel + eww + systemd)
-;; Abre con SUPER + SHIFT + L o el boton del dashboard.
+;; SWAL FILES CONTEXT MENU OVERLAY
 ;; =========================================================================
-(defwindow event_panel
+(defwindow files_ctx_menu
   :monitor 0
-  :geometry (geometry :x "0%" :y "0%" :width "700px" :height "560px" :anchor "center")
+  :geometry (geometry :x "50%" :y "50%" :width "240px" :anchor "center")
   :stacking "overlay"
-  :wm-type "dialog"
+  :wm-type "normal"
   :exclusive false
-  :focusable true
-  (event_panel_container))
-
-(defpoll event_body :interval "5s" :initial "Cargando eventos..."
-  "python3 /home/belal/.config/eww/scripts/event_panel.py body")
-
-(defwidget event_panel_container []
-  (box :class "ram-container" :orientation "v" :spacing 5 :space-evenly false
-    (box :orientation "h" :class "ram-header" :space-evenly false :valign "center" :vexpand false
-      (box :orientation "h" :spacing 6 :valign "center" :space-evenly false
-        (label :text "📋" :style "color:#E3B341;font-size:16px;font-weight:bold;")
-        (label :text "EVENTOS DEL SISTEMA" :style "color:#E6EDF3;font-size:12.5px;font-weight:bold;"))
-      (box :hexpand true)
-      (button :onclick "eww close event_panel" :class "close-btn" :style "margin-left:8px;" :tooltip "Cerrar"
-        (label :text "󰅖" :class "close-lbl")))
-    (box :class "card-sm" :orientation "v" :spacing 2 :space-evenly false
-      (label :text "BITACORA (SENTINEL + EWW + SYSTEMD)" :class "section-title"))
-    (scroll :vscroll true :hscroll false :vexpand true :class "dash-scroll"
-      (box :class "card" :orientation "v" :space-evenly false
-        (label :text {event_body} :wrap true :xalign 0 :yalign 0 :style "font-size:10px;")))
-    (box :class "ram-footer" :orientation "h" :spacing 6 :space-evenly false :valign "center" :vexpand false
-      (button :onclick "bash -c '/home/belal/.local/bin/swal-sentinel check' &" :class "act" :hexpand true :vexpand false
-        (label :text "󰑓 Chequear ahora" :class "act-lbl"))
-      (button :onclick "ghostty -e bash -c 'tail -n 200 -f ~/.cache/swal-sentinel/sentinel.log' &" :class "act" :hexpand true :vexpand false
-        (label :text "󰈙 Ver log completo" :class "act-lbl")))))
-
+  :focusable false
+  (eventbox :onclick "eww close files_ctx_menu"
+    (box :class "files-ctx-menu" :orientation "v" :space-evenly false
+      (box :class "files-ctx-header" :orientation "h" :space-evenly false
+        (label :class "files-ctx-title" :text "${swal_files_data_ctx.target}" :limit-width 24 :xalign 0 :hexpand true)
+        (button :class "files-ctx-close" :onclick "eww close files_ctx_menu" "✕"))
+      (box :class "files-ctx-list" :orientation "v" :space-evenly false
+        (for a in "${swal_files_data_ctx.actions}"
+          (button :class "files-ctx-item ${a.enabled ? '' : 'disabled'}"
+                  :visible "${a.enabled}"
+                  :onclick "swal-files menu-run '${a.id}'; eww close files_ctx_menu"
+            (box :orientation "h" :space-evenly false :spacing 6
+              (label :text "${a.icon}" :class "files-ctx-icon")
+              (label :text "${a.label}" :class "files-ctx-label" :xalign 0))))))))
 
