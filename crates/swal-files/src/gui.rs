@@ -1,6 +1,7 @@
 //! GUI payload formatting and aggregation for Eww integration
 
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use crate::config::FileManagerConfig;
@@ -76,6 +77,7 @@ pub struct GuiPayload {
     pub current_path: String,
     pub parent_path: String,
     pub total_items: usize,
+    pub selected_count: usize,
     pub active_tab_id: usize,
     pub tabs: Vec<TabStatePayload>,
     pub breadcrumbs: Vec<BreadcrumbItem>,
@@ -216,6 +218,7 @@ pub fn build_gui_payload(session: &SessionState) -> GuiPayload {
 
     let grouped = group_entries(&scanned_entries, group_by);
 
+    let selected_set: HashSet<&str> = session.selected_paths.iter().map(|s| s.as_str()).collect();
     let selected_path_str = session.selected_path.as_deref().unwrap_or("");
 
     let mut all_row_items: Vec<FileRowItem> = Vec::new();
@@ -224,7 +227,8 @@ pub fn build_gui_payload(session: &SessionState) -> GuiPayload {
     for g in grouped {
         let mut group_items = Vec::new();
         for e in g.entries {
-            let is_sel = e.path.to_string_lossy() == selected_path_str;
+            let path_str = e.path.to_string_lossy();
+            let is_sel = selected_set.contains(path_str.as_ref()) || (!selected_path_str.is_empty() && path_str == selected_path_str);
             let row = FileRowItem {
                 name: sanitize_preview_text(&e.name),
                 path: e.path.to_string_lossy().to_string(),
@@ -358,6 +362,7 @@ pub fn build_gui_payload(session: &SessionState) -> GuiPayload {
         current_path: current_path.to_string_lossy().to_string(),
         parent_path,
         total_items: all_row_items.len(),
+        selected_count: session.selected_paths.len(),
         active_tab_id: session.active_tab_id,
         tabs,
         breadcrumbs: breadcrumbs.into_iter().rev().take(5).rev().collect(),

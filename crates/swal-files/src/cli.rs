@@ -163,7 +163,91 @@ pub fn handle_command(session: &mut SessionState, args: &[String]) -> Result<Opt
         "select-item" | "select_item" | "select" => {
             if args.len() > 2 {
                 let target = PathBuf::from(&args[2]);
-                session.selected_path = Some(target.to_string_lossy().to_string());
+                let target_str = target.to_string_lossy().to_string();
+                session.selected_path = Some(target_str.clone());
+                session.selected_paths = vec![target_str];
+                state_changed = true;
+            }
+        }
+        "select-toggle" | "select_toggle" => {
+            if args.len() > 2 {
+                let target = PathBuf::from(&args[2]);
+                let target_str = target.to_string_lossy().to_string();
+                if let Some(pos) = session.selected_paths.iter().position(|p| p == &target_str) {
+                    session.selected_paths.remove(pos);
+                    if session.selected_path.as_deref() == Some(&target_str) {
+                        session.selected_path = session.selected_paths.last().cloned();
+                    }
+                } else {
+                    session.selected_paths.push(target_str.clone());
+                    session.selected_path = Some(target_str);
+                }
+                state_changed = true;
+            }
+        }
+        "select-range" | "select_range" => {
+            if args.len() > 2 {
+                let target_str = PathBuf::from(&args[2]).to_string_lossy().to_string();
+                let payload = build_gui_payload(session);
+                let visible_paths: Vec<String> = payload.entries.into_iter().map(|e| e.path).collect();
+
+                let anchor_str = session.selected_path.clone().unwrap_or_else(|| target_str.clone());
+                let start_idx = visible_paths.iter().position(|p| p == &anchor_str);
+                let end_idx = visible_paths.iter().position(|p| p == &target_str);
+
+                if let (Some(s), Some(e)) = (start_idx, end_idx) {
+                    let (from, to) = if s <= e { (s, e) } else { (e, s) };
+                    for p in &visible_paths[from..=to] {
+                        if !session.selected_paths.contains(p) {
+                            session.selected_paths.push(p.clone());
+                        }
+                    }
+                    session.selected_path = Some(target_str);
+                    state_changed = true;
+                } else {
+                    // Fallback if not found in visible list
+                    if !session.selected_paths.contains(&target_str) {
+                        session.selected_paths.push(target_str.clone());
+                    }
+                    session.selected_path = Some(target_str);
+                    state_changed = true;
+                }
+            }
+        }
+        "select-all" | "select_all" => {
+            let payload = build_gui_payload(session);
+            let visible_paths: Vec<String> = payload.entries.into_iter().map(|e| e.path).collect();
+            if !visible_paths.is_empty() {
+                session.selected_paths = visible_paths;
+                session.selected_path = session.selected_paths.last().cloned();
+                state_changed = true;
+            }
+        }
+        "select-clear" | "select_clear" => {
+            session.selected_paths.clear();
+            session.selected_path = None;
+            state_changed = true;
+        }
+        "menu-run" | "menu_run" => {
+            if args.len() > 2 {
+                let action = &args[2];
+                let target_path = args.get(3).cloned();
+
+                let batch_paths = if let Some(ref path) = target_path {
+                    if session.selected_paths.contains(path) {
+                        session.selected_paths.clone()
+                    } else {
+                        vec![path.clone()]
+                    }
+                } else if !session.selected_paths.is_empty() {
+                    session.selected_paths.clone()
+                } else if let Some(ref sel) = session.selected_path {
+                    vec![sel.clone()]
+                } else {
+                    Vec::new()
+                };
+
+                eprintln!("✓ Menú contextual ejecutado: '{}' sobre {:?} items", action, batch_paths.len());
                 state_changed = true;
             }
         }
