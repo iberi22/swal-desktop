@@ -90,6 +90,7 @@ fn launch_gui_window() {
 
 /// True if the live --gui process has NO terminal window attached
 /// (ghostty closed and reparented it to init, PPID == 1).
+#[allow(dead_code)]
 fn gui_process_is_orphaned() -> bool {
     let pid = fs::read_to_string(PID_FILE)
         .ok()
@@ -117,6 +118,26 @@ pub fn handle_command(session: &mut SessionState, args: &[String]) -> Result<Opt
 
     let cmd = args[1].as_str();
 
+    // Pre-dispatch to island CLI handlers (WAVE-FM.02 .. WAVE-FM.07)
+    if let Some(res) = crate::clipboard_ops::handle_cli(args, session) {
+        return Ok(Some(res));
+    }
+    if let Some(res) = crate::file_ops::handle_cli(args, session) {
+        return Ok(Some(res));
+    }
+    if let Some(res) = crate::trash_ops::handle_cli(args, session) {
+        return Ok(Some(res));
+    }
+    if let Some(res) = crate::properties::handle_cli(args, session) {
+        return Ok(Some(res));
+    }
+    if let Some(res) = crate::text_viewer::handle_cli(args, session) {
+        return Ok(Some(res));
+    }
+    if let Some(res) = crate::open_with::handle_cli(args, session) {
+        return Ok(Some(res));
+    }
+
     // Direct path argument
     if cmd.starts_with('/') || cmd.starts_with('~') || Path::new(cmd).exists() {
         open_gui(Some(cmd));
@@ -126,6 +147,122 @@ pub fn handle_command(session: &mut SessionState, args: &[String]) -> Result<Opt
     let mut state_changed = false;
 
     match cmd {
+        "menu-json" | "menu_json" => {
+            let target = args.get(2).map(Path::new);
+            let json_str = crate::context_menu::menu_json(target);
+            return Ok(Some(json_str));
+        }
+        "context-open" | "context_open" => {
+            if args.len() > 2 {
+                let target = PathBuf::from(&args[2]);
+                session.selected_path = Some(target.to_string_lossy().to_string());
+                state_changed = true;
+            }
+            let _ = Command::new("eww").args(["open", "files_ctx_menu"]).status();
+        }
+        "context-close" | "context_close" => {
+            let _ = Command::new("eww").args(["close", "files_ctx_menu"]).status();
+        }
+        "menu-run" | "menu_run" => {
+            let action_id = args.get(2).map(|s| s.as_str()).unwrap_or("");
+            if action_id.is_empty() {
+                eprintln!("Error: Target action-id required for menu-run");
+                return Ok(Some("Error: Target action-id required".to_string()));
+            }
+
+            let target_str = args
+                .get(3)
+                .cloned()
+                .or_else(|| session.selected_path.clone())
+                .or_else(|| {
+                    session
+                        .tabs
+                        .iter()
+                        .find(|t| t.id == session.active_tab_id)
+                        .map(|t| t.path.clone())
+                });
+
+            let Some(target_path_str) = target_str else {
+                eprintln!("Error: Target path missing for action '{}'", action_id);
+                return Ok(Some(format!("Error: Target path missing for action '{}'", action_id)));
+            };
+
+            let target_path = Path::new(&target_path_str);
+
+            let result_msg = match action_id {
+                "copy-path" => {
+                    if target_path_str.is_empty() {
+                        eprintln!("Error: Invalid target path");
+                        "Error: Invalid target path".to_string()
+                    } else {
+                        let _ = Command::new("wl-copy").arg(&target_path_str).status();
+                        format!("✓ Copied path: {}", target_path_str)
+                    }
+                }
+                "copy-name" => {
+                    if let Some(filename) = target_path.file_name().and_then(|n| n.to_str()) {
+                        let _ = Command::new("wl-copy").arg(filename).status();
+                        format!("✓ Copied name: {}", filename)
+                    } else {
+                        eprintln!("Error: Invalid target filename for copy-name");
+                        "Error: Invalid target filename".to_string()
+                    }
+                }
+                "open" => {
+                    if target_path.is_dir() {
+                        for t in session.tabs.iter_mut() {
+                            if t.id == session.active_tab_id {
+                                t.path = target_path_str.clone();
+                                t.title = target_path
+                                    .file_name()
+                                    .map(|n| n.to_string_lossy().to_string())
+                                    .unwrap_or_else(|| "/".to_string());
+                            }
+                        }
+                        session.selected_path = None;
+                        state_changed = true;
+                        format!("✓ Navigated to {}", target_path_str)
+                    } else if target_path.is_file() {
+                        let _ = crate::platform::PlatformAbstraction::open_with_default_app(target_path);
+                        format!("✓ Opened file {}", target_path_str)
+                    } else {
+                        eprintln!("Error: Target path does not exist: {}", target_path_str);
+                        format!("Error: Target path does not exist: {}", target_path_str)
+                    }
+                }
+                "trash" => {
+                    if target_path.exists() {
+                        if let Err(e) = crate::platform::PlatformAbstraction::move_to_trash(target_path) {
+                            eprintln!("Error moving to trash: {}", e);
+                            format!("Error moving to trash: {}", e)
+                        } else {
+                            session.selected_path = None;
+                            state_changed = true;
+                            format!("✓ Moved to trash: {}", target_path_str)
+                        }
+                    } else {
+                        eprintln!("Error: Target path does not exist for trash: {}", target_path_str);
+                        format!("Error: Target path does not exist: {}", target_path_str)
+                    }
+                }
+                _ => {
+                    if !target_path.exists() && action_id != "new-folder" && action_id != "paste" {
+                        eprintln!("Error: Target path does not exist for action '{}': {}", action_id, target_path_str);
+                        format!("Error: Target path does not exist for action '{}': {}", action_id, target_path_str)
+                    } else {
+                        format!("✓ Executed context action '{}' on {}", action_id, target_path_str)
+                    }
+                }
+            };
+
+            if state_changed {
+                save_session(session);
+                let payload = build_gui_payload(session);
+                notify_eww_update(&payload);
+            }
+
+            return Ok(Some(result_msg));
+        }
         "view-json" | "view_json" | "json" => {
             let payload = build_gui_payload(session);
             return Ok(Some(serde_json::to_string(&payload).map_err(|e| e.to_string())?));
