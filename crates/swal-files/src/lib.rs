@@ -10,6 +10,7 @@ pub mod cloud_sync;
 pub mod config;
 pub mod dual_pane;
 pub mod entry;
+pub mod file_ops;
 pub mod git;
 pub mod gui;
 pub mod memory_graph;
