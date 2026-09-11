@@ -331,6 +331,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "requires GPU adapter"]
     fn test_adapter_creation_and_backend_negotiation() {
         let config = SurfaceDescriptorConfig {
             width: 1280,
@@ -352,6 +353,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "requires GPU adapter"]
     fn test_fallback_headless_context_creation() {
         let adapter = CrossPlatformSurfaceAdapter::create_fallback_headless_context();
         assert_eq!(adapter.config().width, 1920);
@@ -368,6 +370,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "requires GPU adapter"]
     fn test_resize_and_vsync_reconfiguration() {
         let mut adapter = CrossPlatformSurfaceAdapter::create_fallback_headless_context();
 
@@ -399,6 +402,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "requires GPU adapter"]
     fn test_presenter_state_transitions() {
         let mut adapter = CrossPlatformSurfaceAdapter::create_fallback_headless_context();
         assert_eq!(

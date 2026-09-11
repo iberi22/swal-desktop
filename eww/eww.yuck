@@ -817,6 +817,7 @@
 ;; SWAL FILES — Modern Minimalist Agentic File Manager (Files & Yazi inspired)
 ;; =========================================================================
 (defpoll swal_files_data :interval "2s" "swal-files view-json")
+(defpoll swal_files_data_ctx :interval "1s" :initial '{"actions":[],"target":""}' "swal-files menu-json")
 
 (defwindow swal_files
   :monitor 0
@@ -959,7 +960,7 @@
                   (label :class "files-group-count" :text "(${group.count})"))
                 ;; Entries in this group
                 (for item in "${group.entries}"
-                  (button :class "files-row-btn ${item.is_selected ? 'selected' : ''}" :onclick "${item.is_dir ? 'swal-files nav \'' + item.path + '\'' : 'swal-files select-item \'' + item.path + '\''}" :ondblclick "swal-files open-item '${item.path}'"
+                  (button :class "files-row-btn ${swal_files_data.row_density == 'compact' ? 'compact' : ''} ${item.is_selected ? 'selected' : ''}" :onclick "${item.is_dir ? 'swal-files nav \'' + item.path + '\'' : 'swal-files select-item \'' + item.path + '\''}" :ondblclick "swal-files open-item '${item.path}'" :onrightclick "swal-files context-open '${item.path}'"
                     (box :class "files-row" :orientation "h" :space-evenly false :spacing 8
                       (box :class "col-name-cell" :orientation "h" :space-evenly false :spacing 6 :hexpand true
                         (label :class "item-ico" :text "${item.icon}")
@@ -989,7 +990,8 @@
         ;; Preview Actions Footer
         (box :class "yazi-preview-actions" :orientation "h" :space-evenly true :spacing 4
           (button :class "yazi-act-btn" :onclick "ghostty --working-directory='${swal_files_data.preview.path}' &" "󰆍 Terminal")
-          (button :class "yazi-act-btn" :onclick "wl-copy '${swal_files_data.preview.path}' && notify-send 'SWAL Files' 'Ruta copiada al portapapeles' &" "📋 Copiar")
+          (button :class "yazi-act-btn" :tooltip "Copiar TODO el contenido del archivo al portapapeles" :onclick "wl-copy '${swal_files_data.preview.path}' && notify-send 'SWAL Files' 'Ruta copiada al portapapeles' &" "📋 Copiar")
+          (button :class "yazi-act-btn" :tooltip "Copiar texto en visor read-only" :onclick "swal-files view-text '${swal_files_data.preview.path}'" "⧉ Text")
           (button :class "yazi-act-btn accent" :onclick "${swal_files_data.preview.is_dir ? 'swal-files nav \'' + swal_files_data.preview.path + '\'' : 'swal-files open-editor \'' + swal_files_data.preview.path + '\''}"
             "${swal_files_data.preview.is_dir ? '📂 Entrar' : '󰏫 Editor'}"))))
 
@@ -1041,4 +1043,27 @@
       (box :hexpand true)
       (label :class "stat-agent" :text "⚡ SWAL Minimalist QuickLook Viewer"))))
 
+;; =========================================================================
+;; SWAL FILES CONTEXT MENU OVERLAY
+;; =========================================================================
+(defwindow files_ctx_menu
+  :monitor 0
+  :geometry (geometry :x "50%" :y "50%" :width "240px" :anchor "center")
+  :stacking "overlay"
+  :wm-type "normal"
+  :exclusive false
+  :focusable false
+  (eventbox :onclick "eww close files_ctx_menu"
+    (box :class "files-ctx-menu" :orientation "v" :space-evenly false
+      (box :class "files-ctx-header" :orientation "h" :space-evenly false
+        (label :class "files-ctx-title" :text "${swal_files_data_ctx.target}" :limit-width 24 :xalign 0 :hexpand true)
+        (button :class "files-ctx-close" :onclick "eww close files_ctx_menu" "✕"))
+      (box :class "files-ctx-list" :orientation "v" :space-evenly false
+        (for a in "${swal_files_data_ctx.actions}"
+          (button :class "files-ctx-item ${a.enabled ? '' : 'disabled'}"
+                  :visible "${a.enabled}"
+                  :onclick "swal-files menu-run '${a.id}'; eww close files_ctx_menu"
+            (box :orientation "h" :space-evenly false :spacing 6
+              (label :text "${a.icon}" :class "files-ctx-icon")
+              (label :text "${a.label}" :class "files-ctx-label" :xalign 0))))))))
 

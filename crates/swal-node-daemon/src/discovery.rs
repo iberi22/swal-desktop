@@ -194,6 +194,62 @@ pub async fn discover_local_daemons() -> Vec<DaemonProbeResult> {
     out
 }
 
+
+/// Probe mesh peers from Xavier /v1/mesh/peers endpoint.
+/// Returns peer list with connectivity status for each peer.
+pub async fn discover_mesh_peers(xavier_url: &str) -> Vec<MeshPeerResult> {
+    let peers_url = format!("{}/v1/mesh/peers", xavier_url.trim_end_matches('/'));
+    let client = reqwest::Client::builder()
+        .timeout(PROBE_TIMEOUT)
+        .build()
+        .unwrap_or_else(|_| reqwest::Client::new());
+
+    let start = Instant::now();
+    let res = timeout(PROBE_TIMEOUT, client.get(&peers_url).send()).await;
+    let _latency_ms = start.elapsed().as_millis() as u64;
+
+    match res {
+        Ok(Ok(resp)) if resp.status().is_success() => {
+            let body = resp.text().await.unwrap_or_default();
+            parse_mesh_peers_response(&body)
+        }
+        _ => vec![],
+    }
+}
+
+/// Result of probing a single mesh peer.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct MeshPeerResult {
+    pub node_id: String,
+    pub healthy: bool,
+    pub last_seen_secs_ago: Option<u64>,
+    pub transport: String,
+}
+
+fn parse_mesh_peers_response(body: &str) -> Vec<MeshPeerResult> {
+    let parsed: serde_json::Value = match serde_json::from_str(body) {
+        Ok(v) => v,
+        Err(_) => return vec![],
+    };
+    let peers = match parsed.get("peers").or(Some(&parsed)).and_then(|v| v.as_array()) {
+        Some(arr) => arr,
+        None => return vec![],
+    };
+    let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_secs();
+    peers.iter().filter_map(|p| {
+        let node_id = p.get("node_id")?.as_str()?.to_string();
+        let healthy = p.get("healthy").and_then(|v| v.as_bool()).unwrap_or(false);
+        let last_seen = p.get("last_seen_at").and_then(|v| v.as_u64());
+        let secs_ago = last_seen.map(|ts| now.saturating_sub(ts));
+        let transport = if p.get("has_iroh").and_then(|v| v.as_bool()).unwrap_or(false) {
+            "iroh/quic".to_string()
+        } else {
+            "http".to_string()
+        };
+        Some(MeshPeerResult { node_id, healthy, last_seen_secs_ago: secs_ago, transport })
+    }).collect()
+}
+
 /// Persist chosen daemon endpoints to the app config file (settings_store).
 /// Uses `swal-node-daemon`'s canonical `settings_store::SwalSystemSettings` persistence:
 /// writes `network.xavier_endpoint` for xavier-api, and stores the other two as well

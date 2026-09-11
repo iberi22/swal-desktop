@@ -6,23 +6,36 @@ pub mod agent_protocol;
 pub mod app_runtime;
 pub mod archive;
 pub mod cli;
+pub mod clipboard {
+    pub use super::clipboard_ops::*;
+}
+pub mod clipboard_ops;
 pub mod cloud_sync;
 pub mod config;
+pub mod context_menu;
 pub mod dual_pane;
 pub mod entry;
+pub mod file_ops;
 pub mod git;
 pub mod gui;
 pub mod memory_graph;
 pub mod native_window;
 pub mod native_window_app;
 pub mod omnibar;
+pub mod open_with;
 pub mod platform;
 pub mod plugin_system;
 pub mod preview;
+pub mod properties;
 pub mod scanner;
 pub mod session;
 pub mod storage;
 pub mod tabs_extended;
+pub mod text_viewer;
+pub mod trash {
+    pub use super::trash_ops::*;
+}
+pub mod trash_ops;
 pub mod tui;
 pub mod watcher;
 

@@ -72,12 +72,15 @@
 
 ---
 
-## 🔄 Side-by-Side Coexistence Model
+## 🔄 Side-by-Side Coexistence Model (ESTABLE — decisión 30-ago-26)
 
-SWAL Desktop is designed with a **modular dual architecture**:
-1. **Presentation Layer (Active Shell)**: Uses Eww Wayland Layer Shell widgets styled with pure ASCII SCSS and dynamic JSON tokens.
-2. **Native Rust Backend**: The `crates/` workspace runs in parallel as a headless micro-daemon, broadcasting telemetry over `/run/user/$UID/swal/telemetry.sock` and validating generative A2UI schemas.
-3. **Seamless Transition**: Users can switch between visual themes or activate the Rust A2UI engine on the fly without restarting their Wayland session.
+> **Decisión BELA 30-ago-26:** EWW es el shell **PRIMARIO estable**. El backend Rust (`crates/`) corre en paralelo como daemon headless opcional (dev/test). No se ejecuta Zero-Eww (`git rm -r eww/`) hasta paridad visual 100% verificada. El plan Zero-Eww queda **pospuesto** a fase experimental.
+> Motivo: `swal-files` nativo aún "horrible, no se ve bien" — no viable para uso diario. Dashboard EWW (SUPER+Escape) y file manager EWW (SUPER+E) son los atajos productivos.
+
+1. **Presentation Layer (PRIMARY)**: EWW Wayland Layer Shell (`eww daemon`, `eww.yuck` 76KB + `eww.scss` 28KB, `toggle_dashboard.sh` / `toggle_files.sh`). Binds: SUPER+Escape → dashboard, SUPER+E → swal_files, SUPER+Q → close EWW, brillo → OSD.
+2. **Native Rust Backend (DEV FALLBACK)**: `crates/` workspace headless, telemetry en `/run/user/$UID/swal/telemetry.sock` (`XDG_RUNTIME_DIR`), A2UI validación. Binds dev: SUPER+CTRL+Escape → `swal-desktop-ctl toggle-dashboard`, SUPER+CTRL+E → `swal-files --gui`.
+3. **Coexistencia**: Ambos daemons corren (`eww daemon` + `swal-node-daemon --daemon`). Hyprland `exec-once` lanza ambos. NixOS `environment.systemPackages` incluye `eww` (restaurado).
+4. **Gate para futuro Zero-Eww**: Ver `docs/EWW_PARITY_CHECKLIST.md` — requiere 11/11 ventanas en ✅ y `grep -rn eww crates/ hypr/ nixos/` solo comentarios históricos + 24h smoke sin EWW.
 
 ---
 

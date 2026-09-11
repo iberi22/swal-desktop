@@ -90,6 +90,7 @@ fn launch_gui_window() {
 
 /// True if the live --gui process has NO terminal window attached
 /// (ghostty closed and reparented it to init, PPID == 1).
+#[allow(dead_code)]
 fn gui_process_is_orphaned() -> bool {
     let pid = fs::read_to_string(PID_FILE)
         .ok()
@@ -117,15 +118,156 @@ pub fn handle_command(session: &mut SessionState, args: &[String]) -> Result<Opt
 
     let cmd = args[1].as_str();
 
+    // Pre-dispatch to island CLI handlers (WAVE-FM.02 .. WAVE-FM.07)
+    if let Some(res) = crate::clipboard_ops::handle_cli(args, session) {
+        return Ok(Some(res));
+    }
+    if let Some(res) = crate::file_ops::handle_cli(args, session) {
+        return Ok(Some(res));
+    }
+    if let Some(res) = crate::trash_ops::handle_cli(args, session) {
+        return Ok(Some(res));
+    }
+    if let Some(res) = crate::properties::handle_cli(args, session) {
+        return Ok(Some(res));
+    }
+    if let Some(res) = crate::text_viewer::handle_cli(args, session) {
+        return Ok(Some(res));
+    }
+    if let Some(res) = crate::open_with::handle_cli(args, session) {
+        return Ok(Some(res));
+    }
+
     // Direct path argument
     if cmd.starts_with('/') || cmd.starts_with('~') || Path::new(cmd).exists() {
         open_gui(Some(cmd));
         return Ok(None);
     }
 
+    // Try dispatching clipboard commands first
+    if let Some(res) = crate::clipboard_ops::handle_cli(args, session) {
+        return Ok(Some(res));
+    }
+
     let mut state_changed = false;
 
     match cmd {
+        "menu-json" | "menu_json" => {
+            let target = args.get(2).map(Path::new);
+            let json_str = crate::context_menu::menu_json(target);
+            return Ok(Some(json_str));
+        }
+        "context-open" | "context_open" => {
+            if args.len() > 2 {
+                let target = PathBuf::from(&args[2]);
+                session.selected_path = Some(target.to_string_lossy().to_string());
+                state_changed = true;
+            }
+            let _ = Command::new("eww").args(["open", "files_ctx_menu"]).status();
+        }
+        "context-close" | "context_close" => {
+            let _ = Command::new("eww").args(["close", "files_ctx_menu"]).status();
+        }
+        "menu-run" | "menu_run" => {
+            let action_id = args.get(2).map(|s| s.as_str()).unwrap_or("");
+            if action_id.is_empty() {
+                eprintln!("Error: Target action-id required for menu-run");
+                return Ok(Some("Error: Target action-id required".to_string()));
+            }
+
+            let target_str = args
+                .get(3)
+                .cloned()
+                .or_else(|| session.selected_path.clone())
+                .or_else(|| {
+                    session
+                        .tabs
+                        .iter()
+                        .find(|t| t.id == session.active_tab_id)
+                        .map(|t| t.path.clone())
+                });
+
+            let Some(target_path_str) = target_str else {
+                eprintln!("Error: Target path missing for action '{}'", action_id);
+                return Ok(Some(format!("Error: Target path missing for action '{}'", action_id)));
+            };
+
+            let target_path = Path::new(&target_path_str);
+
+            let result_msg = match action_id {
+                "copy-path" => {
+                    if target_path_str.is_empty() {
+                        eprintln!("Error: Invalid target path");
+                        "Error: Invalid target path".to_string()
+                    } else {
+                        let _ = Command::new("wl-copy").arg(&target_path_str).status();
+                        format!("✓ Copied path: {}", target_path_str)
+                    }
+                }
+                "copy-name" => {
+                    if let Some(filename) = target_path.file_name().and_then(|n| n.to_str()) {
+                        let _ = Command::new("wl-copy").arg(filename).status();
+                        format!("✓ Copied name: {}", filename)
+                    } else {
+                        eprintln!("Error: Invalid target filename for copy-name");
+                        "Error: Invalid target filename".to_string()
+                    }
+                }
+                "open" => {
+                    if target_path.is_dir() {
+                        for t in session.tabs.iter_mut() {
+                            if t.id == session.active_tab_id {
+                                t.path = target_path_str.clone();
+                                t.title = target_path
+                                    .file_name()
+                                    .map(|n| n.to_string_lossy().to_string())
+                                    .unwrap_or_else(|| "/".to_string());
+                            }
+                        }
+                        session.selected_path = None;
+                        state_changed = true;
+                        format!("✓ Navigated to {}", target_path_str)
+                    } else if target_path.is_file() {
+                        let _ = crate::platform::PlatformAbstraction::open_with_default_app(target_path);
+                        format!("✓ Opened file {}", target_path_str)
+                    } else {
+                        eprintln!("Error: Target path does not exist: {}", target_path_str);
+                        format!("Error: Target path does not exist: {}", target_path_str)
+                    }
+                }
+                "trash" => {
+                    if target_path.exists() {
+                        if let Err(e) = crate::platform::PlatformAbstraction::move_to_trash(target_path) {
+                            eprintln!("Error moving to trash: {}", e);
+                            format!("Error moving to trash: {}", e)
+                        } else {
+                            session.selected_path = None;
+                            state_changed = true;
+                            format!("✓ Moved to trash: {}", target_path_str)
+                        }
+                    } else {
+                        eprintln!("Error: Target path does not exist for trash: {}", target_path_str);
+                        format!("Error: Target path does not exist: {}", target_path_str)
+                    }
+                }
+                _ => {
+                    if !target_path.exists() && action_id != "new-folder" && action_id != "paste" {
+                        eprintln!("Error: Target path does not exist for action '{}': {}", action_id, target_path_str);
+                        format!("Error: Target path does not exist for action '{}': {}", action_id, target_path_str)
+                    } else {
+                        format!("✓ Executed context action '{}' on {}", action_id, target_path_str)
+                    }
+                }
+            };
+
+            if state_changed {
+                save_session(session);
+                let payload = build_gui_payload(session);
+                notify_eww_update(&payload);
+            }
+
+            return Ok(Some(result_msg));
+        }
         "view-json" | "view_json" | "json" => {
             let payload = build_gui_payload(session);
             return Ok(Some(serde_json::to_string(&payload).map_err(|e| e.to_string())?));
@@ -133,6 +275,13 @@ pub fn handle_command(session: &mut SessionState, args: &[String]) -> Result<Opt
         "editor-json" | "editor_json" => {
             let editor = load_editor_state();
             return Ok(Some(serde_json::to_string(&editor).map_err(|e| e.to_string())?));
+        }
+        "properties-json" | "properties_json" | "properties" => {
+            if let Some(json_out) = crate::properties::handle_cli(args, session) {
+                return Ok(Some(json_out));
+            } else {
+                return Err("Failed to compute item properties".to_string());
+            }
         }
         "nav" => {
             if args.len() > 2 {
@@ -163,7 +312,91 @@ pub fn handle_command(session: &mut SessionState, args: &[String]) -> Result<Opt
         "select-item" | "select_item" | "select" => {
             if args.len() > 2 {
                 let target = PathBuf::from(&args[2]);
-                session.selected_path = Some(target.to_string_lossy().to_string());
+                let target_str = target.to_string_lossy().to_string();
+                session.selected_path = Some(target_str.clone());
+                session.selected_paths = vec![target_str];
+                state_changed = true;
+            }
+        }
+        "select-toggle" | "select_toggle" => {
+            if args.len() > 2 {
+                let target = PathBuf::from(&args[2]);
+                let target_str = target.to_string_lossy().to_string();
+                if let Some(pos) = session.selected_paths.iter().position(|p| p == &target_str) {
+                    session.selected_paths.remove(pos);
+                    if session.selected_path.as_deref() == Some(&target_str) {
+                        session.selected_path = session.selected_paths.last().cloned();
+                    }
+                } else {
+                    session.selected_paths.push(target_str.clone());
+                    session.selected_path = Some(target_str);
+                }
+                state_changed = true;
+            }
+        }
+        "select-range" | "select_range" => {
+            if args.len() > 2 {
+                let target_str = PathBuf::from(&args[2]).to_string_lossy().to_string();
+                let payload = build_gui_payload(session);
+                let visible_paths: Vec<String> = payload.entries.into_iter().map(|e| e.path).collect();
+
+                let anchor_str = session.selected_path.clone().unwrap_or_else(|| target_str.clone());
+                let start_idx = visible_paths.iter().position(|p| p == &anchor_str);
+                let end_idx = visible_paths.iter().position(|p| p == &target_str);
+
+                if let (Some(s), Some(e)) = (start_idx, end_idx) {
+                    let (from, to) = if s <= e { (s, e) } else { (e, s) };
+                    for p in &visible_paths[from..=to] {
+                        if !session.selected_paths.contains(p) {
+                            session.selected_paths.push(p.clone());
+                        }
+                    }
+                    session.selected_path = Some(target_str);
+                    state_changed = true;
+                } else {
+                    // Fallback if not found in visible list
+                    if !session.selected_paths.contains(&target_str) {
+                        session.selected_paths.push(target_str.clone());
+                    }
+                    session.selected_path = Some(target_str);
+                    state_changed = true;
+                }
+            }
+        }
+        "select-all" | "select_all" => {
+            let payload = build_gui_payload(session);
+            let visible_paths: Vec<String> = payload.entries.into_iter().map(|e| e.path).collect();
+            if !visible_paths.is_empty() {
+                session.selected_paths = visible_paths;
+                session.selected_path = session.selected_paths.last().cloned();
+                state_changed = true;
+            }
+        }
+        "select-clear" | "select_clear" => {
+            session.selected_paths.clear();
+            session.selected_path = None;
+            state_changed = true;
+        }
+        "menu-run" | "menu_run" => {
+            if args.len() > 2 {
+                let action = &args[2];
+                let target_path = args.get(3).cloned();
+
+                let batch_paths = if let Some(ref path) = target_path {
+                    if session.selected_paths.contains(path) {
+                        session.selected_paths.clone()
+                    } else {
+                        vec![path.clone()]
+                    }
+                } else if !session.selected_paths.is_empty() {
+                    session.selected_paths.clone()
+                } else if let Some(ref sel) = session.selected_path {
+                    vec![sel.clone()]
+                } else {
+                    Vec::new()
+                };
+
+                eprintln!("✓ Menú contextual ejecutado: '{}' sobre {:?} items", action, batch_paths.len());
                 state_changed = true;
             }
         }
@@ -357,11 +590,77 @@ pub fn handle_command(session: &mut SessionState, args: &[String]) -> Result<Opt
             };
             state_changed = true;
         }
+        // Densidad de filas de la lista: compact (mas filas visibles) <-> comfortable
+        "toggle-density" | "toggle_density" => {
+            session.row_density = match session.row_density.as_str() {
+                "compact" => "comfortable".to_string(),
+                _ => "compact".to_string(),
+            };
+            state_changed = true;
+        }
+        "set-density" | "set_density" => {
+            if args.len() > 2 {
+                session.row_density = match args[2].to_lowercase().as_str() {
+                    "compact" | "compacta" => "compact".to_string(),
+                    _ => "comfortable".to_string(),
+                };
+                state_changed = true;
+            }
+        }
+        // Wrap del panel de preview: ON = las lineas largas se ajustan a la ventana
+        "toggle-wrap" | "toggle_wrap" | "wrap" => {
+            session.preview_wrap = !session.preview_wrap;
+            state_changed = true;
+        }
+        "set-wrap" | "set_wrap" => {
+            if args.len() > 2 {
+                session.preview_wrap = matches!(args[2].to_lowercase().as_str(), "on" | "true" | "1");
+                state_changed = true;
+            }
+        }
+        // Ancho de columna de la lista (en caracteres), ajustable con scroll en la cabecera.
+        // Uso: swal-files col-width <name|date|type|size> <up|down>
+        "col-width" | "col_width" | "column-width" => {
+            if args.len() > 3 {
+                let col = args[2].to_lowercase();
+                let dir = args[3].to_lowercase();
+                let (min, max) = match col.as_str() {
+                    "name" => (10i64, 60i64),
+                    "date" => (6, 16),
+                    "type" => (4, 14),
+                    "size" => (4, 12),
+                    _ => (4, 60),
+                };
+                let cur = session.col_chars.get(&col).copied().unwrap_or(20);
+                let next = match dir.as_str() {
+                    "up" | "+" | "grow" | "more" => (cur + 2).min(max),
+                    "down" | "-" | "shrink" | "less" => (cur - 2).max(min),
+                    _ => cur,
+                };
+                session.col_chars.insert(col.clone(), next);
+                eprintln!("✓ columna {} -> {} chars (rango {}-{})", col, next, min, max);
+                state_changed = true;
+            }
+        }
+        "col-reset" | "col_reset" | "columns-reset" => {
+            session.col_chars = crate::session::default_col_chars();
+            eprintln!("✓ anchos de columna restaurados");
+            state_changed = true;
+        }
         "toggle-maximize" | "toggle_maximize" | "maximize" => {
             session.is_maximized = !session.is_maximized;
             state_changed = true;
             // Zero-Eww: the live --gui process re-reads session on SIGUSR1
             // (window state is persisted by save_session below). No eww calls.
+        }
+        // Fija el flag sin ambiguedad (lo usa swal_files_maximize.sh, que decide por la
+        // ventana realmente abierta y luego sincroniza el flag).
+        "set-maximize" | "set_maximize" => {
+            if args.len() > 2 {
+                session.is_maximized =
+                    matches!(args[2].to_lowercase().as_str(), "on" | "true" | "1");
+                state_changed = true;
+            }
         }
         "tab-new" | "tab_new" => {
             let home = home_path_string();
@@ -493,6 +792,16 @@ pub fn handle_command(session: &mut SessionState, args: &[String]) -> Result<Opt
             eprintln!("✓ Sesión reseteada → Home, filtro: all, grupo: none");
             state_changed = true;
         }
+        "rename-item" | "rename_item" | "rename"
+        | "new-folder" | "new_folder" | "mkdir"
+        | "duplicate-item" | "duplicate_item" | "duplicate" => {
+            if let Some(msg) = crate::file_ops::handle_cli(args, session) {
+                save_session(session);
+                let payload = build_gui_payload(session);
+                notify_eww_update(&payload);
+                return Ok(Some(msg));
+            }
+        }
         _ => {
             open_gui(Some(cmd));
         }
@@ -510,8 +819,15 @@ pub fn handle_command(session: &mut SessionState, args: &[String]) -> Result<Opt
 pub fn run_cli(args: &[String]) {
     let mut session = load_session();
     match handle_command(&mut session, args) {
+        Ok(Some(output)) if output.starts_with("Error") => {
+            eprintln!("{}", output);
+            std::process::exit(1);
+        }
         Ok(Some(output)) => println!("{}", output),
-        Ok(None) => {},
-        Err(e) => eprintln!("Error: {}", e),
+        Ok(None) => {}
+        Err(e) => {
+            eprintln!("Error: {}", e);
+            std::process::exit(1);
+        }
     }
 }

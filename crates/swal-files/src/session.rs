@@ -54,12 +54,43 @@ pub struct SessionState {
     pub filter_type: String,
     pub preview_mode: String,
     pub selected_path: Option<String>,
+    #[serde(default)]
+    pub selected_paths: Vec<String>,
     /// User-defined saved filter presets (persisted across restarts)
     #[serde(default)]
     pub saved_filter_presets: Vec<SavedFilterPreset>,
     /// Per-path filter memory: remembers last filter used in each directory
     #[serde(default)]
     pub path_filter_memory: HashMap<String, String>,
+    /// Ancho de cada columna de la lista, en caracteres. El usuario lo cambia con
+    /// scroll sobre la cabecera (`swal-files col-width <col> up|down`).
+    /// Claves: name, date, type, size.
+    #[serde(default = "default_col_chars")]
+    pub col_chars: HashMap<String, i64>,
+    /// Wrap del texto en el panel de preview: true = ajusta las lineas a la ventana.
+    #[serde(default = "default_true")]
+    pub preview_wrap: bool,
+    /// Densidad de las filas de la lista: "comfortable" (default) o "compact".
+    #[serde(default = "default_density")]
+    pub row_density: String,
+}
+
+/// Default column widths (characters) — matches the historical hardcoded layout.
+pub fn default_col_chars() -> HashMap<String, i64> {
+    let mut m = HashMap::new();
+    m.insert("name".to_string(), 24);
+    m.insert("date".to_string(), 16);
+    m.insert("type".to_string(), 12);
+    m.insert("size".to_string(), 8);
+    m
+}
+
+fn default_true() -> bool {
+    true
+}
+
+fn default_density() -> String {
+    "comfortable".to_string()
 }
 
 
@@ -101,8 +132,12 @@ impl Default for SessionState {
             filter_type: cfg.filter_type,
             preview_mode: cfg.preview_mode,
             selected_path: None,
+            selected_paths: Vec::new(),
             saved_filter_presets,
             path_filter_memory: HashMap::new(),
+            col_chars: default_col_chars(),
+            preview_wrap: true,
+            row_density: default_density(),
         }
     }
 }

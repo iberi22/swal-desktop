@@ -217,8 +217,12 @@ fn test_cli_command_handling_state_transitions() {
         filter_type: "all".to_string(),
         preview_mode: "sidebar".to_string(),
         selected_path: None,
+        selected_paths: Vec::new(),
         saved_filter_presets: Vec::new(),
         path_filter_memory: std::collections::HashMap::new(),
+        col_chars: swal_files::session::default_col_chars(),
+        preview_wrap: true,
+        row_density: "comfortable".to_string(),
     };
 
     // 1. view-json
@@ -611,4 +615,86 @@ fn test_session_state_io_and_cli_aliases() {
     // 3. Direct path handling
     let test_dir = dir.path().to_string_lossy().to_string();
     handle_command(&mut session, &["swal-files".to_string(), test_dir]).unwrap();
+}
+
+#[test]
+fn test_multi_selection_subcommands_and_batch_ops() {
+    let dir = tempdir().unwrap();
+    let p1 = dir.path().join("a.txt");
+    let p2 = dir.path().join("b.txt");
+    let p3 = dir.path().join("c.txt");
+    fs::write(&p1, "a").unwrap();
+    fs::write(&p2, "b").unwrap();
+    fs::write(&p3, "c").unwrap();
+
+    let mut session = SessionState {
+        active_tab_id: 1,
+        tabs: vec![TabState {
+            id: 1,
+            title: "Test".to_string(),
+            path: dir.path().to_string_lossy().to_string(),
+            active: true,
+        }],
+        view_mode: "details".to_string(),
+        show_hidden: false,
+        dual_pane: false,
+        search_query: String::new(),
+        is_maximized: false,
+        sort_by: "name".to_string(),
+        sort_order: "asc".to_string(),
+        group_by: "none".to_string(),
+        filter_type: "all".to_string(),
+        preview_mode: "sidebar".to_string(),
+        selected_path: None,
+        selected_paths: Vec::new(),
+        saved_filter_presets: Vec::new(),
+        path_filter_memory: std::collections::HashMap::new(),
+        col_chars: swal_files::session::default_col_chars(),
+        preview_wrap: true,
+        row_density: "comfortable".to_string(),
+    };
+
+    // 1. Test select-toggle (add & remove)
+    let s1 = p1.to_string_lossy().to_string();
+    let s2 = p2.to_string_lossy().to_string();
+    let s3 = p3.to_string_lossy().to_string();
+
+    handle_command(&mut session, &["swal-files".to_string(), "select-toggle".to_string(), s1.clone()]).unwrap();
+    assert_eq!(session.selected_paths, vec![s1.clone()]);
+    assert_eq!(session.selected_path, Some(s1.clone()));
+
+    handle_command(&mut session, &["swal-files".to_string(), "select-toggle".to_string(), s2.clone()]).unwrap();
+    assert_eq!(session.selected_paths.len(), 2);
+    assert_eq!(session.selected_path, Some(s2.clone()));
+
+    handle_command(&mut session, &["swal-files".to_string(), "select-toggle".to_string(), s2.clone()]).unwrap();
+    assert_eq!(session.selected_paths, vec![s1.clone()]);
+    assert_eq!(session.selected_path, Some(s1.clone()));
+
+    // 2. Test select-clear
+    handle_command(&mut session, &["swal-files".to_string(), "select-clear".to_string()]).unwrap();
+    assert!(session.selected_paths.is_empty());
+    assert_eq!(session.selected_path, None);
+
+    // 3. Test select-all
+    handle_command(&mut session, &["swal-files".to_string(), "select-all".to_string()]).unwrap();
+    assert_eq!(session.selected_paths.len(), 3);
+    assert!(session.selected_paths.contains(&s1));
+    assert!(session.selected_paths.contains(&s2));
+    assert!(session.selected_paths.contains(&s3));
+
+    let payload = build_gui_payload(&session);
+    assert_eq!(payload.selected_count, 3);
+    for entry in &payload.entries {
+        assert!(entry.is_selected);
+    }
+
+    // 4. Test select-range from anchor
+    handle_command(&mut session, &["swal-files".to_string(), "select-clear".to_string()]).unwrap();
+    handle_command(&mut session, &["swal-files".to_string(), "select-item".to_string(), s1.clone()]).unwrap();
+    handle_command(&mut session, &["swal-files".to_string(), "select-range".to_string(), s3.clone()]).unwrap();
+    assert_eq!(session.selected_paths.len(), 3);
+
+    // 5. Test menu-run batch execution rule
+    handle_command(&mut session, &["swal-files".to_string(), "menu-run".to_string(), "copy".to_string(), s1.clone()]).unwrap();
 }

@@ -2,8 +2,9 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
-use std::ffi::CString;
 use std::fs::File;
+#[cfg(unix)]
+use std::ffi::CString;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 
@@ -71,8 +72,25 @@ impl DiskUsageScanner {
     }
 }
 
-/// Scans mounted drives on Linux reading `/proc/mounts` and using POSIX `statvfs`
+/// Scans mounted drives. Cross-platform: Linux reads /proc/mounts + statvfs,
+/// Windows enumerates logical drive letters via std::fs.
 pub fn scan_mounted_drives() -> Vec<DriveInfo> {
+    #[cfg(unix)]
+    {
+        scan_drives_unix()
+    }
+    #[cfg(windows)]
+    {
+        scan_drives_windows()
+    }
+    #[cfg(not(any(unix, windows)))]
+    {
+        vec![]
+    }
+}
+
+#[cfg(unix)]
+fn scan_drives_unix() -> Vec<DriveInfo> {
     let mut drives = Vec::new();
     let mut seen_mounts = HashSet::new();
 
@@ -125,6 +143,66 @@ pub fn scan_mounted_drives() -> Vec<DriveInfo> {
     drives
 }
 
+/// Windows: enumerate A:-Z: logical drives using std::fs::metadata to check existence,
+/// then get free space via GetDiskFreeSpaceExW (called via `fsutil volume diskfree`
+/// to avoid winapi dependency until winapi is added to Cargo.toml).
+#[cfg(windows)]
+fn scan_drives_windows() -> Vec<DriveInfo> {
+    use std::process::Command;
+    let mut drives = Vec::new();
+
+    // Enumerate drive letters A: to Z:
+    for letter in b'A'..=b'Z' {
+        let root = format!("{}:\\", letter as char);
+        let path = std::path::Path::new(&root);
+        if !path.exists() {
+            continue;
+        }
+        // Use `fsutil volume diskfree <letter>:` to get disk space on Windows
+        let output = Command::new("fsutil")
+            .args(["volume", "diskfree", &format!("{}:", letter as char)])
+            .output();
+        let (total_bytes, available_bytes) = if let Ok(out) = output {
+            parse_fsutil_output(&String::from_utf8_lossy(&out.stdout))
+        } else {
+            (0u64, 0u64)
+        };
+        let is_removable = matches!(letter, b'A' | b'B'); // A/B traditionally floppy/removable
+        drives.push(DriveInfo::new(
+            root,
+            "ntfs".to_string(),
+            total_bytes,
+            available_bytes,
+            is_removable,
+        ));
+    }
+
+    drives
+}
+
+#[cfg(windows)]
+fn parse_fsutil_output(output: &str) -> (u64, u64) {
+    // fsutil volume diskfree C: outputs lines like:
+    // Total # of bytes        : 107374182400
+    // Total # of free bytes   : 53687091200
+    let mut total = 0u64;
+    let mut free = 0u64;
+    for line in output.lines() {
+        let line = line.to_lowercase();
+        if line.contains("total # of bytes") && !line.contains("free") {
+            if let Some(val) = line.split(':').nth(1) {
+                total = val.trim().parse().unwrap_or(0);
+            }
+        } else if line.contains("total # of free bytes") {
+            if let Some(val) = line.split(':').nth(1) {
+                free = val.trim().parse().unwrap_or(0);
+            }
+        }
+    }
+    (total, free)
+}
+
+#[cfg(unix)]
 fn is_pseudo_filesystem(fstype: &str, device: &str, mount_point: &str) -> bool {
     if mount_point == "/" {
         return false;
