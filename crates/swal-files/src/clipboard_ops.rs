@@ -16,8 +16,16 @@ pub struct ClipboardManifest {
 }
 
 pub fn manifest_path() -> PathBuf {
-    let home = dirs::home_dir().unwrap_or_default();
-    home.join(".config/swal/files/clipboard.json")
+    // Override por env: permite aislar tests (y correr dos instancias sin pisarse).
+    if let Ok(p) = std::env::var("SWAL_FILES_CLIPBOARD_PATH") {
+        if !p.is_empty() {
+            return PathBuf::from(p);
+        }
+    }
+    crate::config::FileManagerConfig::config_path()
+        .parent()
+        .map(|d| d.join("clipboard.json"))
+        .unwrap_or_else(|| PathBuf::from("/tmp/swal_clipboard.json"))
 }
 
 pub fn load_manifest() -> Option<ClipboardManifest> {

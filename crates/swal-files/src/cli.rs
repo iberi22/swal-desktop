@@ -116,10 +116,6 @@ pub fn handle_command(session: &mut SessionState, args: &[String]) -> Result<Opt
         return Ok(None);
     }
 
-    if let Some(text_viewer_output) = crate::text_viewer::handle_cli(args, session) {
-        return Ok(Some(text_viewer_output));
-    }
-
     let cmd = args[1].as_str();
 
     // Pre-dispatch to island CLI handlers (WAVE-FM.02 .. WAVE-FM.07)
@@ -823,8 +819,15 @@ pub fn handle_command(session: &mut SessionState, args: &[String]) -> Result<Opt
 pub fn run_cli(args: &[String]) {
     let mut session = load_session();
     match handle_command(&mut session, args) {
+        Ok(Some(output)) if output.starts_with("Error") => {
+            eprintln!("{}", output);
+            std::process::exit(1);
+        }
         Ok(Some(output)) => println!("{}", output),
-        Ok(None) => {},
-        Err(e) => eprintln!("Error: {}", e),
+        Ok(None) => {}
+        Err(e) => {
+            eprintln!("Error: {}", e);
+            std::process::exit(1);
+        }
     }
 }

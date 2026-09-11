@@ -960,7 +960,7 @@
                   (label :class "files-group-count" :text "(${group.count})"))
                 ;; Entries in this group
                 (for item in "${group.entries}"
-                  (button :class "files-row-btn ${item.is_selected ? 'selected' : ''}" :onclick "${item.is_dir ? 'swal-files nav \'' + item.path + '\'' : 'swal-files select-item \'' + item.path + '\''}" :ondblclick "swal-files open-item '${item.path}'" :onrightclick "swal-files context-open '${item.path}'"
+                  (button :class "files-row-btn ${swal_files_data.row_density == 'compact' ? 'compact' : ''} ${item.is_selected ? 'selected' : ''}" :onclick "${item.is_dir ? 'swal-files nav \'' + item.path + '\'' : 'swal-files select-item \'' + item.path + '\''}" :ondblclick "swal-files open-item '${item.path}'" :onrightclick "swal-files context-open '${item.path}'"
                     (box :class "files-row" :orientation "h" :space-evenly false :spacing 8
                       (box :class "col-name-cell" :orientation "h" :space-evenly false :spacing 6 :hexpand true
                         (label :class "item-ico" :text "${item.icon}")

@@ -178,6 +178,12 @@ pub fn compute_properties(path: &Path) -> io::Result<ItemProperties> {
 }
 
 pub fn handle_cli(args: &[String], session: &mut crate::session::SessionState) -> Option<String> {
+    // Solo respondemos a NUESTROS comandos: en la cadena de despacho, devolver Some()
+    // para comandos ajenos se los traga (bug de integracion detectado en la ola FM).
+    match args.get(1).map(|s| s.as_str()) {
+        Some("properties-json") | Some("properties_json") | Some("properties") => {}
+        _ => return None,
+    }
     let target_str = if args.len() > 2 {
         args[2].clone()
     } else if let Some(sel) = &session.selected_path {

@@ -247,7 +247,7 @@ pub fn handle_cli(args: &[String], _session: &mut SessionState) -> Option<String
             let status = get_trash_status();
             serde_json::to_string_pretty(&status).ok()
         }
-        _ => Some(format!("Error: Unknown trash subcommand '{}'", cmd)),
+        _ => None, // no es nuestro: que siga la cadena de despacho
     }
 }
 

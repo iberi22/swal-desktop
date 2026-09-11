@@ -5,14 +5,21 @@ use std::io::Write;
 use std::process::Command;
 use tempfile::tempdir;
 
+/// Manifiesto de portapapeles aislado por test (evita carreras entre tests en paralelo:
+/// el manifiesto real es global en ~/.config/swal/files/).
+fn isolated_clipboard(dir: &std::path::Path) -> std::path::PathBuf {
+    dir.join("clipboard.json")
+}
+
+
 #[test]
-#[ignore = "wave FM.01 pendiente"]
 fn test_menu_json_actions_and_paste_state() {
     let tmp = tempdir().expect("failed to create tempdir");
     let dir_path = tmp.path().to_str().expect("valid utf-8 path");
 
     let bin = env!("CARGO_BIN_EXE_swal-files");
     let output = Command::new(bin)
+        .env("SWAL_FILES_CLIPBOARD_PATH", tmp.path().join("clipboard.json"))
         .args(["menu-json", dir_path])
         .output()
         .expect("failed to execute swal-files menu-json");
@@ -24,12 +31,17 @@ fn test_menu_json_actions_and_paste_state() {
     let actions = json.get("actions").and_then(|v| v.as_array()).expect("actions array in menu-json");
     assert!(actions.len() >= 13, "menu-json should report at least 13 actions, got {}", actions.len());
 
-    let paste_enabled = json.get("paste_enabled").and_then(|v| v.as_bool()).unwrap_or(true);
+    // El estado de la accion vive en el array (fuente unica), no en una clave duplicada.
+    let paste_enabled = actions
+        .iter()
+        .find(|a| a.get("id").and_then(|v| v.as_str()) == Some("paste"))
+        .and_then(|a| a.get("enabled"))
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false);
     assert!(!paste_enabled, "paste action should be disabled when clipboard manifest is empty");
 }
 
 #[test]
-#[ignore = "wave FM.02 pendiente"]
 fn test_clip_copy_and_clip_paste_collision() {
     let tmp = tempdir().expect("failed to create tempdir");
     let src_file = tmp.path().join("source.txt");
@@ -43,12 +55,14 @@ fn test_clip_copy_and_clip_paste_collision() {
     let bin = env!("CARGO_BIN_EXE_swal-files");
 
     let copy_out = Command::new(bin)
+        .env("SWAL_FILES_CLIPBOARD_PATH", tmp.path().join("clipboard.json"))
         .args(["clip-copy", src_file.to_str().unwrap()])
         .output()
         .expect("failed to clip-copy");
     assert!(copy_out.status.success(), "clip-copy failed");
 
     let paste_out = Command::new(bin)
+        .env("SWAL_FILES_CLIPBOARD_PATH", tmp.path().join("clipboard.json"))
         .args(["clip-paste", dest_dir.to_str().unwrap()])
         .output()
         .expect("failed to clip-paste");
@@ -72,7 +86,6 @@ fn test_clip_copy_and_clip_paste_collision() {
 }
 
 #[test]
-#[ignore = "wave FM.03 pendiente"]
 fn test_clip_cut_and_clip_paste_move() {
     let tmp = tempdir().expect("failed to create tempdir");
     let src_file = tmp.path().join("move_me.txt");
@@ -84,12 +97,14 @@ fn test_clip_cut_and_clip_paste_move() {
     let bin = env!("CARGO_BIN_EXE_swal-files");
 
     let cut_out = Command::new(bin)
+        .env("SWAL_FILES_CLIPBOARD_PATH", tmp.path().join("clipboard.json"))
         .args(["clip-cut", src_file.to_str().unwrap()])
         .output()
         .expect("failed to clip-cut");
     assert!(cut_out.status.success(), "clip-cut failed");
 
     let paste_out = Command::new(bin)
+        .env("SWAL_FILES_CLIPBOARD_PATH", tmp.path().join("clipboard.json"))
         .args(["clip-paste", dest_dir.to_str().unwrap()])
         .output()
         .expect("failed to clip-paste");
@@ -101,6 +116,7 @@ fn test_clip_cut_and_clip_paste_move() {
 
     // Cut manifest should be cleared after paste
     let second_paste = Command::new(bin)
+        .env("SWAL_FILES_CLIPBOARD_PATH", tmp.path().join("clipboard.json"))
         .args(["clip-paste", dest_dir.to_str().unwrap()])
         .output()
         .expect("failed second clip-paste");
@@ -113,7 +129,6 @@ fn test_clip_cut_and_clip_paste_move() {
 }
 
 #[test]
-#[ignore = "wave FM.04 pendiente"]
 fn test_rename_item_invalid_name_fails() {
     let tmp = tempdir().expect("failed to create tempdir");
     let target_file = tmp.path().join("valid_name.txt");
@@ -122,6 +137,7 @@ fn test_rename_item_invalid_name_fails() {
     let bin = env!("CARGO_BIN_EXE_swal-files");
 
     let rename_out = Command::new(bin)
+        .env("SWAL_FILES_CLIPBOARD_PATH", tmp.path().join("clipboard.json"))
         .args(["rename-item", target_file.to_str().unwrap(), "a/b"])
         .output()
         .expect("failed to execute rename-item");
@@ -132,7 +148,6 @@ fn test_rename_item_invalid_name_fails() {
 }
 
 #[test]
-#[ignore = "wave FM.05 pendiente"]
 fn test_delete_item_requires_confirmation() {
     let tmp = tempdir().expect("failed to create tempdir");
     let target_file = tmp.path().join("protected_file.txt");
@@ -141,6 +156,7 @@ fn test_delete_item_requires_confirmation() {
     let bin = env!("CARGO_BIN_EXE_swal-files");
 
     let delete_unconfirmed = Command::new(bin)
+        .env("SWAL_FILES_CLIPBOARD_PATH", tmp.path().join("clipboard.json"))
         .args(["delete-item", target_file.to_str().unwrap()])
         .output()
         .expect("failed to execute delete-item");
@@ -150,7 +166,6 @@ fn test_delete_item_requires_confirmation() {
 }
 
 #[test]
-#[ignore = "wave FM.06 pendiente"]
 fn test_properties_json_file_metadata() {
     let tmp = tempdir().expect("failed to create tempdir");
     let file_path = tmp.path().join("sample.bin");
@@ -162,6 +177,7 @@ fn test_properties_json_file_metadata() {
     let bin = env!("CARGO_BIN_EXE_swal-files");
 
     let output = Command::new(bin)
+        .env("SWAL_FILES_CLIPBOARD_PATH", tmp.path().join("clipboard.json"))
         .args(["properties-json", file_path.to_str().unwrap()])
         .output()
         .expect("failed to execute properties-json");

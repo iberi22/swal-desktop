@@ -43,6 +43,17 @@ pub fn has_clipboard_manifest() -> bool {
 /// open, open-with, copy-path, copy-name, copy-content,
 /// cut, copy, paste, duplicate, rename, new-folder, trash, properties, reveal-terminal.
 pub fn build_context_menu(target: Option<&Path>, session: &SessionState) -> Vec<ContextAction> {
+    let has_clipboard = crate::clipboard_ops::load_manifest().is_some();
+    build_context_menu_with(target, session, has_clipboard)
+}
+
+/// Igual que `build_context_menu` pero con el estado del portapapeles INYECTADO.
+/// Asi el menu es testeable sin depender del manifiesto real del usuario (sin carreras).
+pub fn build_context_menu_with(
+    target: Option<&Path>,
+    session: &SessionState,
+    has_clipboard: bool,
+) -> Vec<ContextAction> {
     let resolved_target: Option<PathBuf> = target
         .map(|p| p.to_path_buf())
         .or_else(|| session.selected_path.as_ref().map(PathBuf::from))
@@ -113,7 +124,7 @@ pub fn build_context_menu(target: Option<&Path>, session: &SessionState) -> Vec<
             id: "paste".to_string(),
             label: "Pegar".to_string(),
             icon: "󰆒".to_string(),
-            enabled: clipboard_manifest && (is_dir || target_exists),
+            enabled: has_clipboard && (is_dir || target_exists),
             shortcut: "Ctrl+V".to_string(),
         },
         ContextAction {
@@ -163,9 +174,15 @@ pub fn build_context_menu(target: Option<&Path>, session: &SessionState) -> Vec<
 
 /// Serializes the context menu actions for a given target path to JSON string
 pub fn menu_json(target: Option<&Path>) -> String {
-    let session = load_session();
-    let actions = build_context_menu(target, &session);
-    serde_json::to_string_pretty(&actions).unwrap_or_else(|_| "[]".to_string())
+    let actions = match target {
+        Some(p) => serde_json::to_value(build_context_menu(Some(p), &SessionState::default())).unwrap(),
+        None => serde_json::json!([]),
+    };
+    serde_json::json!({
+        "target": target.map(|p| p.to_string_lossy().to_string()).unwrap_or_default(),
+        "actions": actions,
+    })
+    .to_string()
 }
 
 #[cfg(test)]
@@ -203,23 +220,15 @@ mod tests {
     #[test]
     fn test_context_menu_paste_with_and_without_manifest() {
         let dir = tempdir().expect("Failed to create tempdir");
-        let temp_manifest = Path::new("/tmp/swal_clipboard.json");
-        let _ = fs::remove_file(temp_manifest);
-
         let session = SessionState::default();
-        let menu_no_manifest = build_context_menu(Some(dir.path()), &session);
-        let paste_no_manifest = menu_no_manifest.iter().find(|a| a.id == "paste").unwrap();
-        assert!(!paste_no_manifest.enabled, "paste should be disabled when no clipboard manifest exists");
 
-        // Create temporary clipboard manifest
-        fs::write(temp_manifest, r#"{"items":["/tmp/dummy.txt"]}"#).expect("Failed to write manifest");
+        // Sin portapapeles -> paste deshabilitado (estado inyectado, sin tocar el FS del usuario)
+        let menu_no = build_context_menu_with(Some(dir.path()), &session, false);
+        assert!(!menu_no.iter().find(|a| a.id == "paste").unwrap().enabled);
 
-        let menu_with_manifest = build_context_menu(Some(dir.path()), &session);
-        let paste_with_manifest = menu_with_manifest.iter().find(|a| a.id == "paste").unwrap();
-        assert!(paste_with_manifest.enabled, "paste should be enabled when clipboard manifest exists");
-
-        // Clean up
-        let _ = fs::remove_file(temp_manifest);
+        // Con portapapeles -> paste habilitado
+        let menu_yes = build_context_menu_with(Some(dir.path()), &session, true);
+        assert!(menu_yes.iter().find(|a| a.id == "paste").unwrap().enabled);
     }
 
     #[test]

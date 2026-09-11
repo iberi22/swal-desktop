@@ -649,6 +649,9 @@ fn test_multi_selection_subcommands_and_batch_ops() {
         selected_paths: Vec::new(),
         saved_filter_presets: Vec::new(),
         path_filter_memory: std::collections::HashMap::new(),
+        col_chars: swal_files::session::default_col_chars(),
+        preview_wrap: true,
+        row_density: "comfortable".to_string(),
     };
 
     // 1. Test select-toggle (add & remove)
