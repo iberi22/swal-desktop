@@ -1,7 +1,9 @@
 # SWAL Files — Estado de Migración EWW → Rust Pure
 
+> **DECISIÓN 30-ago-26 (BELA): EWW PRIMARIO ESTABLE** — El filesystem nativo Rust ("horrible, no se ve bien") queda en **modo dev**. No cerrar EWW. Dashboard EWW (SUPER+Escape) y files EWW (SUPER+E) son productivos. Rust se prueba con SUPER+CTRL+E / SUPER+CTRL+Escape. Zero-Eww pospuesto hasta paridad 11/11 ventanas ✅.
+>
 > **Para el agente trabajando en la migración**: Lee esto antes de empezar.
-> El backend lógico YA ESTÁ COMPLETO. Solo falta la capa de renderizado.
+> El backend lógico YA ESTÁ COMPLETO. Solo falta la capa de renderizado. PERO no reemplaces EWW en hyprland.conf — mantén coexistencia.
 
 ## Backend Lógico: ✅ 100% COMPLETO
 

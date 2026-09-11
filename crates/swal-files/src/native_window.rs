@@ -10,7 +10,7 @@ use crate::gui::get_breadcrumbs;
 use crate::preview::{generate_preview_for_path, sanitize_preview_text};
 
 use crate::scanner::{scan_directory, ScanOptions, SortBy, GroupBy};
-use crate::session::SessionState;
+use crate::session::{default_col_chars, SessionState};
 use crate::storage::DiskUsageScanner;
 
 pub struct NativeFilesWindowBuilder;
@@ -197,6 +197,8 @@ mod tests {
             selected_path: None,
             saved_filter_presets: Vec::new(),
             path_filter_memory: std::collections::HashMap::new(),
+            col_chars: default_col_chars(),
+            preview_wrap: true,
         };
 
         let tree = NativeFilesWindowBuilder::build_native_a2ui_tree(&session);

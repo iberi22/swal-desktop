@@ -357,6 +357,46 @@ pub fn handle_command(session: &mut SessionState, args: &[String]) -> Result<Opt
             };
             state_changed = true;
         }
+        // Wrap del panel de preview: ON = las lineas largas se ajustan a la ventana
+        "toggle-wrap" | "toggle_wrap" | "wrap" => {
+            session.preview_wrap = !session.preview_wrap;
+            state_changed = true;
+        }
+        "set-wrap" | "set_wrap" => {
+            if args.len() > 2 {
+                session.preview_wrap = matches!(args[2].to_lowercase().as_str(), "on" | "true" | "1");
+                state_changed = true;
+            }
+        }
+        // Ancho de columna de la lista (en caracteres), ajustable con scroll en la cabecera.
+        // Uso: swal-files col-width <name|date|type|size> <up|down>
+        "col-width" | "col_width" | "column-width" => {
+            if args.len() > 3 {
+                let col = args[2].to_lowercase();
+                let dir = args[3].to_lowercase();
+                let (min, max) = match col.as_str() {
+                    "name" => (10i64, 60i64),
+                    "date" => (6, 16),
+                    "type" => (4, 14),
+                    "size" => (4, 12),
+                    _ => (4, 60),
+                };
+                let cur = session.col_chars.get(&col).copied().unwrap_or(20);
+                let next = match dir.as_str() {
+                    "up" | "+" | "grow" | "more" => (cur + 2).min(max),
+                    "down" | "-" | "shrink" | "less" => (cur - 2).max(min),
+                    _ => cur,
+                };
+                session.col_chars.insert(col.clone(), next);
+                eprintln!("✓ columna {} -> {} chars (rango {}-{})", col, next, min, max);
+                state_changed = true;
+            }
+        }
+        "col-reset" | "col_reset" | "columns-reset" => {
+            session.col_chars = crate::session::default_col_chars();
+            eprintln!("✓ anchos de columna restaurados");
+            state_changed = true;
+        }
         "toggle-maximize" | "toggle_maximize" | "maximize" => {
             session.is_maximized = !session.is_maximized;
             state_changed = true;

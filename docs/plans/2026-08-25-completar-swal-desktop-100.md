@@ -4,6 +4,7 @@
 > Cada tarea es independiente y commiteable. Orden estricto por fases.
 
 **Goal:** Llevar swal-desktop de ~90% a 100%: compilación limpia, cero inyección de comandos,
+> **ACTUALIZACIÓN 30-ago-26:** Coexistencia EWW primario estable. Zero-Eww (Fase 3.5) POSPUESTO por decisión BELA — filesystem Rust no viable visualmente. EWW dashboard SUPER+Escape y files SUPER+E productivos. Rust dev en SUPER+CTRL+E/Escape.
 cero paths hardcodeados, migración Eww→Rust completa, CI con gates de seguridad y push a repo público saneado.
 
 **Architecture:** Workspace Rust de 8 crates + capa legacy Eww en coexistencia. El plan elimina
@@ -416,7 +417,7 @@ git commit -m "feat(installer): opt-in nixos integration, dry-run mode, clone-if
 
 ---
 
-## FASE 3 — Zero-EWW real (cerrar la coexistencia)
+## FASE 3 — Zero-EWW real (POSPUESTA 30-ago-26 — EWW primario estable, Rust dev fallback)
 
 ### Task 3.1: Toggle dashboard/orb nativo en daemon
 
@@ -538,9 +539,9 @@ git add docs/EWW_PARITY_CHECKLIST.md
 git commit -m "docs: eww→native parity checklist with per-widget status"
 ```
 
-### Task 3.5: Apagado limpio de Eww
+### Task 3.5: Apagado limpio de Eww — ⏸️ POSPUESTA 30-ago-26 (no ejecutar)
 
-**Objective:** Repo sin directorio eww/ activo; historial preserva el legado.
+**Objective:** [POSPUESTO] Repo sin directorio eww/ activo; historial preserva el legado.
 
 **PRECONDICIÓN:** Checklist 3.4 al 100% SÍ.
 
@@ -764,4 +765,5 @@ Fase 0 (compila) ──► Fase 1 (seguro) ──► Fase 2 (portable) ──►
 | 2026-08-25 | Fase 4 | Task 4.1: 0 warnings `cargo check --workspace --all-targets` (unused imports/vars en a2ui-engine/ambient-orb/daemon-tests, EWWSOCK+cleanup_orphan_windows muertos, SearchUpdated allow(dead_code)); [workspace.lints.rust] warnings="deny" añadido (no rompe ningun crate). NOTA: dead `fn main` settings_cli ya resuelto por Task 3.2 (bin swal-settings, commit 0541cb8) | ✅ |
 | 2026-08-25 | Fase 4 | Task 4.2: DIFFERIDO a propósito (refactor unwrap = demasiado grande para este batch; gate gradual clippy::unwrap_used en top-5). Pendiente para siguiente wave | ⏳ |
 | — | Fase 5 | Publicar (CI, gitleaks, push + tag v1.3.0) | ⏳ |
+| 2026-08-30 | Decisión | BELA: EWW primario estable, Rust filesystem horrible en prueba → posponer Zero-Eww. Binds: SUPER+Escape/SUPER+E → EWW, SUPER+CTRL+Escape/SUPER+CTRL+E → Rust dev. Ambos daemons activos. | ✅ |
 | 2026-08-25 | Fase 5 (parcial) | CI pipeline creado (.github/workflows/ci.yml), gitignore endurecido. Verificación final: 36 suites ok / 0 failed / 428 tests; gates verde; autores normalizados a Belalcazar <iberi22@gmail.com> vía filter-branch (16 commits reescritos). PENDIENTE: gitleaks sobre historia completa + push + tag (requiere aprobación del usuario) | 🟡 |

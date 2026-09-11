@@ -1,5 +1,7 @@
 # Checklist de Paridad Eww → Shell Nativa Rust
 
+> **ESTADO 30-ago-26: MODO COEXISTENCIA ESTABLE** — EWW PRIMARY, Rust DEV. Zero-Eww pospuesto por decisión BELA (filesystem nativo no viable visualmente). Este checklist ahora trackea paridad para futuro, no gate inmediato.
+>
 > **Objetivo:** Verificar que cada superficie que Eww renderiza hoy tiene equivalente
 > nativo (swal-node-daemon + render-pipeline + A2UI) ANTES de ejecutar el Task 3.5
 > (`git rm -r eww/`). Este documento es la precondición del hito Zero-Eww.
@@ -49,7 +51,11 @@ Verificar en `hypr/` antes de apagar:
 
 **Nota:** tras Task 2.x (portabilidad) estos paths ya no deben ser absolutos.
 
-## 4. Criterio de apagado (gate para Task 3.5)
+## 4. Criterio de apagado (gate para Task 3.5) — POSPUESTO 30-ago-26 (EWW primario estable)
+
+> **Pospuesto:** No ejecutar Task 3.5 hasta nueva orden. Mantener `eww/` y binds EWW. Rust solo en SUPER+CTRL+E/Escape dev.
+
+### Gate original (archivado):
 
 NO ejecutar `git rm -r eww/` hasta cumplir TODO:
 

@@ -385,6 +385,8 @@ fn test_standalone_window_frame_a2ui_wrapping_e2e() {
         selected_path: None,
         saved_filter_presets: Vec::new(),
         path_filter_memory: std::collections::HashMap::new(),
+        col_chars: swal_files::session::default_col_chars(),
+        preview_wrap: true,
     };
 
     let tree = NativeFilesWindowBuilder::build_native_a2ui_tree(&session);

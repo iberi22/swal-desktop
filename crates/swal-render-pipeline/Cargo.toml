@@ -18,6 +18,9 @@ swal-a2ui-engine = { path = "../swal-a2ui-engine" }
 ab_glyph = "0.2.32"
 smithay-client-toolkit = { version = "0.19.2", default-features = false, features = ["calloop"] }
 
-
 [dev-dependencies]
 tempfile = "3.8"
+
+[[example]]
+name = "viab_test"
+required-features = ["viab"]

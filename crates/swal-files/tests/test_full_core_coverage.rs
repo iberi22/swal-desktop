@@ -219,6 +219,8 @@ fn test_cli_command_handling_state_transitions() {
         selected_path: None,
         saved_filter_presets: Vec::new(),
         path_filter_memory: std::collections::HashMap::new(),
+        col_chars: swal_files::session::default_col_chars(),
+        preview_wrap: true,
     };
 
     // 1. view-json

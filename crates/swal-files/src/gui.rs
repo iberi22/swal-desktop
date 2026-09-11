@@ -102,6 +102,10 @@ pub struct GuiPayload {
     pub saved_filter_presets: Vec<SavedFilterPresetPayload>,
     /// Live disk usage for sidebar (populated from /proc/mounts + statvfs)
     pub disks: Vec<DiskPayload>,
+    /// Ancho de cada columna de la lista en caracteres (name/date/type/size)
+    pub col_chars: std::collections::HashMap<String, i64>,
+    /// Wrap del texto del preview (true = ajusta lineas a la ventana)
+    pub preview_wrap: bool,
 }
 
 /// Compact disk info for EWW sidebar rendering
@@ -116,6 +120,27 @@ pub struct DiskPayload {
     pub is_removable: bool,
 }
 
+
+/// Recorta un texto a `limit` caracteres (caracteres, no bytes) para que el ancho
+/// de columna configurado por el usuario se respete en el render de EWW.
+/// `from_left = true` conserva la cola del texto (util en fechas: se mantiene la hora).
+pub fn fit_text(s: &str, limit: i64, from_left: bool) -> String {
+    let limit = limit.max(2) as usize;
+    let chars: Vec<char> = s.chars().collect();
+    if chars.len() <= limit {
+        return s.to_string();
+    }
+    let keep = limit - 1;
+    if from_left {
+        let mut out = String::from("…");
+        out.extend(&chars[chars.len() - keep..]);
+        out
+    } else {
+        let mut out: String = chars[..keep].iter().collect();
+        out.push('…');
+        out
+    }
+}
 
 pub fn get_breadcrumbs(current_path: &Path) -> Vec<BreadcrumbItem> {
     let home = dirs::home_dir().unwrap_or_default();
@@ -221,17 +246,26 @@ pub fn build_gui_payload(session: &SessionState) -> GuiPayload {
     let mut all_row_items: Vec<FileRowItem> = Vec::new();
     let mut gui_groups: Vec<GuiGroupSection> = Vec::new();
 
+    // Anchos de columna ajustables por el usuario (scroll sobre la cabecera).
+    // El recorte se hace AQUI: EWW 0.6 no acepta interpolacion en :limit-width.
+    let col = |k: &str, d: i64| session.col_chars.get(k).copied().unwrap_or(d);
+    let w_name = col("name", 24);
+    let w_date = col("date", 16);
+    let w_type = col("type", 12);
+    let w_size = col("size", 8);
+
     for g in grouped {
         let mut group_items = Vec::new();
         for e in g.entries {
             let is_sel = e.path.to_string_lossy() == selected_path_str;
             let row = FileRowItem {
-                name: sanitize_preview_text(&e.name),
+                name: fit_text(&sanitize_preview_text(&e.name), w_name, false),
                 path: e.path.to_string_lossy().to_string(),
                 is_dir: e.is_dir,
-                size: e.formatted_size,
-                r#type: e.mime_category,
-                date_modified: e.formatted_date,
+                size: fit_text(&e.formatted_size, w_size, false),
+                r#type: fit_text(&e.mime_category, w_type, false),
+                // Fechas: al encoger se conserva la cola (la hora), que es lo util
+                date_modified: fit_text(&e.formatted_date, w_date, true),
                 icon: e.icon,
                 git_status: e.git_status.as_str().to_string(),
                 git_badge: e.git_status.badge_icon().to_string(),
@@ -381,6 +415,8 @@ pub fn build_gui_payload(session: &SessionState) -> GuiPayload {
         filter_buttons,
         saved_filter_presets: saved_filter_presets_payload,
         disks,
+        col_chars: session.col_chars.clone(),
+        preview_wrap: session.preview_wrap,
     }
 }
 

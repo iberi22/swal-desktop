@@ -224,7 +224,7 @@ in
     wl-clipboard
     wlogout
     swww
-    # eww  # Zero-Eww: disabled — native Rust shell replaces it (restore if rollback needed)
+    eww  # PRIMARY shell — Rust native es dev fallback (coexistencia), no reemplazo hasta paridad 100%
     swal-config-menu
     swal-session
 

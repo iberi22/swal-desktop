@@ -38,6 +38,7 @@ use smithay_client_toolkit::shell::xdg::XdgSurface;
 
 use ab_glyph::{Font, FontArc, PxScale, ScaleFont};
 
+use crate::config::FileManagerConfig;
 use crate::scanner::{scan_directory, ScanOptions};
 use crate::session::{load_session, save_session, TabState};
 use crate::storage::DiskUsageScanner;
@@ -78,6 +79,7 @@ pub fn run_native_window() {
         .filter(|p| p.exists())
         .unwrap_or_else(home_path);
 
+    let cfg_dual = crate::config::FileManagerConfig::load().dual_pane_enabled;
     let mut app = SwalFilesApp {
         registry_state: RegistryState::new(&globals),
         seat_state: SeatState::new(&globals, &qh),
@@ -92,10 +94,17 @@ pub fn run_native_window() {
         exit: false,
         keyboard: None,
         pointer: None,
-        current_path: start_path,
+        current_path: start_path.clone(),
         items: Vec::new(),
         selected_index: 0,
         scroll_offset: 0,
+        dual_enabled: cfg_dual,
+        right_path: start_path.clone(),
+        right_items: Vec::new(),
+        right_selected: 0,
+        right_scroll: 0,
+        active_is_right: false,
+        split_ratio: 0.5,
         font,
         _dummy: (),
     };
@@ -125,25 +134,56 @@ fn home_path() -> PathBuf {
 }
 
 fn load_font() -> FontArc {
-    // Path exacto verificado (probe: gids H=43 e=72 o=82 correctos, upem 2048).
-    // NO escanear /nix/store completo: hay variantes corruptas/parciales.
-    let candidates = [
-        "/nix/store/ang6yzsv32vnkdq7bqr41dgna2knkz8w-dejavu-fonts-minimal-2.37/share/fonts/truetype/DejaVuSans.ttf",
-        "/nix/store/xvy8dq43r9hi9qrnwgg7kjjny8y0lr0g-dejavu-fonts-minimal-2.37/share/fonts/truetype/DejaVuSans.ttf",
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-        "/usr/share/fonts/DejaVuSans.ttf",
-    ];
-    for c in candidates {
+    // Búsqueda dinámica (evita hardcodear hash /nix/store que cambia en rebuild).
+    // 1) fc-match si está disponible, 2) /run/current-system, 3) scan /nix/store, 4) /usr/share
+    let mut candidates: Vec<String> = Vec::new();
+    if let Ok(out) = std::process::Command::new("fc-match").args(["--format", "%{file}\n", "DejaVu Sans"]).output() {
+        if out.status.success() {
+            if let Ok(s) = String::from_utf8(out.stdout) {
+                for l in s.lines() {
+                    let l = l.trim();
+                    if !l.is_empty() && l.ends_with(".ttf") {
+                        candidates.push(l.to_string());
+                    }
+                }
+            }
+        }
+    }
+    // Fallback dinámico actual del sistema
+    candidates.extend([
+        "/run/current-system/sw/share/fonts/truetype/DejaVuSans.ttf".to_string(),
+        "/run/current-system/sw/share/fonts/truetype/dejavu/DejaVuSans.ttf".to_string(),
+    ]);
+    // Scan /nix/store para cualquier DejaVuSans válido (hasta 8 candidatos)
+    if let Ok(entries) = std::fs::read_dir("/nix/store") {
+        for e in entries.flatten().take(80) {
+            let p = e.path().join("share/fonts/truetype/DejaVuSans.ttf");
+            if p.exists() {
+                candidates.push(p.to_string_lossy().to_string());
+                if candidates.len() > 12 { break; }
+            }
+            let p2 = e.path().join("share/fonts/truetype/dejavu/DejaVuSans.ttf");
+            if p2.exists() {
+                candidates.push(p2.to_string_lossy().to_string());
+                if candidates.len() > 12 { break; }
+            }
+        }
+    }
+    candidates.extend([
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf".to_string(),
+        "/usr/share/fonts/DejaVuSans.ttf".to_string(),
+        "/usr/share/fonts/TTF/DejaVuSans.ttf".to_string(),
+    ]);
+    for c in &candidates {
         if let Ok(data) = std::fs::read(c) {
             if let Ok(font) = FontArc::try_from_vec(data) {
-                // Sanity check: 'H' debe existir (gid != 0)
-                if font.glyph_id('H').0 != 0 {
+                if font.glyph_id('H').0 != 0 && font.glyph_id('e').0 != 0 {
                     return font;
                 }
             }
         }
     }
-    panic!("No se encontró un DejaVuSans.ttf válido — SWAL Files necesita una fuente TTF");
+    panic!("No se encontró DejaVuSans.ttf válido — probados {} candidatos: {:?} — SWAL Files necesita TTF", candidates.len(), candidates.iter().take(3).collect::<Vec<_>>());
 }
 
 struct SwalFilesApp {
@@ -164,6 +204,14 @@ struct SwalFilesApp {
     items: Vec<String>,
     selected_index: usize,
     scroll_offset: usize,
+    // Dual-pane state
+    dual_enabled: bool,
+    right_path: PathBuf,
+    right_items: Vec<String>,
+    right_selected: usize,
+    right_scroll: usize,
+    active_is_right: bool,
+    split_ratio: f32,
     font: FontArc,
     _dummy: (),
 }
@@ -180,29 +228,65 @@ impl SwalFilesApp {
             .collect();
         self.selected_index = 0;
         self.scroll_offset = 0;
+        if self.dual_enabled {
+            self.right_items = scan_directory(&self.right_path, &ScanOptions::default())
+                .unwrap_or_default()
+                .into_iter()
+                .map(|e| {
+                    let icon = if e.is_dir { "[D]" } else { "[F]" };
+                    format!("{} {}  {}", icon, e.name, e.formatted_size)
+                })
+                .collect();
+            self.right_selected = 0;
+            self.right_scroll = 0;
+        }
         self.redraw = true;
     }
+    fn toggle_dual(&mut self) {
+        self.dual_enabled = !self.dual_enabled;
+        if self.dual_enabled && self.right_items.is_empty() {
+            self.right_path = self.current_path.clone();
+            self.reload_dir();
+        }
+        self.redraw = true;
+    }
+    fn switch_pane(&mut self) {
+        if self.dual_enabled {
+            self.active_is_right = !self.active_is_right;
+            self.redraw = true;
+        }
+    }
 
+    fn active_items(&self) -> &Vec<String> {
+        if self.dual_enabled && self.active_is_right { &self.right_items } else { &self.items }
+    }
+    fn active_selected(&self) -> usize {
+        if self.dual_enabled && self.active_is_right { self.right_selected } else { self.selected_index }
+    }
     fn raw_name(&self, idx: usize) -> Option<String> {
-        let line = self.items.get(idx)?;
+        let line = self.active_items().get(idx)?;
         let bare = line
             .strip_prefix("[D] ")
             .or_else(|| line.strip_prefix("[F] "))
             .unwrap_or(line);
-        // bytes 4+2: "name  size" → split at last double-space
         let name = bare.rsplit_once("  ").map(|(n, _)| n).unwrap_or(bare);
         Some(name.trim().to_string())
     }
-
     fn is_dir_entry(&self, idx: usize) -> bool {
-        self.items.get(idx).map(|l| l.starts_with("[D]")).unwrap_or(false)
+        self.active_items().get(idx).map(|l| l.starts_with("[D]")).unwrap_or(false)
     }
 
     fn open_selected(&mut self) {
-        if let Some(name) = self.raw_name(self.selected_index) {
-            let target = self.current_path.join(&name);
+        let idx = self.active_selected();
+        if let Some(name) = self.raw_name(idx) {
+            let base = if self.dual_enabled && self.active_is_right { &self.right_path } else { &self.current_path };
+            let target = base.join(&name);
             if target.is_dir() {
-                self.current_path = target;
+                if self.dual_enabled && self.active_is_right {
+                    self.right_path = target;
+                } else {
+                    self.current_path = target;
+                }
                 self.reload_dir();
             } else {
                 let _ = std::process::Command::new("xdg-open").arg(&target).spawn();
@@ -211,10 +295,19 @@ impl SwalFilesApp {
     }
 
     fn go_up(&mut self) {
-        if let Some(parent) = self.current_path.parent() {
-            if parent.exists() {
-                self.current_path = parent.to_path_buf();
-                self.reload_dir();
+        if self.dual_enabled && self.active_is_right {
+            if let Some(parent) = self.right_path.parent() {
+                if parent.exists() {
+                    self.right_path = parent.to_path_buf();
+                    self.reload_dir();
+                }
+            }
+        } else {
+            if let Some(parent) = self.current_path.parent() {
+                if parent.exists() {
+                    self.current_path = parent.to_path_buf();
+                    self.reload_dir();
+                }
             }
         }
     }
@@ -238,107 +331,232 @@ impl SwalFilesApp {
         // Sidebar
         fill_rect(&mut buf, w, h, 0, 0, sidebar_w, h, ELEVATED);
         let mut y = 24;
-        let home = home_path();
-        for (label, target) in [
-            ("📌 Home", Some(home)),
-            ("📁 Descargas", None),
-            ("📁 Documentos", None),
-            ("📂 Proyectos SWAL", None),
-            ("🖴 /", Some(PathBuf::from("/"))),
-        ] {
-            if target.is_some() {
+        // Pinned locations from config (fallback to sensible defaults si config vacía)
+        let cfg = FileManagerConfig::load();
+        let pins = if cfg.pinned_locations.is_empty() {
+            vec![
+                ("📌 Home".to_string(), home_path(), "🏠".to_string()),
+                ("📁 Descargas".to_string(), home_path().join("Descargas"), "⬇".to_string()),
+                ("📁 Documentos".to_string(), home_path().join("Documentos"), "📄".to_string()),
+            ]
+        } else {
+            cfg.pinned_locations.iter().map(|p| (format!("{} {}", p.icon, p.name), p.path.clone(), p.icon.clone())).collect()
+        };
+        for (label, target, _icon) in pins.iter().take(6) {
+            let is_current = &self.current_path == target;
+            if is_current {
                 fill_rect(&mut buf, w, h, 0, y - 4, 4, 20, ACCENT);
+                fill_rect(&mut buf, w, h, 4, y - 4, sidebar_w - 4, 20, SELECTED);
             }
-            draw_text(&mut buf, w, h, &self.font, 15.0, 12, y, label, TEXT_DIM, false);
+            let color = if is_current { TEXT } else { TEXT_DIM };
+            draw_text(&mut buf, w, h, &self.font, 13.0, 12, y, label, color, is_current);
             y += 24;
         }
-        y += 8;
-        let pct = DiskUsageScanner::new()
-            .scan_mounted_drives()
-            .first()
-            .map(|d| d.used_percentage)
-            .unwrap_or(0.0) as u8;
-        draw_text(&mut buf, w, h, &self.font, 13.0, 12, y, &format!("🖴 SISTEMA {}%", pct), TEXT_DIM, false);
-        fill_rect(&mut buf, w, h, 12, y + 18, sidebar_w - 24, 6, SELECTED);
-        fill_rect(&mut buf, w, h, 12, y + 18, ((sidebar_w - 24) as f32 * (pct as f32 / 100.0)) as usize, 6, SUCCESS);
-        draw_text(&mut buf, w, h, &self.font, 12.0, 12, h - 22, "SWAL Files (native)", ACCENT, false);
+        y += 12;
+        // Disk meters (hasta 2 unidades)
+        for drive in DiskUsageScanner::new().scan_mounted_drives().iter().take(2) {
+            let pct = drive.used_percentage as u8;
+            let label = format!("🖴 {} {}%", drive.mount_point, pct);
+            draw_text(&mut buf, w, h, &self.font, 11.0, 12, y, &label, TEXT_DIM, false);
+            fill_rect(&mut buf, w, h, 12, y + 14, sidebar_w - 24, 6, SELECTED);
+            let bar_color = if pct > 90 { 0xFFef4444 } else if pct > 75 { 0xFFf59e0b } else { SUCCESS };
+            fill_rect(&mut buf, w, h, 12, y + 14, ((sidebar_w - 24) as f32 * (pct as f32 / 100.0)) as usize, 6, bar_color);
+            y += 28;
+        }
+        draw_text(&mut buf, w, h, &self.font, 11.0, 12, h - 22, "SWAL Files — EWW fallback SUPER+E", ACCENT, false);
 
-        // Content header
+        // Content header — breadcrumbs with ellipses si path largo
+        let path_str = self.current_path.to_string_lossy().to_string();
+        let home_str = home_path().to_string_lossy().to_string();
+        let display_path = if path_str.starts_with(&home_str) {
+            path_str.replacen(&home_str, "~", 1)
+        } else {
+            path_str
+        };
+        // Header: icono carpeta + path truncado + hint
+        let header_label = format!("📂 {}  ·  {} items", display_path, self.items.len());
         draw_text_trunc(
-            &mut buf, w, h, &self.font, 15.0, content_x + 12, 10,
-            &format!("{}  ⮜ ⮝", self.current_path.display()),
+            &mut buf, w, h, &self.font, 14.0, content_x + 12, 10,
+            &header_label,
             TEXT, true, content_w - 24,
         );
+        // Sub-header hint + dual-pane status
+        let dual_hint = if self.dual_enabled {
+            let left_name = self.current_path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| "/".to_string());
+            let right_name = self.right_path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| "/".to_string());
+            format!("⮜ H atrás  ⮝ abrir  ·  TAB pane  ·  d dual  ·  L {}  R {}", left_name, right_name)
+        } else {
+            "⮜ H atrás  ⮝ L/Enter abrir  ·  r recargar  ·  d dual-pane  ·  TAB switch".to_string()
+        };
+        draw_text(&mut buf, w, h, &self.font, 11.0, content_x + 12, 28, &dual_hint, TEXT_DIM, false);
 
-        // File list with scroll
+        // File list — single-pane o dual-pane split
         let row_h = 24usize;
         let list_top = 42usize;
         let visible_rows = (h.saturating_sub(list_top + 24)) / row_h;
-        if self.selected_index < self.scroll_offset {
-            self.scroll_offset = self.selected_index;
-        }
-        if self.selected_index >= self.scroll_offset + visible_rows {
-            self.scroll_offset = self.selected_index.saturating_sub(visible_rows - 1);
-        }
-        let mut y = list_top;
-        for i in self.scroll_offset..self.items.len().min(self.scroll_offset + visible_rows) {
-            let is_sel = i == self.selected_index;
-            if is_sel {
-                fill_rect(&mut buf, w, h, content_x, y - 2, content_w, row_h, SELECTED);
+        if self.dual_enabled {
+            // Dual-pane: split content_w
+            let divider = 2usize;
+            let left_w = ((content_w as f32 * self.split_ratio) as usize).max(100);
+            let right_w = content_w.saturating_sub(left_w + divider);
+            let left_x = content_x;
+            let right_x = content_x + left_w + divider;
+            // Divider
+            fill_rect(&mut buf, w, h, left_x + left_w, list_top - 10, divider, h - list_top + 10, SELECTED);
+            // Active pane highlight border top
+            let active_color = ACCENT;
+            if self.active_is_right {
+                fill_rect(&mut buf, w, h, right_x, list_top - 10, right_w, 2, active_color);
+            } else {
+                fill_rect(&mut buf, w, h, left_x, list_top - 10, left_w, 2, active_color);
             }
-            if let Some(line) = self.items.get(i) {
-                let color = if is_sel {
-                    ACCENT
-                } else if self.is_dir_entry(i) {
-                    DIR_COLOR
-                } else {
-                    TEXT
-                };
-                draw_text_trunc(&mut buf, w, h, &self.font, 14.0, content_x + 16, y + 4, line, color, is_sel, content_w - 32);
+            // Helper to draw one pane
+            let mut draw_pane = |_pane_right: bool, pane_x: usize, pane_w: usize, items: &Vec<String>, sel: usize, scroll: usize, is_active: bool| {
+                let mut yy = list_top;
+                for i in scroll..items.len().min(scroll + visible_rows) {
+                    let is_sel = i == sel && is_active;
+                    if is_sel {
+                        fill_rect(&mut buf, w, h, pane_x, yy - 2, pane_w, row_h, SELECTED);
+                    }
+                    if let Some(line) = items.get(i) {
+                        let is_dir = line.starts_with("[D]");
+                        let color = if is_sel { ACCENT } else if is_dir { DIR_COLOR } else { TEXT };
+                        let name_part = line.strip_prefix("[D] ").or_else(|| line.strip_prefix("[F] ")).unwrap_or(line);
+                        let icon = if is_dir { "📁 " } else {
+                            if name_part.ends_with(".rs") || name_part.ends_with(".toml") || name_part.ends_with(".nix") { "🦀 " }
+                            else if name_part.ends_with(".md") { "📝 " }
+                            else if name_part.ends_with(".json") { "📋 " }
+                            else { "📄 " }
+                        };
+                        let pretty = format!("{}{}", icon, name_part);
+                        draw_text_trunc(&mut buf, w, h, &self.font, 12.0, pane_x + 8, yy + 4, &pretty, color, is_sel, pane_w - 16);
+                    }
+                    yy += row_h;
+                }
+            };
+            // Update scroll for active pane
+            if !self.active_is_right {
+                if self.selected_index < self.scroll_offset { self.scroll_offset = self.selected_index; }
+                if self.selected_index >= self.scroll_offset + visible_rows { self.scroll_offset = self.selected_index.saturating_sub(visible_rows - 1); }
+            } else {
+                if self.right_selected < self.right_scroll { self.right_scroll = self.right_selected; }
+                if self.right_selected >= self.right_scroll + visible_rows { self.right_scroll = self.right_selected.saturating_sub(visible_rows - 1); }
             }
-            y += row_h;
+            draw_pane(false, left_x, left_w, &self.items.clone(), self.selected_index, self.scroll_offset, !self.active_is_right);
+            draw_pane(true, right_x, right_w, &self.right_items.clone(), self.right_selected, self.right_scroll, self.active_is_right);
+            // Pane labels
+            draw_text(&mut buf, w, h, &self.font, 11.0, left_x + 8, list_top - 8, if !self.active_is_right { "● Izq" } else { "○ Izq" }, if !self.active_is_right { ACCENT } else { TEXT_DIM }, false);
+            draw_text(&mut buf, w, h, &self.font, 11.0, right_x + 8, list_top - 8, if self.active_is_right { "● Der" } else { "○ Der" }, if self.active_is_right { ACCENT } else { TEXT_DIM }, false);
+        } else {
+            if self.selected_index < self.scroll_offset {
+                self.scroll_offset = self.selected_index;
+            }
+            if self.selected_index >= self.scroll_offset + visible_rows {
+                self.scroll_offset = self.selected_index.saturating_sub(visible_rows - 1);
+            }
+            let mut y = list_top;
+            for i in self.scroll_offset..self.items.len().min(self.scroll_offset + visible_rows) {
+                let is_sel = i == self.selected_index;
+                if is_sel {
+                    fill_rect(&mut buf, w, h, content_x, y - 2, content_w, row_h, SELECTED);
+                }
+                if let Some(line) = self.items.get(i) {
+                    let is_dir = self.is_dir_entry(i);
+                    let color = if is_sel {
+                        ACCENT
+                    } else if is_dir {
+                        DIR_COLOR
+                    } else {
+                        TEXT
+                    };
+                    let name_part = line.strip_prefix("[D] ").or_else(|| line.strip_prefix("[F] ")).unwrap_or(line);
+                    let icon = if is_dir { "📁 " } else {
+                        if name_part.ends_with(".rs") || name_part.ends_with(".toml") || name_part.ends_with(".nix") { "🦀 " }
+                        else if name_part.ends_with(".md") { "📝 " }
+                        else if name_part.ends_with(".json") { "📋 " }
+                        else { "📄 " }
+                    };
+                    let pretty = format!("{}{}", icon, name_part);
+                    draw_text_trunc(&mut buf, w, h, &self.font, 13.0, content_x + 16, y + 4, &pretty, color, is_sel, content_w - 32);
+                }
+                y += row_h;
+            }
         }
 
-        // Preview panel
+        // Preview panel — titulo + info archivo
         fill_rect(&mut buf, w, h, content_x + content_w, 0, preview_w, h, ELEVATED);
-        draw_text(&mut buf, w, h, &self.font, 14.0, content_x + content_w + 12, 10, "Vista Previa", TEXT_DIM, false);
-        if let Some(name) = self.raw_name(self.selected_index) {
-            let p = self.current_path.join(&name);
+        // Borde izquierdo sutil
+        fill_rect(&mut buf, w, h, content_x + content_w, 0, 1, h, SELECTED);
+        draw_text(&mut buf, w, h, &self.font, 13.0, content_x + content_w + 12, 10, "Vista Previa", TEXT_DIM, false);
+        let active_sel = self.active_selected();
+        if let Some(name) = self.raw_name(active_sel) {
+            let base = if self.dual_enabled && self.active_is_right { &self.right_path } else { &self.current_path };
+            let p = base.join(&name);
+            // Header preview: nombre + tipo
+            let preview_title = if p.is_dir() { format!("📁 {}/", name) } else { format!("📄 {}", name) };
+            draw_text_trunc(&mut buf, w, h, &self.font, 12.0, content_x + content_w + 12, 28, &preview_title, TEXT, true, preview_w - 24);
             let mut lines: Vec<String> = Vec::new();
             if p.is_dir() {
-                lines.push(format!("📁 {}", name));
-            } else if let Ok(content) = std::fs::read_to_string(&p) {
-                lines = content.lines().take(40).map(|l| l.to_string()).collect();
-            } else {
-                lines.push("(binario — sin preview de texto)".to_string());
+                // Listar contenido dir (max 20 entries)
+                if let Ok(entries) = std::fs::read_dir(&p) {
+                    for e in entries.flatten().take(20) {
+                        let fname = e.file_name().to_string_lossy().to_string();
+                        let is_d = e.path().is_dir();
+                        lines.push(format!("{} {}", if is_d { "📁" } else { "📄" }, fname));
+                    }
+                    if lines.is_empty() { lines.push("(vacía)".to_string()); }
+                }
+            } else if let Ok(md) = std::fs::metadata(&p) {
+                if md.len() > 512*1024 {
+                    lines.push(format!("(archivo grande {:.1} MB — sin preview)", md.len() as f64 / 1024.0/1024.0));
+                } else if let Ok(content) = std::fs::read_to_string(&p) {
+                    lines = content.lines().take(50).map(|l| {
+                        // Truncar líneas muy largas
+                        if l.len() > 80 { format!("{}…", &l[..80]) } else { l.to_string() }
+                    }).collect();
+                    if lines.is_empty() { lines.push("(archivo vacío)".to_string()); }
+                } else {
+                    lines.push("(binario — sin preview de texto)".to_string());
+                }
             }
-            let mut py = 42;
+            let mut py = 48;
             for (i, line) in lines.iter().enumerate() {
-                if py + 16 > h || i > 60 {
+                if py + 15 > h || i > 55 {
                     break;
                 }
-                let lineno = format!("{:>3} │ {}", i + 1, line);
-                draw_text_trunc(&mut buf, w, h, &self.font, 12.0, content_x + content_w + 12, py, &lineno, TEXT_DIM, false, preview_w - 24);
-                py += 16;
+                // Solo numerar si es preview de texto (no dir)
+                let display = if p.is_dir() { line.clone() } else { format!("{:>3} │ {}", i + 1, line) };
+                draw_text_trunc(&mut buf, w, h, &self.font, 11.0, content_x + content_w + 12, py, &display, TEXT_DIM, false, preview_w - 24);
+                py += 15;
             }
+        } else {
+            draw_text(&mut buf, w, h, &self.font, 12.0, content_x + content_w + 12, 48, "(sin selección)", TEXT_DIM, false);
         }
 
         // Footer
+        let footer = if self.dual_enabled {
+            format!("{} | {} items · TAB switch · d dual · s sync · q salir", if self.active_is_right { "DER activo" } else { "IZQ activo" }, self.active_items().len())
+        } else {
+            format!("{} items · j/k navegar · enter abrir · h arriba · r reload · d dual · q salir", self.items.len())
+        };
         draw_text(
-            &mut buf, w, h, &self.font, 12.0, 12, h - 20,
-            &format!(
-                "{} items · j/k navegar · enter abrir · h arriba · r reload · q salir",
-                self.items.len()
-            ),
+            &mut buf, w, h, &self.font, 11.0, 12, h - 20,
+            &footer,
             TEXT_DIM, false,
         );
 
-        // Present via wl_shm
+        // Present via wl_shm — pool resize handled for Hyprland dynamic configure
         let (w32, h32) = (w as i32, h as i32);
         let stride = w32 * 4;
-        let mut pool = self.pool.take().unwrap_or_else(|| {
-            smithay_client_toolkit::shm::slot::SlotPool::new((w * h * 4) as usize, &self.shm).expect("pool")
-        });
+        let needed = (w * h * 4) as usize;
+        let mut pool = if let Some(mut existing) = self.pool.take() {
+            if existing.len() < needed {
+                let _ = existing.resize(needed);
+            }
+            existing
+        } else {
+            smithay_client_toolkit::shm::slot::SlotPool::new(needed, &self.shm).expect("pool")
+        };
         let buffer = pool
             .create_buffer(w32, h32, stride, wl_shm::Format::Argb8888)
             .expect("create buffer")
@@ -346,10 +564,11 @@ impl SwalFilesApp {
         if let Some(canvas) = pool.canvas(&buffer) {
             for (dst, src) in canvas.chunks_exact_mut(4).zip(buf.iter()) {
                 let px = *src;
-                dst[0] = (px >> 16) as u8; // 0RGB → B,G,R,A little-endian
-                dst[1] = (px >> 8) as u8;
-                dst[2] = px as u8;
-                dst[3] = (px >> 24) as u8;
+                // Argb8888 little-endian: memory order B,G,R,A (0xAARRGGBB)
+                dst[0] = (px & 0xFF) as u8;        // B
+                dst[1] = ((px >> 8) & 0xFF) as u8; // G
+                dst[2] = ((px >> 16) & 0xFF) as u8; // R
+                dst[3] = ((px >> 24) & 0xFF) as u8; // A
             }
         }
         buffer.attach_to(self.window.wl_surface()).expect("attach");
@@ -530,7 +749,6 @@ impl SeatHandler for SwalFilesApp {
 }
 
 // ── Manual wl_keyboard dispatch (xkbcommon no está en el cache offline) ──
-// Mapeo de keycodes X11 hacia las teclas que usa la UI (layout US/ES basta).
 fn handle_x11_keycode(app: &mut SwalFilesApp, keycode: u32) {
     match keycode {
         // q=24, esc=9
@@ -540,26 +758,39 @@ fn handle_x11_keycode(app: &mut SwalFilesApp, keycode: u32) {
         }
         // j=44, down=116
         44 | 116 => {
-            if app.selected_index + 1 < app.items.len() {
-                app.selected_index += 1;
-                app.redraw = true;
+            if app.dual_enabled && app.active_is_right {
+                if app.right_selected + 1 < app.right_items.len() { app.right_selected += 1; app.redraw = true; }
+            } else {
+                if app.selected_index + 1 < app.items.len() { app.selected_index += 1; app.redraw = true; }
             }
         }
         // k=45, up=111
         45 | 111 => {
-            if app.selected_index > 0 {
-                app.selected_index -= 1;
-                app.redraw = true;
+            if app.dual_enabled && app.active_is_right {
+                if app.right_selected > 0 { app.right_selected -= 1; app.redraw = true; }
+            } else {
+                if app.selected_index > 0 { app.selected_index -= 1; app.redraw = true; }
             }
         }
         // l=46, right=114, enter=36
         46 | 114 | 36 => app.open_selected(),
         // h=43, left=113, backspace=22
         43 | 113 | 22 => app.go_up(),
-        // r=27
+        // r=27 reload
         27 => app.reload_dir(),
-        // p=33
+        // p=33 preview toggle
         33 => app.redraw = true,
+        // Tab=23 switch pane (dual)
+        23 => app.switch_pane(),
+        // d=40 toggle dual-pane
+        40 => app.toggle_dual(),
+        // s=39 sync panes (cuando dual)
+        39 => {
+            if app.dual_enabled {
+                if app.active_is_right { app.current_path = app.right_path.clone(); } else { app.right_path = app.current_path.clone(); }
+                app.reload_dir();
+            }
+        }
         _ => {}
     }
 }
@@ -638,15 +869,40 @@ impl ProvidesRegistryState for SwalFilesApp {
 impl SwalFilesApp {
     fn hit_test(&mut self, sx: usize, sy: usize) {
         let sidebar_w = ((self.width as f32) * 0.18).max(140.0) as usize;
+        let preview_w = ((self.width as f32) * 0.28) as usize;
+        let content_x = sidebar_w;
+        let content_w = (self.width as usize).saturating_sub(sidebar_w + preview_w);
         if sx < sidebar_w || sy < 42 {
             return;
         }
         let row_h = 24usize;
         let row = (sy - 42) / row_h;
-        let idx = self.scroll_offset + row;
-        if idx < self.items.len() {
-            self.selected_index = idx;
-            self.redraw = true;
+        if self.dual_enabled {
+            let left_w = ((content_w as f32 * self.split_ratio) as usize).max(100);
+            let right_x = content_x + left_w + 2;
+            if sx < content_x + left_w {
+                // Left pane
+                self.active_is_right = false;
+                let idx = self.scroll_offset + row;
+                if idx < self.items.len() {
+                    self.selected_index = idx;
+                    self.redraw = true;
+                }
+            } else if sx >= right_x {
+                // Right pane
+                self.active_is_right = true;
+                let idx = self.right_scroll + row;
+                if idx < self.right_items.len() {
+                    self.right_selected = idx;
+                    self.redraw = true;
+                }
+            }
+        } else {
+            let idx = self.scroll_offset + row;
+            if idx < self.items.len() {
+                self.selected_index = idx;
+                self.redraw = true;
+            }
         }
     }
 }
