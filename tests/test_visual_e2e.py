@@ -10,8 +10,8 @@ import subprocess
 import time
 import unittest
 
-ARTIFACT_DIR = "/home/belal/.gemini/antigravity/brain/8d5d93d4-e03d-4879-a36f-b95611086547"
-TMP_DIR = "/tmp/swal_visual_tests"
+ARTIFACT_DIR = os.environ.get("SWAL_VISUAL_ARTIFACT_DIR", os.environ.get("TMPDIR", "/tmp") + "/swal_visual_artifacts")
+TMP_DIR = os.environ.get("TMPDIR", "/tmp") + "/swal_visual_tests"
 
 
 def run_cmd(cmd_list):

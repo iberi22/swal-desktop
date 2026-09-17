@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Copia al portapapeles el CONTENIDO del archivo en preview (texto/código).
 # Para imágenes/carpetas copia la ruta. Lee el estado real del backend.
-FILES_BIN="/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files"
+FILES_BIN="${SWAL_ROOT:-$HOME/proyectosSWAL}/periferia/swal-desktop/target/debug/swal-files"
 
 JSON=$("$FILES_BIN" view-json 2>/dev/null)
 eval "$(echo "$JSON" | python3 -c "

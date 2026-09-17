@@ -2,7 +2,7 @@
 
 let
   user = "beri";
-  email = "beri22@gmail.com";
+  email = "you@example.com"; # override locally; do not commit a real address
 in
 {
   home.username = "bela";

@@ -7,10 +7,11 @@
 set -u
 
 TIMEOUT=6
-CMD="/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files"
+CMD="${SWAL_ROOT:-$HOME/proyectosSWAL}/periferia/swal-desktop/target/debug/swal-files"
 LOG="/tmp/swal-files-poll.log"
 CACHE="/tmp/swal-files-last-good.json"
-FALLBACK='{"current_path":"/home/belal","parent_path":"/","total_items":0,"active_tab_id":1,"tabs":[{"id":1,"title":"Home","path":"/home/belal","active":true}],"breadcrumbs":[{"name":"Home","path":"/home/belal"}],"view_mode":"details","show_hidden":false,"dual_pane":false,"sort_by":"name","sort_order":"asc","group_by":"none","filter_type":"all","preview_mode":"sidebar","is_maximized":false,"is_current_pinned":false,"theme_id":"hive-dark","favorites":[],"workspaces":[],"entries":[],"groups":[],"disks":[],"git_status":{"is_git_repo":false,"branch":"","ahead":0,"behind":0,"staged_count":0,"modified_count":0,"untracked_count":0,"conflicted_count":0,"is_clean":true,"summary":"","badge":""},"col_chars":{"name":24,"date":16,"type":12,"size":8},"preview_wrap":true,"row_density":"comfortable","preview":{"path":"/home/belal","file_name":"Home","file_type":"Carpeta","size_formatted":"0 items","date_modified":"","is_image":false,"is_text":false,"is_dir":true,"is_git_repo":false,"image_path":"","line_count":0,"content":"","gutter_lines":"","git_status_summary":""}}'
+FALLBACK='{"current_path":"HOME_DIR_PLACEHOLDER","parent_path":"/","total_items":0,"active_tab_id":1,"tabs":[{"id":1,"title":"Home","path":"HOME_DIR_PLACEHOLDER","active":true}],"breadcrumbs":[{"name":"Home","path":"HOME_DIR_PLACEHOLDER"}],"view_mode":"details","show_hidden":false,"dual_pane":false,"sort_by":"name","sort_order":"asc","group_by":"none","filter_type":"all","preview_mode":"sidebar","is_maximized":false,"is_current_pinned":false,"theme_id":"hive-dark","favorites":[],"workspaces":[],"entries":[],"groups":[],"disks":[],"git_status":{"is_git_repo":false,"branch":"","ahead":0,"behind":0,"staged_count":0,"modified_count":0,"untracked_count":0,"conflicted_count":0,"is_clean":true,"summary":"","badge":""},"col_chars":{"name":24,"date":16,"type":12,"size":8},"preview_wrap":true,"row_density":"comfortable","preview":{"path":"HOME_DIR_PLACEHOLDER","file_name":"Home","file_type":"Carpeta","size_formatted":"0 items","date_modified":"","is_image":false,"is_text":false,"is_dir":true,"is_git_repo":false,"image_path":"","line_count":0,"content":"","gutter_lines":"","git_status_summary":""}}'
+FALLBACK="${FALLBACK//HOME_DIR_PLACEHOLDER/${HOME:-/root}}"
 
 TMP=$(mktemp) || exit 0
 trap 'rm -f "$TMP"' EXIT

@@ -48,21 +48,32 @@ result
 .gestalt/
 .jules/
 .xavier/
+**/.xavier/
 .xavier-backups/
 .skill-registry.cache.json
 
 # Planificación suelta en la raíz o en docs/
+docs/plans/
 PLANNING.md
 TASK.md
 tasks.json
+HANDOFF.md
+HANDOFF*.md
 
 # Configuración local con rutas absolutas
 .mcp.json
 
 # Runtime y artefactos
+# Runtime databases (never publish)
+*.db
+*.sqlite
+*.sqlite3
 *.db-wal
 *.db-shm
 *.sqlite-wal
 *.sqlite-shm
 *.profraw
 # <<< GITCORE PUBLIC REPO HARDENING <<<
+
+# Internal migration checklist (reveals internal decisions)
+docs/EWW_PARITY_CHECKLIST.md

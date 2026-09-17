@@ -245,7 +245,7 @@ mod tests {
         // Real partitions
         assert!(is_real_partition("/dev/nvme0n1p2", "/", "ext4"));
         assert!(is_real_partition("/dev/sda1", "/home", "btrfs"));
-        assert!(is_real_partition("/dev/nvme1n1p5", "/mnt/ssd-2tb", "ntfs3"));
+        assert!(is_real_partition("/dev/nvme0n1p2", "/mnt/data", "ext4"));
         assert!(is_real_partition("/dev/disk/by-uuid/xyz", "/nix", "ext4"));
         assert!(is_real_partition("rpool/ROOT/nixos", "/", "zfs"));
     }

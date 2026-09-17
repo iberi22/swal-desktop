@@ -128,19 +128,19 @@
         (label :text "⚙" :style "color:#f97316;font-size:13.5px;margin-right:3px;"))
       (button :onclick "eww open --toggle event_panel" :class "icon-btn" :vexpand false :tooltip "Eventos del sistema (bitacora)"
         (label :text "📋" :style "color:#E3B341;font-size:12.5px;margin-right:2px;"))
-      (button :onclick "/home/belal/.config/eww/scripts/toggle_dashboard.sh close" :class "close-btn" :vexpand false :tooltip "Cerrar Dashboard"
+      (button :onclick "$HOME/.config/eww/scripts/toggle_dashboard.sh close" :class "close-btn" :vexpand false :tooltip "Cerrar Dashboard"
         (label :text "󰅖" :class "close-lbl")))
 
     ;; --- Toggles rápidos ---
     (box :class "card-sm" :orientation "h" :space-evenly true :spacing 2 :vexpand false
-      (chip :label "Net" :icon "󰖩" :tooltip "Red WiFi" :onclick "/home/belal/.config/eww/scripts/toggles.sh network toggle" :active {net_active == "true"})
-      (chip :label "BT" :icon "󰂯" :tooltip "Bluetooth" :onclick "/home/belal/.config/eww/scripts/toggles.sh bt toggle" :active {bt_active == "true"})
-      (chip :label "Night" :icon "󰖨" :tooltip "Luz nocturna" :onclick "/home/belal/.config/eww/scripts/toggles.sh nightlight toggle" :active {night_active == "true"})
-      (chip :label "Dark" :icon "󰔎" :tooltip "Modo oscuro" :onclick "/home/belal/.config/eww/scripts/toggles.sh darkmode toggle" :active {dark_active == "true"})
-      (chip :label "DND" :icon "󰂛" :tooltip "No molestar" :onclick "/home/belal/.config/eww/scripts/toggles.sh dnd toggle" :active {dnd_active == "true"})
-      (chip :label "Idle" :icon "󰒲" :tooltip "Suspension auto (pantalla 45min + hibernar 50min)" :onclick "/home/belal/.config/eww/scripts/idle_toggle.sh toggle" :active {idle_active == "true"})
-      (chip :label "Ptr" :icon "🖱" :tooltip "Puntero con teclado SUPER+flechas (click para activar/desactivar)" :onclick "/home/belal/.config/eww/scripts/hands_toggle.sh pointer toggle" :active {pointer_active == "true"})
-      (chip :label "Voz" :icon "🎙" :tooltip "Dictado por voz SUPER CTRL+D (click para activar/desactivar)" :onclick "/home/belal/.config/eww/scripts/hands_toggle.sh ptt toggle" :active {ptt_active == "true"}))
+      (chip :label "Net" :icon "󰖩" :tooltip "Red WiFi" :onclick "$HOME/.config/eww/scripts/toggles.sh network toggle" :active {net_active == "true"})
+      (chip :label "BT" :icon "󰂯" :tooltip "Bluetooth" :onclick "$HOME/.config/eww/scripts/toggles.sh bt toggle" :active {bt_active == "true"})
+      (chip :label "Night" :icon "󰖨" :tooltip "Luz nocturna" :onclick "$HOME/.config/eww/scripts/toggles.sh nightlight toggle" :active {night_active == "true"})
+      (chip :label "Dark" :icon "󰔎" :tooltip "Modo oscuro" :onclick "$HOME/.config/eww/scripts/toggles.sh darkmode toggle" :active {dark_active == "true"})
+      (chip :label "DND" :icon "󰂛" :tooltip "No molestar" :onclick "$HOME/.config/eww/scripts/toggles.sh dnd toggle" :active {dnd_active == "true"})
+      (chip :label "Idle" :icon "󰒲" :tooltip "Suspension auto (pantalla 45min + hibernar 50min)" :onclick "$HOME/.config/eww/scripts/idle_toggle.sh toggle" :active {idle_active == "true"})
+      (chip :label "Ptr" :icon "🖱" :tooltip "Puntero con teclado SUPER+flechas (click para activar/desactivar)" :onclick "$HOME/.config/eww/scripts/hands_toggle.sh pointer toggle" :active {pointer_active == "true"})
+      (chip :label "Voz" :icon "🎙" :tooltip "Dictado por voz SUPER CTRL+D (click para activar/desactivar)" :onclick "$HOME/.config/eww/scripts/hands_toggle.sh ptt toggle" :active {ptt_active == "true"}))
 
     ;; --- HARDWARE, RED & SENSORES ---
     (box :class "card hw-grid" :orientation "v" :spacing 2 :space-evenly false :vexpand false
@@ -238,7 +238,7 @@
       (box :orientation "h" :space-evenly false :vexpand false
         (label :text "CALENDARIO & AGENDA" :class "section-title" :xalign 0)
         (box :hexpand true)
-        (button :onclick "python3 /home/belal/.config/eww/scripts/gcalendar_sync.py sync; eww update calendar_markup=\"$(python3 /home/belal/.config/eww/scripts/calendar_gen.py)\" &"
+        (button :onclick "python3 $HOME/.config/eww/scripts/gcalendar_sync.py sync; eww update calendar_markup=\"$(python3 $HOME/.config/eww/scripts/calendar_gen.py)\" &"
                 :class "icon-btn" :tooltip "Sincronizar Google Calendar (iberi22)" :vexpand false
           (label :text "󰑓 Sinc" :style "color:#00CCFF;font-size:9px;")))
       (box :class "calendar-wrap" :orientation "v" :halign "center" :vexpand false
@@ -298,7 +298,7 @@
         (box :orientation "h" :space-evenly true :spacing 2 :vexpand false
           (act_btn :label "Monitor" :class "" :onclick "eww open --toggle agent_admin")
           (act_btn :label "Web Dash" :class "" :onclick "bash -c 'hermes dashboard --no-open >/tmp/hermes-dash.log 2>&1 & sleep 1.2; xdg-open http://127.0.0.1:9119 &'")
-          (act_btn :label "Limpiar" :class "warn" :onclick "bash -c 'python3 /home/belal/.config/eww/scripts/agent_control.py close-stale 2; eww update agents_data=\"$(python3 /home/belal/.config/eww/scripts/agent_control.py json)\" ag_live=\"$(python3 /home/belal/.config/eww/scripts/agent_control.py get stats.active_count)\" ag_stale=\"$(python3 /home/belal/.config/eww/scripts/agent_control.py get stats.stale_count)\"' &")))
+          (act_btn :label "Limpiar" :class "warn" :onclick "bash -c 'python3 $HOME/.config/eww/scripts/agent_control.py close-stale 2; eww update agents_data=\"$(python3 $HOME/.config/eww/scripts/agent_control.py json)\" ag_live=\"$(python3 $HOME/.config/eww/scripts/agent_control.py get stats.active_count)\" ag_stale=\"$(python3 $HOME/.config/eww/scripts/agent_control.py get stats.stale_count)\"' &")))
 
       ;; Contadores
       (box :orientation "h" :spacing 4 :space-evenly false :vexpand false :halign "fill"
@@ -315,10 +315,10 @@
         (box :hexpand true)
         (label :text "󰀻" :style "font-size:12px;color:#00FF88;"))
       (box :orientation "h" :space-evenly true :spacing 2 :vexpand false
-        (chip :label "Def" :icon "󰒓" :tooltip "Perfil default" :onclick "sudo /home/belal/.config/system-profiles/profile-manager.sh switch default" :active {system_profile == "default"})
-        (chip :label "Game" :icon "󰊴" :tooltip "Perfil gaming" :onclick "sudo /home/belal/.config/system-profiles/profile-manager.sh switch gaming" :active {system_profile == "gaming"})
-        (chip :label "AI" :icon "󰚩" :tooltip "Perfil AI (GPU libre)" :onclick "sudo /home/belal/.config/system-profiles/profile-manager.sh switch ai" :active {system_profile == "ai"})
-        (chip :label "Zen" :icon "󰋖" :tooltip "Perfil zen" :onclick "sudo /home/belal/.config/system-profiles/profile-manager.sh switch sen" :active {system_profile == "sen"})))
+        (chip :label "Def" :icon "󰒓" :tooltip "Perfil default" :onclick "sudo $HOME/.config/system-profiles/profile-manager.sh switch default" :active {system_profile == "default"})
+        (chip :label "Game" :icon "󰊴" :tooltip "Perfil gaming" :onclick "sudo $HOME/.config/system-profiles/profile-manager.sh switch gaming" :active {system_profile == "gaming"})
+        (chip :label "AI" :icon "󰚩" :tooltip "Perfil AI (GPU libre)" :onclick "sudo $HOME/.config/system-profiles/profile-manager.sh switch ai" :active {system_profile == "ai"})
+        (chip :label "Zen" :icon "󰋖" :tooltip "Perfil zen" :onclick "sudo $HOME/.config/system-profiles/profile-manager.sh switch sen" :active {system_profile == "sen"})))
 
     ;; --- POMODORO ---
     (box :class "card-sm" :orientation "v" :spacing 1 :space-evenly false :vexpand false
@@ -327,9 +327,9 @@
         (box :hexpand true)
         (label :text pomo_state :style "font-family:monospace;font-size:10px;color:#00FF88;" :halign "end"))
       (box :orientation "h" :space-evenly true :spacing 2 :vexpand false
-        (act_btn :label "Iniciar" :class "" :onclick "bash -c 'python3 /home/belal/.config/eww/scripts/pomodoro.py start; eww update pomo_state=\"$(python3 /home/belal/.config/eww/scripts/pomodoro.py status)\"' &")
-        (act_btn :label "Pausa" :class "warn" :onclick "bash -c 'python3 /home/belal/.config/eww/scripts/pomodoro.py stop; eww update pomo_state=\"$(python3 /home/belal/.config/eww/scripts/pomodoro.py status)\"' &")
-        (act_btn :label "Reset" :class "" :onclick "bash -c 'python3 /home/belal/.config/eww/scripts/pomodoro.py reset; eww update pomo_state=\"$(python3 /home/belal/.config/eww/scripts/pomodoro.py status)\"' &")))
+        (act_btn :label "Iniciar" :class "" :onclick "bash -c 'python3 $HOME/.config/eww/scripts/pomodoro.py start; eww update pomo_state=\"$(python3 $HOME/.config/eww/scripts/pomodoro.py status)\"' &")
+        (act_btn :label "Pausa" :class "warn" :onclick "bash -c 'python3 $HOME/.config/eww/scripts/pomodoro.py stop; eww update pomo_state=\"$(python3 $HOME/.config/eww/scripts/pomodoro.py status)\"' &")
+        (act_btn :label "Reset" :class "" :onclick "bash -c 'python3 $HOME/.config/eww/scripts/pomodoro.py reset; eww update pomo_state=\"$(python3 $HOME/.config/eww/scripts/pomodoro.py status)\"' &")))
 
     ;; --- AUDIO & MULTIMEDIA ---
     (box :class "card-sm" :orientation "v" :spacing 1 :space-evenly false :vexpand false
@@ -373,16 +373,16 @@
     ;; Selector de Perfiles de Rendimiento
     (box :class "card-sm" :orientation "h" :space-evenly true :spacing 4 :vexpand false
       (chip :label "Default" :icon "󰒓" :tooltip "Modo equilibrado"
-            :onclick "sudo /home/belal/.config/system-profiles/profile-manager.sh switch default; eww update RAM_PANEL=\"$(python3 /home/belal/.config/eww/scripts/ram_panel.py)\""
+            :onclick "sudo $HOME/.config/system-profiles/profile-manager.sh switch default; eww update RAM_PANEL=\"$(python3 $HOME/.config/eww/scripts/ram_panel.py)\""
             :active {RAM_PANEL.profile.name == "default"})
       (chip :label "Gaming" :icon "󰊴" :tooltip "Modo gaming prioritario"
-            :onclick "sudo /home/belal/.config/system-profiles/profile-manager.sh switch gaming; eww update RAM_PANEL=\"$(python3 /home/belal/.config/eww/scripts/ram_panel.py)\""
+            :onclick "sudo $HOME/.config/system-profiles/profile-manager.sh switch gaming; eww update RAM_PANEL=\"$(python3 $HOME/.config/eww/scripts/ram_panel.py)\""
             :active {RAM_PANEL.profile.name == "gaming" || RAM_PANEL.profile.name == "game"})
       (chip :label "AI Hub" :icon "󰚩" :tooltip "Modo para agentes y LLMs"
-            :onclick "sudo /home/belal/.config/system-profiles/profile-manager.sh switch ai; eww update RAM_PANEL=\"$(python3 /home/belal/.config/eww/scripts/ram_panel.py)\""
+            :onclick "sudo $HOME/.config/system-profiles/profile-manager.sh switch ai; eww update RAM_PANEL=\"$(python3 $HOME/.config/eww/scripts/ram_panel.py)\""
             :active {RAM_PANEL.profile.name == "ai"})
       (chip :label "Zen" :icon "󰋖" :tooltip "Modo silencioso de bajo consumo"
-            :onclick "sudo /home/belal/.config/system-profiles/profile-manager.sh switch sen; eww update RAM_PANEL=\"$(python3 /home/belal/.config/eww/scripts/ram_panel.py)\""
+            :onclick "sudo $HOME/.config/system-profiles/profile-manager.sh switch sen; eww update RAM_PANEL=\"$(python3 $HOME/.config/eww/scripts/ram_panel.py)\""
             :active {RAM_PANEL.profile.name == "sen" || RAM_PANEL.profile.name == "zen"}))
 
     ;; Métricas de Rendimiento (CPU, GPU, RAM, SWAP)
@@ -423,7 +423,7 @@
     (box :orientation "h" :space-evenly false :valign "center" :vexpand false :style "margin-top:2px;"
       (label :text "PROCESOS ACTIVOS (TOP CONSUMO DE MEMORIA)" :class "section-title")
       (box :hexpand true)
-      (button :onclick "eww update RAM_PANEL=\"$(python3 /home/belal/.config/eww/scripts/ram_panel.py)\"" :class "icon-btn" :tooltip "Refrescar procesos"
+      (button :onclick "eww update RAM_PANEL=\"$(python3 $HOME/.config/eww/scripts/ram_panel.py)\"" :class "icon-btn" :tooltip "Refrescar procesos"
         (label :text "󰑓 Refrescar" :style "color:#00CCFF;font-size:9.5px;")))
 
     ;; Lista Interactiva de Procesos con Scroll
@@ -439,7 +439,7 @@
                 (box :hexpand true)
                 (label :text "${p.rss} (${p.pct}%)" :class "proc-ram-badge"))
               (label :text {p.cmd} :class "proc-cmd" :limit-width 64 :show-truncated true :tooltip {p.cmd} :xalign 0))
-            (button :onclick "bash -c 'bash /home/belal/.config/eww/scripts/ram_kill.sh ${p.pid}; sleep 0.5; eww update RAM_PANEL=\"$(python3 /home/belal/.config/eww/scripts/ram_panel.py)\"' &"
+            (button :onclick "bash -c 'bash $HOME/.config/eww/scripts/ram_kill.sh ${p.pid}; sleep 0.5; eww update RAM_PANEL=\"$(python3 $HOME/.config/eww/scripts/ram_panel.py)\"' &"
                     :class "proc-kill-btn" :tooltip "Finalizar proceso PID ${p.pid} (${p.name})" :vexpand false
               (box :orientation "h" :spacing 3 :space-evenly false :valign "center"
                 (label :text "󰆴" :style "font-size:9.5px;color:#F85149;")
@@ -447,13 +447,13 @@
 
     ;; Pie de Acciones Rápidas
     (box :class "ram-footer" :orientation "h" :spacing 6 :space-evenly false :valign "center" :vexpand false
-      (button :onclick "bash -c 'bash /home/belal/.config/eww/scripts/ram_optimize.sh; sleep 0.5; eww update RAM_PANEL=\"$(python3 /home/belal/.config/eww/scripts/ram_panel.py)\"' &"
+      (button :onclick "bash -c 'bash $HOME/.config/eww/scripts/ram_optimize.sh; sleep 0.5; eww update RAM_PANEL=\"$(python3 $HOME/.config/eww/scripts/ram_panel.py)\"' &"
               :class "act send-btn" :hexpand true :vexpand false
         (label :text "󰃢 Limpiar RAM" :class "act-lbl"))
-      (button :onclick "bash -c '/home/belal/.local/bin/swal-vram-optimizer boost; sleep 0.5; eww update RAM_PANEL=\"$(python3 /home/belal/.config/eww/scripts/ram_panel.py)\"' &"
+      (button :onclick "bash -c '$HOME/.local/bin/swal-vram-optimizer boost; sleep 0.5; eww update RAM_PANEL=\"$(python3 $HOME/.config/eww/scripts/ram_panel.py)\"' &"
               :class "act warn" :hexpand true :vexpand false :tooltip "Liberar VRAM de GPU (Caché + suspender buffers GPU navegadores)"
         (label :text "󰢮 Boost VRAM" :class "act-lbl"))
-      (button :onclick "bash -c '/home/belal/.local/bin/swal-vram-optimizer prompt; sleep 0.5; eww update RAM_PANEL=\"$(python3 /home/belal/.config/eww/scripts/ram_panel.py)\"' &"
+      (button :onclick "bash -c '$HOME/.local/bin/swal-vram-optimizer prompt; sleep 0.5; eww update RAM_PANEL=\"$(python3 $HOME/.config/eww/scripts/ram_panel.py)\"' &"
               :class "act danger" :hexpand true :vexpand false :tooltip "Elegir app pesada para cerrar y recuperar VRAM"
         (label :text "󰆴 Cerrar App GPU" :class "act-lbl"))
       (button :onclick "ghostty -e bash -c 'btop || fastfetch; read -n1' &"
@@ -468,7 +468,7 @@
     (box :orientation "h" :space-evenly false :vexpand false
       (label :text "AGENT MONITOR" :style "color:#E6EDF3;font-size:12px;font-weight:bold;")
       (box :hexpand true)
-      (button :onclick "bash -c 'python3 /home/belal/.config/eww/scripts/agent_control.py close-stale 2; eww update agents_data=\"$(python3 /home/belal/.config/eww/scripts/agent_control.py json)\" ag_stale=\"$(python3 /home/belal/.config/eww/scripts/agent_control.py get stats.stale_count)\" ag_tree=\"$(python3 /home/belal/.config/eww/scripts/agent_control.py tree)\"' &"
+      (button :onclick "bash -c 'python3 $HOME/.config/eww/scripts/agent_control.py close-stale 2; eww update agents_data=\"$(python3 $HOME/.config/eww/scripts/agent_control.py json)\" ag_stale=\"$(python3 $HOME/.config/eww/scripts/agent_control.py get stats.stale_count)\" ag_tree=\"$(python3 $HOME/.config/eww/scripts/agent_control.py tree)\"' &"
               :class "act warn" :vexpand false
         (label :text "Close stale" :class "act-lbl"))
       (button :onclick "eww open --toggle agent_admin" :class "icon-btn" :vexpand false
@@ -491,9 +491,9 @@
     (box :orientation "h" :space-evenly true :spacing 3 :vexpand false
       (act_btn :label "New" :class "" :onclick "eww close agent_admin; ghostty -e hermes &")
       (act_btn :label "Cont" :class "" :onclick "eww close agent_admin; ghostty -e hermes -c &")
-      (act_btn :label "Pause" :class "warn" :onclick "bash -c 'python3 /home/belal/.config/eww/scripts/agent_control.py cron-pause-all; eww update agents_data=\"$(python3 /home/belal/.config/eww/scripts/agent_control.py json)\" ag_cron=\"$(python3 /home/belal/.config/eww/scripts/agent_control.py get stats.cron_active)\"' &")
-      (act_btn :label "ResumeCron" :class "" :onclick "bash -c 'python3 /home/belal/.config/eww/scripts/agent_control.py cron-resume-all; eww update agents_data=\"$(python3 /home/belal/.config/eww/scripts/agent_control.py json)\" ag_cron=\"$(python3 /home/belal/.config/eww/scripts/agent_control.py get stats.cron_active)\"' &")
-      (act_btn :label "GW+" :class "danger" :onclick "bash -c 'python3 /home/belal/.config/eww/scripts/agent_control.py gateway-restart; eww update ag_gw=\"$(python3 /home/belal/.config/eww/scripts/agent_control.py get stats.gateway)\"' &"))
+      (act_btn :label "Pause" :class "warn" :onclick "bash -c 'python3 $HOME/.config/eww/scripts/agent_control.py cron-pause-all; eww update agents_data=\"$(python3 $HOME/.config/eww/scripts/agent_control.py json)\" ag_cron=\"$(python3 $HOME/.config/eww/scripts/agent_control.py get stats.cron_active)\"' &")
+      (act_btn :label "ResumeCron" :class "" :onclick "bash -c 'python3 $HOME/.config/eww/scripts/agent_control.py cron-resume-all; eww update agents_data=\"$(python3 $HOME/.config/eww/scripts/agent_control.py json)\" ag_cron=\"$(python3 $HOME/.config/eww/scripts/agent_control.py get stats.cron_active)\"' &")
+      (act_btn :label "GW+" :class "danger" :onclick "bash -c 'python3 $HOME/.config/eww/scripts/agent_control.py gateway-restart; eww update ag_gw=\"$(python3 $HOME/.config/eww/scripts/agent_control.py get stats.gateway)\"' &"))
 
     (box :class "card" :orientation "v" :spacing 2 :space-evenly false :vexpand false
       (label :text "CRON" :class "section-title")
@@ -503,7 +503,7 @@
             (label :text {cron.name} :class "sess-title" :hexpand true :xalign 0 :limit-width 22 :show-truncated true)
             (label :text {cron.schedule} :class "sess-meta" :limit-width 10 :show-truncated true)
             (label :text {cron.state} :class "badge ${cron.state == 'active' ? 'active' : 'paused'}")
-            (button :onclick "bash -c 'python3 /home/belal/.config/eww/scripts/agent_control.py cron-toggle ${cron.id}; eww update agents_data=\"$(python3 /home/belal/.config/eww/scripts/agent_control.py json)\"' &"
+            (button :onclick "bash -c 'python3 $HOME/.config/eww/scripts/agent_control.py cron-toggle ${cron.id}; eww update agents_data=\"$(python3 $HOME/.config/eww/scripts/agent_control.py json)\"' &"
                     :class "sess-btn" :vexpand false
               (label :text "T" :class "sess-btn-ico"))))))
 
@@ -518,7 +518,7 @@
                 (label :text {item.status_desc} :class "badge ${item.status}")
                 (button :onclick "ghostty -e hermes --resume ${item.id} &" :class "sess-btn" :vexpand false :tooltip "Abrir en Terminal"
                   (label :text "󰆍" :class "sess-btn-ico"))
-                (button :onclick "bash -c 'python3 /home/belal/.config/eww/scripts/agent_control.py delete ${item.id}; eww update agents_data=\"$(python3 /home/belal/.config/eww/scripts/agent_control.py json)\"' &"
+                (button :onclick "bash -c 'python3 $HOME/.config/eww/scripts/agent_control.py delete ${item.id}; eww update agents_data=\"$(python3 $HOME/.config/eww/scripts/agent_control.py json)\"' &"
                         :class "sess-btn danger" :vexpand false
                   (label :text "X" :class "sess-btn-ico")))
               (label :text "${item.model} · ${item.duration}" :class "sess-meta" :xalign 0)
@@ -556,7 +556,7 @@
                 (label :text "${item.model} · ${item.duration}" :class "sess-meta" :xalign 0)
                 (box :orientation "h" :spacing 4 :space-evenly false
                   (button :onclick "ghostty -e hermes --resume ${item.id} &" :class "sess-btn" (label :text "󰆍 Resume"))
-                  (button :onclick "bash -c 'python3 /home/belal/.config/eww/scripts/agent_control.py delete ${item.id}; eww update agents_data=\"$(python3 /home/belal/.config/eww/scripts/agent_control.py json)\"' &"
+                  (button :onclick "bash -c 'python3 $HOME/.config/eww/scripts/agent_control.py delete ${item.id}; eww update agents_data=\"$(python3 $HOME/.config/eww/scripts/agent_control.py json)\"' &"
                           :class "sess-btn danger" (label :text "󰆴 Kill"))))))))
 
       ;; Column 2: Live A2UI AST Surface & Cognition
@@ -571,9 +571,9 @@
             (box :orientation "v" :spacing 6 :space-evenly false
               (label :text ag_tree :class "a2ui-ast-text" :xalign 0 :wrap true)))
           (box :orientation "h" :spacing 6 :space-evenly false :vexpand false
-            (button :onclick "bash -c 'python3 /home/belal/.config/eww/scripts/agent_control.py cron-pause-all; eww update ag_cron=\"0\"' &"
+            (button :onclick "bash -c 'python3 $HOME/.config/eww/scripts/agent_control.py cron-pause-all; eww update ag_cron=\"0\"' &"
                     :class "act warn" :hexpand true (label :text "⏸ Pause All Crons"))
-            (button :onclick "bash -c 'python3 /home/belal/.config/eww/scripts/agent_control.py cron-resume-all' &"
+            (button :onclick "bash -c 'python3 $HOME/.config/eww/scripts/agent_control.py cron-resume-all' &"
                     :class "act" :hexpand true (label :text "▶ Resume Crons")))))
 
       ;; Column 3: Telemetry & Memory
@@ -613,46 +613,46 @@
       (box :class "osd-bar-container" :style "min-width: 90px;"
         (box :class "osd-bar-fill" :style "min-width: {osd_pct}px")))))
 
-(defpoll vol_pct :interval "1s" "/home/belal/.config/eww/scripts/sys_info.sh vol")
-(defpoll vol_icon :interval "1s" "/home/belal/.config/eww/scripts/sys_info.sh vol_icon")
+(defpoll vol_pct :interval "1s" "$HOME/.config/eww/scripts/sys_info.sh vol")
+(defpoll vol_icon :interval "1s" "$HOME/.config/eww/scripts/sys_info.sh vol_icon")
 
 (defpoll EWW_SYS_STATS :interval "2s"
   :initial '{"cpu":{"avg":0,"temp":0,"temp_str":"--"},"ram":{"used_mem_perc":0,"used_gb":0,"total_gb":0,"temp":0,"temp_str":"--"},"gpu":{"load":0,"temp":0,"temp_str":"--","vram_str":"--"},"sensors":{"cpu_tctl":"--","cpu_socket":"--","mb_system":"--","mb_chipset":"--","mb_vrm":"--","mb_vsoc":"--","gpu_edge":"--","gpu_junction":"--","gpu_mem":"--","nvme0":"--","nvme1":"--"},"xavier":{"online":false,"mode":"offline","status_str":"Xavier: Standby"},"net":{"down":"0B/s","up":"0B/s","combined":"↓0B/s ↑0B/s"},"conns":{"in":0,"out":0,"summary":"In:0 Out:0"}}'
-  "python3 /home/belal/.config/eww/scripts/system_stats.py all")
+  "python3 $HOME/.config/eww/scripts/system_stats.py all")
 
-(defpoll disks_list :interval "10s" :initial "[]" "python3 /home/belal/.config/eww/scripts/disks.py json")
-(defpoll calendar_markup :interval "1m" :initial "Cargando calendario..." "python3 /home/belal/.config/eww/scripts/calendar_gen.py")
-(deflisten media_info :initial '{"status":"Stopped","title":"No media","artist":"","cover":""}' "/home/belal/.config/eww/scripts/media_daemon.py")
+(defpoll disks_list :interval "10s" :initial "[]" "python3 $HOME/.config/eww/scripts/disks.py json")
+(defpoll calendar_markup :interval "1m" :initial "Cargando calendario..." "python3 $HOME/.config/eww/scripts/calendar_gen.py")
+(deflisten media_info :initial '{"status":"Stopped","title":"No media","artist":"","cover":""}' "$HOME/.config/eww/scripts/media_daemon.py")
 
 (defpoll agents_data :interval "3s"
   :initial '{"stats":{"active_count":0,"subagents_count":0,"total_active_agents":0,"idle_count":0,"stale_count":0,"total_sessions":0,"total_tokens":"0","total_cost":"$0.00","gateway":"unknown","cron_active":0,"cron_paused":0},"sessions":[],"crons":[],"tree":"...","active_label":"Standby"}'
-  "python3 /home/belal/.config/eww/scripts/agent_control.py json")
-(defpoll ag_tree :interval "3s" :initial "..." "python3 /home/belal/.config/eww/scripts/agent_control.py tree")
-(defpoll ag_active :interval "3s" :initial "Standby" "python3 /home/belal/.config/eww/scripts/agent_control.py active")
-(defpoll ag_live :interval "3s" :initial "0" "python3 /home/belal/.config/eww/scripts/agent_control.py get stats.active_count")
-(defpoll ag_sub :interval "3s" :initial "0" "python3 /home/belal/.config/eww/scripts/agent_control.py get stats.subagents_count")
-(defpoll ag_stale :interval "5s" :initial "0" "python3 /home/belal/.config/eww/scripts/agent_control.py get stats.stale_count")
-(defpoll ag_cron :interval "5s" :initial "0" "python3 /home/belal/.config/eww/scripts/agent_control.py get stats.cron_active")
-(defpoll ag_gw :interval "5s" :initial "?" "python3 /home/belal/.config/eww/scripts/agent_control.py get stats.gateway")
+  "python3 $HOME/.config/eww/scripts/agent_control.py json")
+(defpoll ag_tree :interval "3s" :initial "..." "python3 $HOME/.config/eww/scripts/agent_control.py tree")
+(defpoll ag_active :interval "3s" :initial "Standby" "python3 $HOME/.config/eww/scripts/agent_control.py active")
+(defpoll ag_live :interval "3s" :initial "0" "python3 $HOME/.config/eww/scripts/agent_control.py get stats.active_count")
+(defpoll ag_sub :interval "3s" :initial "0" "python3 $HOME/.config/eww/scripts/agent_control.py get stats.subagents_count")
+(defpoll ag_stale :interval "5s" :initial "0" "python3 $HOME/.config/eww/scripts/agent_control.py get stats.stale_count")
+(defpoll ag_cron :interval "5s" :initial "0" "python3 $HOME/.config/eww/scripts/agent_control.py get stats.cron_active")
+(defpoll ag_gw :interval "5s" :initial "?" "python3 $HOME/.config/eww/scripts/agent_control.py get stats.gateway")
 
-(defpoll toggle_net :interval "5s" "/home/belal/.config/eww/scripts/toggles.sh network icon")
-(defpoll toggle_bt :interval "5s" "/home/belal/.config/eww/scripts/toggles.sh bt icon")
-(defpoll toggle_night :interval "5s" "/home/belal/.config/eww/scripts/toggles.sh nightlight icon")
-(defpoll toggle_dark :interval "5s" "/home/belal/.config/eww/scripts/toggles.sh darkmode icon")
-(defpoll toggle_dnd :interval "5s" "/home/belal/.config/eww/scripts/toggles.sh dnd icon")
-(defpoll net_active :interval "5s" "/home/belal/.config/eww/scripts/toggles.sh network active")
-(defpoll bt_active :interval "5s" "/home/belal/.config/eww/scripts/toggles.sh bt active")
-(defpoll night_active :interval "5s" "/home/belal/.config/eww/scripts/toggles.sh nightlight active")
-(defpoll dark_active :interval "5s" "/home/belal/.config/eww/scripts/toggles.sh darkmode active")
-(defpoll dnd_active :interval "5s" "/home/belal/.config/eww/scripts/toggles.sh dnd active")
-(defpoll toggle_idle :interval "5s" "/home/belal/.config/eww/scripts/idle_toggle.sh icon")
-(defpoll idle_active :interval "5s" "/home/belal/.config/eww/scripts/idle_toggle.sh active")
-(defpoll pointer_active :interval "5s" "/home/belal/.config/eww/scripts/hands_toggle.sh pointer active")
-(defpoll ptt_active :interval "5s" "/home/belal/.config/eww/scripts/hands_toggle.sh ptt active")
-(defpoll system_profile :interval "3s" "cat /home/belal/.config/system-profiles/.current_state 2>/dev/null | grep '^PROFILE=' | cut -d= -f2 || echo 'default'")
-(defpoll power_cost :interval "30s" :initial "0.00 kWh | $0" "python3 /home/belal/.config/eww/scripts/power_session.py")
-(defpoll pomo_state :interval "1s" :initial "WORK 25:00 R1 [pausa]" "python3 /home/belal/.config/eww/scripts/pomodoro.py status")
-(defpoll profile_icon :interval "3s" "/home/belal/.config/system-profiles/profile-manager.sh icon")
+(defpoll toggle_net :interval "5s" "$HOME/.config/eww/scripts/toggles.sh network icon")
+(defpoll toggle_bt :interval "5s" "$HOME/.config/eww/scripts/toggles.sh bt icon")
+(defpoll toggle_night :interval "5s" "$HOME/.config/eww/scripts/toggles.sh nightlight icon")
+(defpoll toggle_dark :interval "5s" "$HOME/.config/eww/scripts/toggles.sh darkmode icon")
+(defpoll toggle_dnd :interval "5s" "$HOME/.config/eww/scripts/toggles.sh dnd icon")
+(defpoll net_active :interval "5s" "$HOME/.config/eww/scripts/toggles.sh network active")
+(defpoll bt_active :interval "5s" "$HOME/.config/eww/scripts/toggles.sh bt active")
+(defpoll night_active :interval "5s" "$HOME/.config/eww/scripts/toggles.sh nightlight active")
+(defpoll dark_active :interval "5s" "$HOME/.config/eww/scripts/toggles.sh darkmode active")
+(defpoll dnd_active :interval "5s" "$HOME/.config/eww/scripts/toggles.sh dnd active")
+(defpoll toggle_idle :interval "5s" "$HOME/.config/eww/scripts/idle_toggle.sh icon")
+(defpoll idle_active :interval "5s" "$HOME/.config/eww/scripts/idle_toggle.sh active")
+(defpoll pointer_active :interval "5s" "$HOME/.config/eww/scripts/hands_toggle.sh pointer active")
+(defpoll ptt_active :interval "5s" "$HOME/.config/eww/scripts/hands_toggle.sh ptt active")
+(defpoll system_profile :interval "3s" "cat $HOME/.config/system-profiles/.current_state 2>/dev/null | grep '^PROFILE=' | cut -d= -f2 || echo 'default'")
+(defpoll power_cost :interval "30s" :initial "0.00 kWh | $0" "python3 $HOME/.config/eww/scripts/power_session.py")
+(defpoll pomo_state :interval "1s" :initial "WORK 25:00 R1 [pausa]" "python3 $HOME/.config/eww/scripts/pomodoro.py status")
+(defpoll profile_icon :interval "3s" "$HOME/.config/system-profiles/profile-manager.sh icon")
 
 (defpoll osd_icon :interval "2s" "echo VOL")
 (defpoll osd_label :interval "2s" "echo ''")
@@ -660,13 +660,13 @@
 
 (defpoll RAM_PANEL :interval "2s"
   :initial '{"used":"0","total":"0","available":"0","used_pct":0,"swap_used":"0","swap_total":"0","swap_pct":0,"cpu":{"pct":0,"temp":0,"temp_str":"--"},"gpu":{"load":0,"edge":0,"jct":0,"temp_str":"--","power":"--","vram_str":"--"},"profile":{"name":"default","icon":"󰒓","label":"Default"},"game":{"running":false,"game":"Sin juego","fps":"--"},"procs":[]}'
-  "python3 /home/belal/.config/eww/scripts/ram_panel.py")
+  "python3 $HOME/.config/eww/scripts/ram_panel.py")
 (defpoll ram_opt :interval "3s"
   :initial '{"ok":false,"freed":"—","available":"—","ts":""}'
-  "bash /home/belal/.config/eww/scripts/ram_opt_status.sh")
+  "bash $HOME/.config/eww/scripts/ram_opt_status.sh")
 (defpoll vram_opt :interval "3s"
   :initial '{"ok":false,"level":0,"freed_mb":0,"free_mb":0,"action":"Listo"}'
-  "bash /home/belal/.config/eww/scripts/vram_opt_status.sh")
+  "bash $HOME/.config/eww/scripts/vram_opt_status.sh")
 
 (defvar confirm_action "")
 (defvar confirm_label "")
@@ -753,8 +753,8 @@
           (keybind_row :keys "Media Play/Pause" :desc "Reproducir / Pausar Multimedia")
           (keybind_row :keys "CTRL + Scroll" :desc "Zoom en Terminal Ghostty"))))))
 
-(defpoll chat_markup :interval "2s" :initial "Cargando chat..." "python3 /home/belal/.config/eww/scripts/agent_chat.py markup")
-(defpoll chat_status :interval "3s" :initial "Comprobando agente..." "python3 /home/belal/.config/eww/scripts/agent_chat.py status")
+(defpoll chat_markup :interval "2s" :initial "Cargando chat..." "python3 $HOME/.config/eww/scripts/agent_chat.py markup")
+(defpoll chat_status :interval "3s" :initial "Comprobando agente..." "python3 $HOME/.config/eww/scripts/agent_chat.py status")
 (defvar chat_agent "Xavier Core")
 (defvar chat_input_val "")
 
@@ -770,10 +770,10 @@
         (label :text "󰅖" :style "color:rgba(255,255,255,0.7);font-size:13px;")))
 
     (box :class "chat-tabs" :orientation "h" :space-evenly true :spacing 4 :vexpand false
-      (button :onclick "python3 /home/belal/.config/eww/scripts/agent_chat.py agent xavier"
+      (button :onclick "python3 $HOME/.config/eww/scripts/agent_chat.py agent xavier"
               :class {chat_agent == "Xavier Core" ? "chat-tab active" : "chat-tab"}
         (label :text "🟢 Xavier Core (RAG / Memoria)"))
-      (button :onclick "python3 /home/belal/.config/eww/scripts/agent_chat.py agent hermes"
+      (button :onclick "python3 $HOME/.config/eww/scripts/agent_chat.py agent hermes"
               :class {chat_agent == "Hermes Agent" ? "chat-tab active" : "chat-tab"}
         (label :text "🤖 Hermes Agent")))
 
@@ -786,13 +786,13 @@
         (input :class "chat-input"
                :tooltip "Escribe tu consulta para el agente..."
                :hexpand true
-               :onaccept "python3 /home/belal/.config/eww/scripts/agent_chat.py send '%s'"
+               :onaccept "python3 $HOME/.config/eww/scripts/agent_chat.py send '%s'"
                :value chat_input_val)
-        (button :onclick "python3 /home/belal/.config/eww/scripts/agent_chat.py send '${chat_input_val}'" :class "act send-btn" :vexpand false
+        (button :onclick "python3 $HOME/.config/eww/scripts/agent_chat.py send '${chat_input_val}'" :class "act send-btn" :vexpand false
           (label :text "Enviar" :class "act-lbl")))
 
       (box :orientation "h" :spacing 4 :space-evenly false :vexpand false :valign "center"
-        (button :onclick "python3 /home/belal/.config/eww/scripts/agent_chat.py clear" :class "act danger" :vexpand false
+        (button :onclick "python3 $HOME/.config/eww/scripts/agent_chat.py clear" :class "act danger" :vexpand false
           (label :text "Limpiar" :class "act-lbl"))
         (button :onclick "ghostty -e hermes &" :class "act" :vexpand false
           (label :text "Hermes CLI" :class "act-lbl"))
@@ -878,7 +878,7 @@
           (label :text "Puerto HTTP: 8006 | MCP: 8100" :style "font-size:9px;color:#94a3b8;"))
         (label :text "Motor de grafo de conocimiento, vector embeddings (SQLite-vec) y memoria central persistente." :style "font-size:9.5px;color:#cbd5e1;" :wrap true)
         (box :orientation "h" :spacing 4 :space-evenly false
-          (button :onclick "python3 /home/belal/.config/eww/scripts/swal_settings.py restart_xavier" :class "act" :vexpand false
+          (button :onclick "python3 $HOME/.config/eww/scripts/swal_settings.py restart_xavier" :class "act" :vexpand false
             (label :text "🔄 Reiniciar Xavier" :class "act-lbl"))
           (button :onclick "xdg-open http://localhost:8006/health" :class "act" :vexpand false
             (label :text "🌐 Health API" :class "act-lbl"))
@@ -901,26 +901,26 @@
     (box :visible {settings_tab == "performance"} :class "settings-body" :orientation "v" :spacing 8 :space-evenly false :vexpand true
       (label :text "Perfiles de Rendimiento del Sistema" :class "section-title" :halign "start")
       (box :orientation "h" :spacing 6 :space-evenly true :vexpand false
-        (button :onclick "python3 /home/belal/.config/eww/scripts/ram_panel.py profile default" :class "act" :vexpand false
+        (button :onclick "python3 $HOME/.config/eww/scripts/ram_panel.py profile default" :class "act" :vexpand false
           (box :orientation "v" :spacing 2 :space-evenly false
             (label :text "⚙ Default" :style "font-weight:bold;")
             (label :text "Equilibrado diario" :style "font-size:8.5px;color:#94a3b8;")))
-        (button :onclick "python3 /home/belal/.config/eww/scripts/ram_panel.py profile gaming" :class "act" :vexpand false
+        (button :onclick "python3 $HOME/.config/eww/scripts/ram_panel.py profile gaming" :class "act" :vexpand false
           (box :orientation "v" :spacing 2 :space-evenly false
             (label :text "🎮 Gaming" :style "font-weight:bold;color:#10b981;")
             (label :text "Máx FPS & GPU Boost" :style "font-size:8.5px;color:#94a3b8;")))
-        (button :onclick "python3 /home/belal/.config/eww/scripts/ram_panel.py profile ai_hub" :class "act" :vexpand false
+        (button :onclick "python3 $HOME/.config/eww/scripts/ram_panel.py profile ai_hub" :class "act" :vexpand false
           (box :orientation "v" :spacing 2 :space-evenly false
             (label :text "🤖 AI Hub" :style "font-weight:bold;color:#06b6d4;")
             (label :text "VRAM & Cuda Threads" :style "font-size:8.5px;color:#94a3b8;")))
-        (button :onclick "python3 /home/belal/.config/eww/scripts/ram_panel.py profile zen" :class "act" :vexpand false
+        (button :onclick "python3 $HOME/.config/eww/scripts/ram_panel.py profile zen" :class "act" :vexpand false
           (box :orientation "v" :spacing 2 :space-evenly false
             (label :text "🧘 Zen" :style "font-weight:bold;color:#a855f7;")
             (label :text "Bajo consumo & silencio" :style "font-size:8.5px;color:#94a3b8;"))))
 
       (label :text "Optimización de Memoria y Almacenamiento" :class "section-title" :halign "start")
       (box :orientation "h" :spacing 6 :space-evenly false
-        (button :onclick "python3 /home/belal/.config/eww/scripts/ram_panel.py clear_cache" :class "act warn" :vexpand false
+        (button :onclick "python3 $HOME/.config/eww/scripts/ram_panel.py clear_cache" :class "act warn" :vexpand false
           (label :text "🧹 Liberar Memoria Caché de RAM" :class "act-lbl"))
         (button :onclick "ghostty -e btop &" :class "act" :vexpand false
           (label :text "📊 Abrir Btop Monitor" :class "act-lbl"))))
@@ -929,15 +929,15 @@
     (box :visible {settings_tab == "diagnostics"} :class "settings-body" :orientation "v" :spacing 8 :space-evenly false :vexpand true
       (label :text "Herramientas de Salud & Diagnóstico del Sistema" :class "section-title" :halign "start")
       (box :orientation "h" :spacing 6 :space-evenly true :vexpand false
-        (button :onclick "python3 /home/belal/.config/eww/scripts/swal_settings.py doctor" :class "act" :vexpand false
+        (button :onclick "python3 $HOME/.config/eww/scripts/swal_settings.py doctor" :class "act" :vexpand false
           (box :orientation "v" :spacing 2 :space-evenly false
             (label :text "🩺 SWAL Doctor Scan" :style "font-weight:bold;color:#06b6d4;")
             (label :text "Diagnóstico de 5 puntos" :style "font-size:8.5px;color:#94a3b8;")))
-        (button :onclick "python3 /home/belal/.config/eww/scripts/swal_settings.py doctor_fix" :class "act warn" :vexpand false
+        (button :onclick "python3 $HOME/.config/eww/scripts/swal_settings.py doctor_fix" :class "act warn" :vexpand false
           (box :orientation "v" :spacing 2 :space-evenly false
             (label :text "🔧 SWAL Auto-Fix" :style "font-weight:bold;color:#f59e0b;")
             (label :text "Saneamiento y hot-reload" :style "font-size:8.5px;color:#94a3b8;")))
-        (button :onclick "python3 /home/belal/.config/eww/scripts/swal_settings.py rebuild_nix" :class "act danger" :vexpand false
+        (button :onclick "python3 $HOME/.config/eww/scripts/swal_settings.py rebuild_nix" :class "act danger" :vexpand false
           (box :orientation "v" :spacing 2 :space-evenly false
             (label :text "⚙ Reconstruir NixOS" :style "font-weight:bold;color:#ef4444;")
             (label :text "nixos-rebuild switch" :style "font-size:8.5px;color:#94a3b8;"))))
@@ -946,13 +946,13 @@
       (box :orientation "h" :spacing 6 :space-evenly false
         (button :onclick "eww reload" :class "act" :vexpand false
           (label :text "🔄 Recargar Eww" :class "act-lbl"))
-        (button :onclick "ghostty -e python3 /home/belal/proyectosSWAL/periferia/swal-desktop/tests/test_theme_engine.py &" :class "act" :vexpand false
+        (button :onclick "ghostty -e python3 $HOME/proyectosSWAL/periferia/swal-desktop/tests/test_theme_engine.py &" :class "act" :vexpand false
           (label :text "🧪 Ejecutar Tests E2E" :class "act-lbl"))))))
 
 ;; =========================================================================
 ;; SWAL FILES — Modern Minimalist Agentic File Manager (Files & Yazi inspired)
 ;; =========================================================================
-(defpoll swal_files_data :interval "2s" :initial '{\"current_path\":\"/home/belal\",\"parent_path\":\"/home\",\"total_items\":0,\"active_tab_id\":1,\"tabs\":[],\"breadcrumbs\":[],\"view_mode\":\"details\",\"show_hidden\":false,\"dual_pane\":false,\"sort_by\":\"name\",\"sort_order\":\"asc\",\"group_by\":\"none\",\"filter_type\":\"all\",\"preview_mode\":\"sidebar\",\"is_maximized\":false,\"is_current_pinned\":false,\"theme_id\":\"hive-dark\",\"favorites\":[],\"workspaces\":[],\"entries\":[],\"groups\":[],\"disks\":[],\"git_status\":{\"is_git_repo\":false,\"branch\":\"\",\"ahead\":0,\"behind\":0,\"staged_count\":0,\"modified_count\":0,\"untracked_count\":0,\"conflicted_count\":0,\"is_clean\":true,\"summary\":\"\",\"badge\":\"\"},\"preview\":{\"path\":\"\",\"file_name\":\"Cargando...\",\"file_type\":\"\",\"size_formatted\":\"\",\"date_modified\":\"\",\"is_image\":false,\"is_text\":false,\"is_dir\":false,\"is_git_repo\":false,\"image_path\":\"\",\"line_count\":0,\"content\":\"\",\"gutter_lines\":\"\",\"git_status_summary\":\"\"},\"col_chars\":{\"name\":30,\"date\":16,\"type\":12,\"size\":8},\"preview_wrap\":true,\"row_density\":\"comfortable\"}' "bash /home/belal/.config/eww/scripts/swal_filesPoll.sh")
+(defpoll swal_files_data :interval "2s" :initial '{\"current_path\":\"$HOME\",\"parent_path\":\"/home\",\"total_items\":0,\"active_tab_id\":1,\"tabs\":[],\"breadcrumbs\":[],\"view_mode\":\"details\",\"show_hidden\":false,\"dual_pane\":false,\"sort_by\":\"name\",\"sort_order\":\"asc\",\"group_by\":\"none\",\"filter_type\":\"all\",\"preview_mode\":\"sidebar\",\"is_maximized\":false,\"is_current_pinned\":false,\"theme_id\":\"hive-dark\",\"favorites\":[],\"workspaces\":[],\"entries\":[],\"groups\":[],\"disks\":[],\"git_status\":{\"is_git_repo\":false,\"branch\":\"\",\"ahead\":0,\"behind\":0,\"staged_count\":0,\"modified_count\":0,\"untracked_count\":0,\"conflicted_count\":0,\"is_clean\":true,\"summary\":\"\",\"badge\":\"\"},\"preview\":{\"path\":\"\",\"file_name\":\"Cargando...\",\"file_type\":\"\",\"size_formatted\":\"\",\"date_modified\":\"\",\"is_image\":false,\"is_text\":false,\"is_dir\":false,\"is_git_repo\":false,\"image_path\":\"\",\"line_count\":0,\"content\":\"\",\"gutter_lines\":\"\",\"git_status_summary\":\"\"},\"col_chars\":{\"name\":30,\"date\":16,\"type\":12,\"size\":8},\"preview_wrap\":true,\"row_density\":\"comfortable\"}' "bash $HOME/.config/eww/scripts/swal_filesPoll.sh")
 
 
 ;; Modo "menu contextual abierto" del panel (lo activa swal_ctx_open.sh en el
@@ -988,54 +988,54 @@
       (box :class "files-tabs-container" :orientation "h" :space-evenly false :spacing 3
         (for tab in "${swal_files_data.tabs}"
           (box :class "files-tab ${tab.active ? 'active' : 'inactive'}" :orientation "h" :space-evenly false :spacing 4
-            (button :class "files-tab-btn" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files tab-switch '${tab.id}'"
+            (button :class "files-tab-btn" :onclick "$HOME/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files tab-switch '${tab.id}'"
               (box :orientation "h" :space-evenly false :spacing 4
                 (label :class "files-tab-icon" :text "📂")
                 (label :class "files-tab-title" :text "${tab.title}" :limit-width 18)))
-            (button :class "files-tab-close" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files tab-close '${tab.id}'" "✕"))))
-      (button :class "files-new-tab-btn" :tooltip "Nueva Pestana (Ctrl+T)" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files tab-new" "+")
+            (button :class "files-tab-close" :onclick "$HOME/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files tab-close '${tab.id}'" "✕"))))
+      (button :class "files-new-tab-btn" :tooltip "Nueva Pestana (Ctrl+T)" :onclick "$HOME/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files tab-new" "+")
       (box :hexpand true)
       ;; Window Controls
       (box :class "files-win-controls" :orientation "h" :space-evenly false :spacing 4
-        (button :class "files-win-btn" :onclick "bash /home/belal/.config/eww/scripts/swal_files_close.sh" "─")
-        (button :class "files-win-btn" :onclick "bash /home/belal/.config/eww/scripts/swal_files_maximize.sh" "□")
-        (button :class "files-win-btn close" :onclick "bash /home/belal/.config/eww/scripts/swal_files_close.sh" "✕")))
+        (button :class "files-win-btn" :onclick "bash $HOME/.config/eww/scripts/swal_files_close.sh" "─")
+        (button :class "files-win-btn" :onclick "bash $HOME/.config/eww/scripts/swal_files_maximize.sh" "□")
+        (button :class "files-win-btn close" :onclick "bash $HOME/.config/eww/scripts/swal_files_close.sh" "✕")))
 
     ;; 2. COMMAND TOOLBAR & OMNIBAR
     ;; 2. COMMAND TOOLBAR & OMNIBAR
     (box :class "files-toolbar" :orientation "h" :space-evenly false :spacing 4
       ;; Nav cluster
       (box :class "files-nav-cluster" :orientation "h" :space-evenly false :spacing 2
-        (button :class "files-tool-btn" :tooltip "Atras" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files nav '${swal_files_data.parent_path}'" "󰁍")
-        (button :class "files-tool-btn" :tooltip "Subir de nivel" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files nav '${swal_files_data.parent_path}'" "󰁝")
+        (button :class "files-tool-btn" :tooltip "Atras" :onclick "$HOME/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files nav '${swal_files_data.parent_path}'" "󰁍")
+        (button :class "files-tool-btn" :tooltip "Subir de nivel" :onclick "$HOME/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files nav '${swal_files_data.parent_path}'" "󰁝")
         (button :class "files-tool-btn" :tooltip "Refrescar" :onclick "eww poll swal_files_data" "󰑐"))
 
       ;; Breadcrumbs Address Bar (Pills)
       (box :class "files-address-bar" :orientation "h" :space-evenly false :spacing 2 :hexpand true
         (for crumb in "${swal_files_data.breadcrumbs}"
           (box :orientation "h" :space-evenly false :spacing 2
-            (button :class "files-crumb-pill" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files nav '${crumb.path}'" "${crumb.name}")
+            (button :class "files-crumb-pill" :onclick "$HOME/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files nav '${crumb.path}'" "${crumb.name}")
             (label :class "files-crumb-sep" :text "›"))))
 
       ;; Pin / Unpin Active Folder
-      (button :class "files-tool-btn pin-pill ${swal_files_data.is_current_pinned ? 'pinned' : ''}" :tooltip "${swal_files_data.is_current_pinned ? 'Despinear carpeta actual' : 'Pinear carpeta actual a Favoritos'}" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files toggle-pin-current"
+      (button :class "files-tool-btn pin-pill ${swal_files_data.is_current_pinned ? 'pinned' : ''}" :tooltip "${swal_files_data.is_current_pinned ? 'Despinear carpeta actual' : 'Pinear carpeta actual a Favoritos'}" :onclick "$HOME/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files toggle-pin-current"
         "${swal_files_data.is_current_pinned ? '󰤱 Despinear' : '📌 Pinear'}")
 
       ;; Filter & Grouping Pills
-      (button :class "files-tool-btn group-pill" :tooltip "Cambiar Agrupamiento" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files set-group '${swal_files_data.group_by == 'none' ? 'type' : (swal_files_data.group_by == 'type' ? 'date' : (swal_files_data.group_by == 'date' ? 'size' : 'none'))}'"
+      (button :class "files-tool-btn group-pill" :tooltip "Cambiar Agrupamiento" :onclick "$HOME/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files set-group '${swal_files_data.group_by == 'none' ? 'type' : (swal_files_data.group_by == 'type' ? 'date' : (swal_files_data.group_by == 'date' ? 'size' : 'none'))}'"
         "󰒺 Grupo: ${swal_files_data.group_by}")
 
-      (button :class "files-tool-btn filter-pill" :tooltip "Filtrar por tipo" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files set-filter '${swal_files_data.filter_type == 'all' ? 'code' : (swal_files_data.filter_type == 'code' ? 'documents' : (swal_files_data.filter_type == 'documents' ? 'images' : 'all'))}'"
+      (button :class "files-tool-btn filter-pill" :tooltip "Filtrar por tipo" :onclick "$HOME/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files set-filter '${swal_files_data.filter_type == 'all' ? 'code' : (swal_files_data.filter_type == 'code' ? 'documents' : (swal_files_data.filter_type == 'documents' ? 'images' : 'all'))}'"
         "󰈲 Filtro: ${swal_files_data.filter_type}")
 
       ;; Preview Mode Switcher (Yazi Sidebar on/off)
-      (button :class "files-tool-btn preview-mode ${swal_files_data.preview_mode == 'sidebar' ? 'active' : ''}" :tooltip "Alternar Panel Lateral Yazi" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files toggle-preview-mode"
+      (button :class "files-tool-btn preview-mode ${swal_files_data.preview_mode == 'sidebar' ? 'active' : ''}" :tooltip "Alternar Panel Lateral Yazi" :onclick "$HOME/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files toggle-preview-mode"
         "${swal_files_data.preview_mode == 'sidebar' ? '󰍹 Panel Lateral' : '󰍺 Panel Oculto'}")
 
       ;; Densidad de filas (compacta <-> comoda)
       (button :class "files-tool-btn density ${swal_files_data.row_density == 'compact' ? 'active' : ''}"
               :tooltip "Densidad de filas: ${swal_files_data.row_density == 'compact' ? 'COMPACTA (clic = comoda)' : 'COMODA (clic = compacta)'}"
-              :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files toggle-density"
+              :onclick "$HOME/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files toggle-density"
               "${swal_files_data.row_density == 'compact' ? '▤' : '▦'}"))
 
     ;; 3. MAIN 3-PANEL WORKSPACE (1. SIDEBAR | 2. FILE LIST / GROUPS | 3. YAZI PREVIEW)
@@ -1048,15 +1048,15 @@
             (box :class "files-side-section" :orientation "v" :space-evenly false
               (box :class "files-side-header-box" :orientation "h" :space-evenly false
                 (label :class "files-side-header" :text "FAVORITOS" :xalign 0 :hexpand true)
-                (button :class "files-pin-add-btn" :tooltip "Pinear carpeta actual a Favoritos" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files pin-current" "+"))
+                (button :class "files-pin-add-btn" :tooltip "Pinear carpeta actual a Favoritos" :onclick "$HOME/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files pin-current" "+"))
               (box :class "files-side-list" :orientation "v" :space-evenly false
                 (for fav in "${swal_files_data.favorites}"
                   (box :class "files-side-item ${fav.is_active ? 'active' : ''}" :orientation "h" :space-evenly false
-                    (button :class "files-side-btn" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files nav '${fav.path}'" :hexpand true
+                    (button :class "files-side-btn" :onclick "$HOME/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files nav '${fav.path}'" :hexpand true
                       (box :orientation "h" :space-evenly false :spacing 6
                         (label :text "${fav.icon}" :class "side-ico")
                         (label :text "${fav.name}" :xalign 0 :limit-width 13)))
-                    (button :class "files-unpin-btn" :tooltip "Despinear '${fav.name}'" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files unpin '${fav.path}'" "✕")))))
+                    (button :class "files-unpin-btn" :tooltip "Despinear '${fav.name}'" :onclick "$HOME/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files unpin '${fav.path}'" "✕")))))
 
             ;; Section 2: Espacios Agénticos
             (box :class "files-side-section" :orientation "v" :space-evenly false
@@ -1065,11 +1065,11 @@
               (box :class "files-side-list" :orientation "v" :space-evenly false
                 (for ws in "${swal_files_data.workspaces}"
                   (box :class "files-side-item ${ws.is_active ? 'active' : ''}" :orientation "h" :space-evenly false
-                    (button :class "files-side-btn" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files nav '${ws.path}'" :hexpand true
+                    (button :class "files-side-btn" :onclick "$HOME/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files nav '${ws.path}'" :hexpand true
                       (box :orientation "h" :space-evenly false :spacing 6
                         (label :text "${ws.icon}" :class "side-ico")
                         (label :text "${ws.name}" :xalign 0 :limit-width 13)))
-                    (button :class "files-unpin-btn" :tooltip "Despinear workspace" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files unpin '${ws.path}'" "✕")))))
+                    (button :class "files-unpin-btn" :tooltip "Despinear workspace" :onclick "$HOME/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files unpin '${ws.path}'" "✕")))))
 
             ;; Section 3: Etiquetas AI
             (box :class "files-side-section" :orientation "v" :space-evenly false
@@ -1084,7 +1084,7 @@
               (label :class "files-side-header" :text "UNIDADES" :xalign 0)
               (for disk in "${swal_files_data.disks}"
                 (box :class "files-disk-entry" :orientation "v" :space-evenly false
-                  (button :class "files-side-btn" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files nav '${disk.mount}'"
+                  (button :class "files-side-btn" :onclick "$HOME/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files nav '${disk.mount}'"
                     (box :orientation "h" :space-evenly false :spacing 6
                       (label :text "${disk.icon}" :class "side-ico")
                       (label :text "${disk.label}" :xalign 0 :hexpand true)
@@ -1102,33 +1102,33 @@
         (box :class "files-search-box" :orientation "h" :space-evenly false :spacing 4 :hexpand true
           (label :class "files-search-ico" :text "🔍")
           (input :class "files-search-input"
-                 :onchange "bash /home/belal/.config/eww/scripts/swal_files_search.sh {}"
-                 :onaccept "bash /home/belal/.config/eww/scripts/swal_files_search.sh {}"))
+                 :onchange "bash $HOME/.config/eww/scripts/swal_files_search.sh {}"
+                 :onaccept "bash $HOME/.config/eww/scripts/swal_files_search.sh {}"))
         ;; Columns Header — scroll sobre cada titulo = redimensionar esa columna
         (box :class "files-col-header" :orientation "h" :space-evenly false :spacing 8
           (eventbox :class "col-hdr" :hexpand true :cursor "ew-resize"
             :tooltip "Ancho Nombre: ${swal_files_data.col_chars.name} chars (rueda/clic=+2, clic der=-2)"
-            :onscroll "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-width name {}"
-            :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-width name up"
-            :onrightclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-width name down"
+            :onscroll "$HOME/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-width name {}"
+            :onclick "$HOME/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-width name up"
+            :onrightclick "$HOME/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-width name down"
             (label :class "col-name" :text "Nombre" :xalign 0))
           (eventbox :class "col-hdr" :cursor "ew-resize"
             :tooltip "Ancho Fecha: ${swal_files_data.col_chars.date} chars (rueda/clic=+2, clic der=-2)"
-            :onscroll "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-width date {}"
-            :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-width date up"
-            :onrightclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-width date down"
+            :onscroll "$HOME/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-width date {}"
+            :onclick "$HOME/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-width date up"
+            :onrightclick "$HOME/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-width date down"
             (label :class "col-date" :text "Fecha" :xalign 0))
           (eventbox :class "col-hdr" :cursor "ew-resize"
             :tooltip "Ancho Tipo: ${swal_files_data.col_chars.type} chars (rueda/clic=+2, clic der=-2)"
-            :onscroll "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-width type {}"
-            :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-width type up"
-            :onrightclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-width type down"
+            :onscroll "$HOME/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-width type {}"
+            :onclick "$HOME/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-width type up"
+            :onrightclick "$HOME/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-width type down"
             (label :class "col-type" :text "Tipo" :xalign 0))
           (eventbox :class "col-hdr" :cursor "ew-resize"
             :tooltip "Ancho Tamano: ${swal_files_data.col_chars.size} chars (rueda/clic=+2, clic der=-2)"
-            :onscroll "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-width size {}"
-            :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-width size up"
-            :onrightclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-width size down"
+            :onscroll "$HOME/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-width size {}"
+            :onclick "$HOME/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-width size up"
+            :onrightclick "$HOME/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-width size down"
             (label :class "col-size" :text "Tamaño" :xalign 1)))
 
         ;; File Rows / Groups
@@ -1140,7 +1140,7 @@
               (label :class "files-empty-ico" :text "📂")
               (label :class "files-empty-lbl" :text "Sin resultados · filtro activo: ${swal_files_data.filter_type}")
               (button :class "files-empty-btn"
-                :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files reset-session"
+                :onclick "$HOME/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files reset-session"
                 "🔄 Limpiar filtros y volver a Home"))
             (for group in "${swal_files_data.groups}"
               (box :orientation "v" :space-evenly false
@@ -1150,7 +1150,7 @@
                   (label :class "files-group-count" :text "(${group.count})"))
                 ;; Entries in this group
                 (for item in "${group.entries}"
-                  (button :class "files-row-btn ${swal_files_data.row_density == 'compact' ? 'compact' : ''} ${item.is_selected ? 'selected' : ''}" :onclick "${item.is_dir ? 'swal-files nav \'' + item.path + '\'' : 'swal-files select-item \'' + item.path + '\''}" :onrightclick "bash /home/belal/.config/eww/scripts/swal_ctx_open.sh '${item.path}'"
+                  (button :class "files-row-btn ${swal_files_data.row_density == 'compact' ? 'compact' : ''} ${item.is_selected ? 'selected' : ''}" :onclick "${item.is_dir ? 'swal-files nav \'' + item.path + '\'' : 'swal-files select-item \'' + item.path + '\''}" :onrightclick "bash $HOME/.config/eww/scripts/swal_ctx_open.sh '${item.path}'"
                     (box :class "files-row" :orientation "h" :space-evenly false :spacing 8
                       (box :class "col-name-cell" :orientation "h" :space-evenly false :spacing 6 :hexpand true
                         (label :class "item-ico" :text "${item.icon}")
@@ -1190,14 +1190,14 @@
           (box :orientation "v" :space-evenly false :hexpand true
             (label :class "yazi-file-title" :text "${swal_files_data.preview.file_name}" :limit-width 18 :xalign 0)
             (label :class "yazi-file-meta" :text "${swal_files_data.preview.file_type} · ${swal_files_data.preview.size_formatted}" :xalign 0))
-          (button :class "yazi-popout-btn" :tooltip "Abrir en Ventana Flotante" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files open-editor '${swal_files_data.preview.path}'" "🗖"))
+          (button :class "yazi-popout-btn" :tooltip "Abrir en Ventana Flotante" :onclick "$HOME/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files open-editor '${swal_files_data.preview.path}'" "🗖"))
 
         ;; Preview Body (Imagen real / Código / Hex Dump)
         (box :class "yazi-preview-body" :orientation "h" :space-evenly false :vexpand true
           ;; Imagen (widget image nativo de EWW)
           (box :class "yazi-image-frame" :orientation "v" :space-evenly false :vexpand true :hexpand true
                :halign "fill" :valign "fill" :visible "${swal_files_data.preview.is_image}"
-            (image :class "yazi-image" :path "${swal_files_data.preview.image_path == '' ? '/home/belal/.config/eww/assets/empty.png' : swal_files_data.preview.image_path}"
+            (image :class "yazi-image" :path "${swal_files_data.preview.image_path == '' ? '$HOME/.config/eww/assets/empty.png' : swal_files_data.preview.image_path}"
                    :image-width 200 :preserve-aspect-ratio true)
             (label :class "yazi-image-caption" :text "${swal_files_data.preview.file_type} · ${swal_files_data.preview.size_formatted}" :xalign 0.5))
           ;; Contenido de texto/codigo — modo WRAP (lineas ajustadas a la ventana)
@@ -1210,10 +1210,10 @@
         ;; Preview Actions Footer (icon-only para no inflar el panel)
         (box :class "yazi-preview-actions" :orientation "h" :space-evenly true :spacing 4
           (button :class "yazi-act-btn" :tooltip "Abrir terminal en esta carpeta" :onclick "ghostty --working-directory='${swal_files_data.preview.path}' &" "󰆍")
-          (button :class "yazi-act-btn" :tooltip "Copiar TODO el contenido del archivo (o su ruta si no es texto)" :onclick "bash /home/belal/.config/eww/scripts/swal_preview_copy.sh" "📋")
-          (button :class "yazi-act-btn" :tooltip "Ver para copiar con el mouse (pager de SOLO LECTURA, no editable)" :visible "${swal_files_data.preview.is_text}" :onclick "bash /home/belal/.config/eww/scripts/swal_preview_view.sh" "⧉")
-          (button :class "yazi-act-btn ${swal_files_data.preview_wrap ? 'active' : ''}" :tooltip "Wrap: ${swal_files_data.preview_wrap ? 'ON (lineas ajustadas)' : 'OFF (lineas cortadas)'} — clic para cambiar" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files toggle-wrap" "↩")
-          (button :class "yazi-act-btn" :tooltip "Editar (Sublime) / Abrir con app por defecto" :visible "${swal_files_data.preview.is_dir ? false : true}" :onclick "bash /home/belal/.config/eww/scripts/swal_preview_edit.sh" "✎")
+          (button :class "yazi-act-btn" :tooltip "Copiar TODO el contenido del archivo (o su ruta si no es texto)" :onclick "bash $HOME/.config/eww/scripts/swal_preview_copy.sh" "📋")
+          (button :class "yazi-act-btn" :tooltip "Ver para copiar con el mouse (pager de SOLO LECTURA, no editable)" :visible "${swal_files_data.preview.is_text}" :onclick "bash $HOME/.config/eww/scripts/swal_preview_view.sh" "⧉")
+          (button :class "yazi-act-btn ${swal_files_data.preview_wrap ? 'active' : ''}" :tooltip "Wrap: ${swal_files_data.preview_wrap ? 'ON (lineas ajustadas)' : 'OFF (lineas cortadas)'} — clic para cambiar" :onclick "$HOME/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files toggle-wrap" "↩")
+          (button :class "yazi-act-btn" :tooltip "Editar (Sublime) / Abrir con app por defecto" :visible "${swal_files_data.preview.is_dir ? false : true}" :onclick "bash $HOME/.config/eww/scripts/swal_preview_edit.sh" "✎")
           (button :class "yazi-act-btn accent" :tooltip "Abrir carpeta / QuickLook" :onclick "${swal_files_data.preview.is_dir ? 'swal-files nav \'' + swal_files_data.preview.path + '\'' : 'swal-files open-editor \'' + swal_files_data.preview.path + '\''}"
             "${swal_files_data.preview.is_dir ? '📂' : '󰏫'}"))))
 
@@ -1225,13 +1225,13 @@
       (label :class "stat-git" :text "${swal_files_data.git_status.summary}")
       (label :class "stat-sep" :text " · ")
       (label :class "stat-agent" :text "⚡ Xavier GraphRAG (:8006) · 100% Indexado")
-      (button :class "stat-colreset" :tooltip "Restaurar anchos de columna" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-reset" "⇔"))))
+      (button :class "stat-colreset" :tooltip "Restaurar anchos de columna" :onclick "$HOME/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files col-reset" "⇔"))))
 
 
 ;; =========================================================================
 ;; SWAL MINIMALIST EDITOR & QUICKLOOK VIEWER (Sublime Text Aesthetic)
 ;; =========================================================================
-(defpoll swal_editor_data :interval "5s" :initial '{\"path\":\"\",\"file_name\":\"Cargando...\",\"file_type\":\"\",\"size_formatted\":\"\",\"date_modified\":\"\",\"is_image\":false,\"is_text\":false,\"is_dir\":false,\"is_git_repo\":false,\"image_path\":\"\",\"line_count\":0,\"content\":\"\",\"gutter_lines\":\"\",\"git_status_summary\":\"\"}' "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files editor-json")
+(defpoll swal_editor_data :interval "5s" :initial '{\"path\":\"\",\"file_name\":\"Cargando...\",\"file_type\":\"\",\"size_formatted\":\"\",\"date_modified\":\"\",\"is_image\":false,\"is_text\":false,\"is_dir\":false,\"is_git_repo\":false,\"image_path\":\"\",\"line_count\":0,\"content\":\"\",\"gutter_lines\":\"\",\"git_status_summary\":\"\"}' "$HOME/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files editor-json")
 
 (defwindow swal_editor
   :monitor 0
@@ -1251,14 +1251,14 @@
       (label :class "editor-file-type" :text "[${swal_editor_data.file_type}]")
       (box :hexpand true)
       (label :class "editor-file-path" :text "${swal_editor_data.path}" :limit-width 50)
-      (button :class "yazi-act-btn ${swal_files_data.preview_wrap ? 'active' : ''}" :tooltip "Wrap: ${swal_files_data.preview_wrap ? 'ON' : 'OFF'}" :onclick "/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files toggle-wrap" "↩")
+      (button :class "yazi-act-btn ${swal_files_data.preview_wrap ? 'active' : ''}" :tooltip "Wrap: ${swal_files_data.preview_wrap ? 'ON' : 'OFF'}" :onclick "$HOME/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files toggle-wrap" "↩")
       (button :class "files-win-btn close" :onclick "eww close swal_editor" "✕"))
 
     ;; Body (Imagen / Código)
     (box :class "editor-body" :orientation "h" :space-evenly false :vexpand true :hexpand true
       (box :class "editor-image-frame" :orientation "v" :space-evenly false :vexpand true :hexpand true
            :halign "fill" :valign "fill" :visible "${swal_editor_data.is_image}"
-        (image :class "editor-image" :path "${swal_editor_data.image_path == '' ? '/home/belal/.config/eww/assets/empty.png' : swal_editor_data.image_path}"
+        (image :class "editor-image" :path "${swal_editor_data.image_path == '' ? '$HOME/.config/eww/assets/empty.png' : swal_editor_data.image_path}"
                :image-width 420 :preserve-aspect-ratio true)
         (label :class "editor-image-caption" :text "${swal_editor_data.file_type} · ${swal_editor_data.size_formatted}" :xalign 0.5))
       (scroll :class "editor-content-scroll" :visible "${swal_editor_data.is_image ? false : (swal_files_data.preview_wrap ? true : false)}" :vscroll true :hscroll false :hexpand true :vexpand true
@@ -1286,7 +1286,7 @@
   (event_panel_container))
 
 (defpoll event_body :interval "5s" :initial "Cargando eventos..."
-  "python3 /home/belal/.config/eww/scripts/event_panel.py body")
+  "python3 $HOME/.config/eww/scripts/event_panel.py body")
 
 (defwidget event_panel_container []
   (box :class "ram-container" :orientation "v" :spacing 5 :space-evenly false
@@ -1303,7 +1303,7 @@
       (box :class "card" :orientation "v" :space-evenly false
         (label :text {event_body} :wrap true :xalign 0 :yalign 0 :style "font-size:10px;")))
     (box :class "ram-footer" :orientation "h" :spacing 6 :space-evenly false :valign "center" :vexpand false
-      (button :onclick "bash -c '/home/belal/.local/bin/swal-sentinel check' &" :class "act" :hexpand true :vexpand false
+      (button :onclick "bash -c '$HOME/.local/bin/swal-sentinel check' &" :class "act" :hexpand true :vexpand false
         (label :text "󰑓 Chequear ahora" :class "act-lbl"))
       (button :onclick "ghostty -e bash -c 'tail -n 200 -f ~/.cache/swal-sentinel/sentinel.log' &" :class "act" :hexpand true :vexpand false
         (label :text "󰈙 Ver log completo" :class "act-lbl")))))

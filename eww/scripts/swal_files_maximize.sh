@@ -15,8 +15,8 @@
 # se espera y se reintenta UNA vez. Si aun asi no aparece, se avisa por notificacion
 # en vez de dejar una ventana a medias (era el bug reportado: ventana bugueada que
 # habia que matar a mano).
-FILES_BIN="/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files"
-SENTINEL="/home/belal/.local/bin/swal-sentinel"
+FILES_BIN="${SWAL_ROOT:-$HOME/proyectosSWAL}/periferia/swal-desktop/target/debug/swal-files"
+SENTINEL="$HOME/.local/bin/swal-sentinel"
 T=5
 
 # Mata clientes eww colgados que operan sobre ventanas swal_files* (nunca otras).

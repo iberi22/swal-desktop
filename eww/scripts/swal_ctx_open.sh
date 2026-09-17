@@ -14,7 +14,7 @@
 #
 # Uso: swal_ctx_open.sh <ruta>
 set -u
-FILES=/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files
+FILES=${SWAL_ROOT:-$HOME/proyectosSWAL}/periferia/swal-desktop/target/debug/swal-files
 CACHE="$HOME/.cache/swal-files/ctx.json"
 TARGET="${1:-}"
 

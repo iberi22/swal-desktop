@@ -25,9 +25,9 @@ param(
 
 $ErrorActionPreference = "Stop"
 $QEMU_DIR = "$HOME\qemu"
-$QEMU_BIN = "C:\Users\belal\scoop\apps\qemu\current"
+$QEMU_BIN = Join-Path $env:USERPROFILE "scoop\apps\qemu\current"
 $REPO_DIR = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
-$VBoxManage = "C:\Program Files\Oracle\VirtualBox\VBoxManage.exe"
+$VBoxManage = Join-Path $env:ProgramFiles "Oracle\VirtualBox\VBoxManage.exe"
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 

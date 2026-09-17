@@ -3,7 +3,7 @@
 #   texto/código -> Sublime Text (edición real)
 #   imagen       -> visor por defecto (xdg-open)
 #   carpeta      -> terminal ghostty en esa carpeta
-FILES_BIN="/home/belal/proyectosSWAL/periferia/swal-desktop/target/debug/swal-files"
+FILES_BIN="${SWAL_ROOT:-$HOME/proyectosSWAL}/periferia/swal-desktop/target/debug/swal-files"
 
 read -r P_PATH P_TEXT P_IMG <<< "$("$FILES_BIN" view-json 2>/dev/null | python3 -c "
 import sys, json
