@@ -9,6 +9,10 @@ THEMES_DIR = os.path.expanduser("~/.config/swal/themes")
 SCHEMA_FILE = os.path.expanduser("~/.config/swal/schemas/theme.schema.json")
 
 
+import unittest
+import shutil
+
+@unittest.skipUnless(shutil.which("swal-theme"), "swal-theme executable not found")
 class TestSWALThemeEngine(unittest.TestCase):
 
     def test_theme_schema_exists(self):

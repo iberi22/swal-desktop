@@ -8,7 +8,9 @@ use serde::{Deserialize, Serialize};
 /// Status of the agent action card execution cycle.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
+#[derive(Default)]
 pub enum AgentActionStatus {
+    #[default]
     Pending,
     Ready,
     Executed,
@@ -16,11 +18,7 @@ pub enum AgentActionStatus {
     Failed,
 }
 
-impl Default for AgentActionStatus {
-    fn default() -> Self {
-        Self::Pending
-    }
-}
+
 
 /// Visual metric impact comparison (before and after state).
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -43,17 +41,15 @@ impl MetricImpact {
 /// Style variant for action buttons.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
+#[derive(Default)]
 pub enum ActionButtonVariant {
+    #[default]
     Primary,
     Destructive,
     Subtle,
 }
 
-impl Default for ActionButtonVariant {
-    fn default() -> Self {
-        Self::Primary
-    }
-}
+
 
 /// Actionable UI button control with structured callback payload.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

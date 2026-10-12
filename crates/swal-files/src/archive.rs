@@ -102,6 +102,7 @@ pub struct ArchiveEntry {
 }
 
 impl ArchiveEntry {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         name: String,
         path: String,
@@ -1036,7 +1037,7 @@ mod tests {
         assert!(!manager.has_tag(&path2, "project-x"));
 
         // Remove tag batch
-        let removed = manager.remove_tags_batch(&[path2.clone()], &["work"]);
+        let removed = manager.remove_tags_batch(std::slice::from_ref(&path2), &["work"]);
         assert_eq!(removed, 1);
         assert!(!manager.has_tag(&path2, "work"));
 
@@ -1053,7 +1054,7 @@ mod tests {
 
         let mut manager = BatchTagManager::with_store_path(&store_file);
         let path = PathBuf::from("/tmp/file.pdf");
-        manager.add_tags_batch(&[path.clone()], &["finance", "receipts", "2026"]);
+        manager.add_tags_batch(std::slice::from_ref(&path), &["finance", "receipts", "2026"]);
 
         // Save
         manager.save().unwrap();

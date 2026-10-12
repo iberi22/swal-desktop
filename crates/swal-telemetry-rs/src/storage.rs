@@ -139,17 +139,17 @@ pub fn get_disk_info(mount_point: &str) -> Option<DiskInfo> {
         if libc::statvfs(c_path.as_ptr(), stat.as_mut_ptr()) == 0 {
             let stat = stat.assume_init();
             let fragment_size = if stat.f_frsize > 0 {
-                stat.f_frsize as u64
+                stat.f_frsize
             } else {
-                stat.f_bsize as u64
+                stat.f_bsize
             };
 
             if fragment_size == 0 || stat.f_blocks == 0 {
                 return None;
             }
 
-            let total_bytes = (stat.f_blocks as u64).saturating_mul(fragment_size);
-            let free_bytes = (stat.f_bavail as u64).saturating_mul(fragment_size);
+            let total_bytes = stat.f_blocks.saturating_mul(fragment_size);
+            let free_bytes = stat.f_bavail.saturating_mul(fragment_size);
             let used_bytes = total_bytes.saturating_sub(free_bytes);
 
             let used_pct = if total_bytes > 0 {
@@ -175,7 +175,7 @@ pub fn parse_mounts<R: BufRead>(reader: R) -> Vec<DiskInfo> {
     let mut disks = Vec::new();
     let mut seen_mounts = HashSet::new();
 
-    for line in reader.lines().flatten() {
+    for line in reader.lines().map_while(Result::ok) {
         let line = line.trim();
         if line.is_empty() || line.starts_with('#') {
             continue;

@@ -309,15 +309,7 @@ fn resolve_mime(path: &Path, is_dir: bool, is_symlink: bool) -> String {
         "mp3" => "audio/mpeg".to_string(),
         "mp4" => "video/mp4".to_string(),
         "" => {
-            let file_name = path
-                .file_name()
-                .map(|n| n.to_string_lossy().to_lowercase())
-                .unwrap_or_default();
-            if file_name == "hostname" || file_name == "hosts" || file_name == "passwd" {
-                "text/plain".to_string()
-            } else {
-                "text/plain".to_string()
-            }
+            "text/plain".to_string()
         }
         _ => format!("application/x-{}", ext),
     }

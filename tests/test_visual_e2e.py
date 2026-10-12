@@ -57,6 +57,10 @@ def safe_close_all():
             run_cmd(["eww", "close", win])
 
 
+import unittest
+import shutil
+
+@unittest.skipUnless(shutil.which("eww"), "eww executable not found")
 class TestSWALVisualE2E(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

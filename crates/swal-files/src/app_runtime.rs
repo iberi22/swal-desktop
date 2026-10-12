@@ -8,19 +8,17 @@ use std::env;
 
 /// Application runtime mode variants for standalone & integrated operation
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Default)]
 pub enum AppRuntimeMode {
     WaylandLayerShell,
+    #[default]
     StandaloneWindow,
     TuiTerminal,
     HeadlessDaemon,
     WebCanvas,
 }
 
-impl Default for AppRuntimeMode {
-    fn default() -> Self {
-        Self::StandaloneWindow
-    }
-}
+
 
 /// Window configuration settings for GUI window instances
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

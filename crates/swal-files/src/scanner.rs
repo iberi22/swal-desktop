@@ -6,20 +6,19 @@ use std::path::Path;
 use std::time::SystemTime;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Default)]
 pub enum SortBy {
+    #[default]
     Name,
     Size,
     Modified,
     Type,
 }
 
-impl Default for SortBy {
-    fn default() -> Self {
-        SortBy::Name
-    }
-}
+
 
 impl SortBy {
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Self {
         match s.to_lowercase().as_str() {
             "size" | "tamano" => SortBy::Size,
@@ -31,7 +30,9 @@ impl SortBy {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Default)]
 pub enum GroupBy {
+    #[default]
     None,
     Type,
     Date,
@@ -39,13 +40,10 @@ pub enum GroupBy {
     Alphabetical,
 }
 
-impl Default for GroupBy {
-    fn default() -> Self {
-        GroupBy::None
-    }
-}
+
 
 impl GroupBy {
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Self {
         match s.to_lowercase().as_str() {
             "type" | "tipo" => GroupBy::Type,

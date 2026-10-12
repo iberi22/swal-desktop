@@ -16,8 +16,10 @@ use std::sync::Arc;
 
 /// Ambient operational states of the SWAL Orb
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Default)]
 pub enum OrbState {
     /// Pulsing cyan energy ripple (#06b6d4)
+    #[default]
     Listening,
     /// Orange multi-frequency interference (#f97316)
     Thinking,
@@ -25,11 +27,7 @@ pub enum OrbState {
     Speaking,
 }
 
-impl Default for OrbState {
-    fn default() -> Self {
-        Self::Listening
-    }
-}
+
 
 /// Uniforms passed to GLSL fragment shaders for rendering
 #[repr(C)]

@@ -35,7 +35,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let response = send_ctl_command("ping")?;
             println!("✓ SWAL Orb Daemon Status: {}", response.trim());
         }
-        "daemon" | _ => {
+                _ => {
             println!("🔮 Starting SWAL Ambient Orb 100% Native Rust Surface...");
             let audio_consumer = LockFreeAudioConsumer::new();
             let _controller = OrbController::new(audio_consumer.clone());

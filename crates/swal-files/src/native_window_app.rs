@@ -45,13 +45,13 @@ use crate::storage::DiskUsageScanner;
 
 // ── SWAL edge-hive dark palette (source of truth: @swal/ui tokens) ──────
 const BG: u32 = 0xFF020617; // deep slate
-const ELEVATED: u32 = 0xFF0f172a; // card surface
-const ACCENT: u32 = 0xFF06b6d4; // cyan
-const SUCCESS: u32 = 0xFF10b981;
-const TEXT: u32 = 0xFFf1f5f9;
-const TEXT_DIM: u32 = 0xFF64748b;
-const SELECTED: u32 = 0xFF1e293b;
-const DIR_COLOR: u32 = 0xFF60cdff;
+const ELEVATED: u32 = 0xFF0F172A; // card surface
+const ACCENT: u32 = 0xFF06B6D4; // cyan
+const SUCCESS: u32 = 0xFF10B981;
+const TEXT: u32 = 0xFFF1F5F9;
+const TEXT_DIM: u32 = 0xFF64748B;
+const SELECTED: u32 = 0xFF1E293B;
+const DIR_COLOR: u32 = 0xFF60CDFF;
 
 pub fn run_native_window() {
     let conn = Connection::connect_to_env().expect("WAYLAND_DISPLAY o XDG_RUNTIME_DIR requeridos");
@@ -359,7 +359,7 @@ impl SwalFilesApp {
             let label = format!("🖴 {} {}%", drive.mount_point, pct);
             draw_text(&mut buf, w, h, &self.font, 11.0, 12, y, &label, TEXT_DIM, false);
             fill_rect(&mut buf, w, h, 12, y + 14, sidebar_w - 24, 6, SELECTED);
-            let bar_color = if pct > 90 { 0xFFef4444 } else if pct > 75 { 0xFFf59e0b } else { SUCCESS };
+            let bar_color = if pct > 90 { 0xFFEF4444 } else if pct > 75 { 0xFFF59E0B } else { SUCCESS };
             fill_rect(&mut buf, w, h, 12, y + 14, ((sidebar_w - 24) as f32 * (pct as f32 / 100.0)) as usize, 6, bar_color);
             y += 28;
         }
@@ -548,7 +548,7 @@ impl SwalFilesApp {
         // Present via wl_shm — pool resize handled for Hyprland dynamic configure
         let (w32, h32) = (w as i32, h as i32);
         let stride = w32 * 4;
-        let needed = (w * h * 4) as usize;
+        let needed = w * h * 4;
         let mut pool = if let Some(mut existing) = self.pool.take() {
             if existing.len() < needed {
                 let _ = existing.resize(needed);
@@ -591,12 +591,13 @@ impl SwalFilesApp {
                 active: true,
             });
         }
-        let _ = save_session(&session);
+        save_session(&session);
     }
 }
 
 // ── drawing helpers ──────────────────────────────────────────────────────
 
+#[allow(clippy::too_many_arguments)]
 fn fill_rect(buf: &mut [u32], w: usize, h: usize, x: usize, y: usize, rw: usize, rh: usize, color: u32) {
     let x1 = (x + rw).min(w);
     let y1 = (y + rh).min(h);
@@ -607,10 +608,12 @@ fn fill_rect(buf: &mut [u32], w: usize, h: usize, x: usize, y: usize, rw: usize,
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn draw_text(buf: &mut [u32], w: usize, h: usize, font: &FontArc, px: f32, x: usize, y: usize, text: &str, color: u32, bold: bool) {
     draw_text_trunc(buf, w, h, font, px, x, y, text, color, bold, usize::MAX);
 }
 
+#[allow(clippy::too_many_arguments)]
 fn draw_text_trunc(
     buf: &mut [u32],
     w: usize,
@@ -804,15 +807,12 @@ impl Dispatch<wl_keyboard::WlKeyboard, ()> for SwalFilesApp {
         _conn: &Connection,
         _qh: &QueueHandle<Self>,
     ) {
-        match event {
-            wl_keyboard::Event::Key {
+        if let wl_keyboard::Event::Key {
                 key, state: kstate, ..
-            } => {
-                if matches!(kstate, wayland_client::WEnum::Value(wl_keyboard::KeyState::Pressed)) {
-                    handle_x11_keycode(state, key);
-                }
+            } = event {
+            if matches!(kstate, wayland_client::WEnum::Value(wl_keyboard::KeyState::Pressed)) {
+                handle_x11_keycode(state, key);
             }
-            _ => {}
         }
     }
 }

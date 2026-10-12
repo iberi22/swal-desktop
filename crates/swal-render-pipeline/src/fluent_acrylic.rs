@@ -125,6 +125,7 @@ pub struct FluentAcrylicUniforms {
 
 impl FluentAcrylicUniforms {
     /// Creates a new `FluentAcrylicUniforms` with custom parameters.
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         rect_bounds: [f32; 4],
         tint_color: [f32; 4],
@@ -245,6 +246,7 @@ pub struct FluentAcrylicPipelineDescriptor {
 }
 
 impl FluentAcrylicPipelineDescriptor {
+    #[allow(clippy::too_many_arguments)]
     pub fn new() -> Self {
         Self {
             label: "Fluent Acrylic Quad Render Pipeline".to_string(),

@@ -96,7 +96,7 @@ fn scan_drives_unix() -> Vec<DriveInfo> {
 
     if let Ok(file) = File::open("/proc/mounts") {
         let reader = BufReader::new(file);
-        for line in reader.lines().flatten() {
+        for line in reader.lines().map_while(Result::ok) {
             let parts: Vec<&str> = line.split_whitespace().collect();
             if parts.len() < 3 {
                 continue;
@@ -253,9 +253,9 @@ fn get_statvfs<P: AsRef<Path>>(path: P) -> Option<(u64, u64)> {
 
     let res = unsafe { libc::statvfs(c_path.as_ptr(), &mut stat) };
     if res == 0 {
-        let block_size = stat.f_frsize as u64;
-        let total = stat.f_blocks as u64 * block_size;
-        let available = stat.f_bavail as u64 * block_size;
+        let block_size = stat.f_frsize;
+        let total = stat.f_blocks * block_size;
+        let available = stat.f_bavail * block_size;
         Some((total, available))
     } else {
         None

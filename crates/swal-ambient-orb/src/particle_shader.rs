@@ -343,7 +343,7 @@ mod tests {
             let rad = (angle_deg as f32) * std::f32::consts::PI / 180.0;
             let p = [rad.cos() * 0.3, rad.sin() * 0.3];
             let disp = cpu_particle_dispersion(p, 0.5, 0.7);
-            assert!(disp >= 0.0 && disp <= 1.0, "Dispersion {} out of range", disp);
+            assert!((0.0..=1.0).contains(&disp), "Dispersion {} out of range", disp);
         }
 
         // Circle distance test

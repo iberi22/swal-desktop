@@ -202,8 +202,8 @@ impl PlatformAbstraction {
             let drive = (normalized_slashes.as_bytes()[0] as char).to_ascii_uppercase();
             let rest_str = &normalized_slashes[2..];
             (Some(format!("{}:", drive)), rest_str.to_string())
-        } else if normalized_slashes.starts_with('/') {
-            (Some("/".to_string()), normalized_slashes[1..].to_string())
+        } else if let Some(stripped) = normalized_slashes.strip_prefix('/') {
+            (Some("/".to_string()), stripped.to_string())
         } else {
             (None, normalized_slashes.to_string())
         };
@@ -281,9 +281,8 @@ impl PlatformAbstraction {
 
         match status {
             Ok(s) if s.success() => Ok(()),
-            Ok(s) => Err(Error::new(
-                ErrorKind::Other,
-                format!("Default app launcher exited with status: {}", s),
+            Ok(s) => Err(Error::other(
+                format!("Default app launcher exited with status: {}", s)
             )),
             Err(e) => Err(e),
         }
@@ -375,9 +374,9 @@ fn get_posix_statvfs<P: AsRef<Path>>(path: P) -> Option<(u64, u64)> {
     let mut stat: libc::statvfs = unsafe { std::mem::zeroed() };
     let res = unsafe { libc::statvfs(c_path.as_ptr(), &mut stat) };
     if res == 0 {
-        let block_size = stat.f_frsize as u64;
-        let total = stat.f_blocks as u64 * block_size;
-        let available = stat.f_bavail as u64 * block_size;
+        let block_size = stat.f_frsize;
+        let total = stat.f_blocks * block_size;
+        let available = stat.f_bavail * block_size;
         Some((total, available))
     } else {
         None

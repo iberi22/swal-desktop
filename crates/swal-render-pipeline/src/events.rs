@@ -2,6 +2,7 @@
 //! Provides spatial hit-testing, layer resolution, pointer events, window focus,
 //! and keyboard shortcut matching.
 
+#[allow(clippy::duplicate_mod)]
 #[path = "settings_controller.rs"]
 pub mod settings_controller;
 

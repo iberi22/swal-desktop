@@ -367,7 +367,7 @@ impl SwalDoctorEngine {
         ]
     }
 
-    pub fn run_auto_fix(results: &mut Vec<DoctorDiagnosticResult>) -> usize {
+    pub fn run_auto_fix(results: &mut [DoctorDiagnosticResult]) -> usize {
         let mut fixed_count = 0;
         for item in results.iter_mut() {
             if !item.passed {

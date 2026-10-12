@@ -258,7 +258,7 @@ impl HermesA2uiStreamer {
             yuck.push_str("  )\n");
         }
 
-        yuck.push_str(")");
+        yuck.push(')');
         yuck
     }
 }

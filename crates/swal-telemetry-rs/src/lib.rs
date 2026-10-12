@@ -150,7 +150,7 @@ pub fn read_network_bytes() -> NetworkBytes {
     let mut bytes = NetworkBytes::default();
     if let Ok(file) = File::open("/proc/net/dev") {
         let reader = BufReader::new(file);
-        for line in reader.lines().flatten() {
+        for line in reader.lines().map_while(Result::ok) {
             if line.contains(':') {
                 let parts: Vec<&str> = line.split_whitespace().collect();
                 if parts.len() >= 10 {
@@ -320,7 +320,7 @@ mod tests {
     #[test]
     fn test_gpu_reading_fallback() {
         let gpu = read_gpu_metrics();
-        assert!(gpu >= 0.0 && gpu <= 100.0);
+        assert!((0.0..=100.0).contains(&gpu));
     }
 
     #[test]

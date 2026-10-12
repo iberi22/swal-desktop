@@ -108,8 +108,9 @@ impl AgendaList {
 }
 
 /// Determines whether a year is a leap year in the Gregorian calendar.
+#[allow(clippy::manual_is_multiple_of)] // is_multiple_of is unstable on u32
 pub fn is_leap_year(year: u32) -> bool {
-    (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)
+    ((year % 4 == 0) && (year % 100 != 0)) || (year % 400 == 0)
 }
 
 /// Calculates the number of days in a given month (1..=12) for a given year.
@@ -133,7 +134,7 @@ pub fn days_in_month(year: u32, month: u32) -> u32 {
 /// Uses Sakamoto's algorithm.
 /// Returns: 0 = Sunday, 1 = Monday, 2 = Tuesday, 3 = Wednesday, 4 = Thursday, 5 = Friday, 6 = Saturday.
 pub fn day_of_week(year: u32, month: u32, day: u32) -> u32 {
-    if month < 1 || month > 12 || day < 1 || day > 31 {
+    if !(1..=12).contains(&month) || !(1..=31).contains(&day) {
         return 0;
     }
     let t = [0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4];

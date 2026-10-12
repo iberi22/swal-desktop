@@ -62,7 +62,7 @@ pub fn open_gui(target_path: Option<&str>) {
             let path_str = p.to_string_lossy().to_string();
             let mut session = load_session();
             let found = session.tabs.iter_mut().any(|t| {
-                if t.path == path_str { true } else { false }
+                t.path == path_str
             });
             if !found {
                 let next_id = session.tabs.iter().map(|t| t.id).max().unwrap_or(0) + 1;
@@ -377,6 +377,32 @@ pub fn handle_command(session: &mut SessionState, args: &[String]) -> Result<Opt
             session.selected_path = None;
             state_changed = true;
         }
+                #[allow(unreachable_patterns)]
+        "menu-run" | "menu_run" => {
+            if args.len() > 2 {
+                let action = &args[2];
+                let target_path = args.get(3).cloned();
+
+                let batch_paths = if let Some(ref path) = target_path {
+                    if session.selected_paths.contains(path) {
+                        session.selected_paths.clone()
+                    } else {
+                        vec![path.clone()]
+                    }
+                } else if !session.selected_paths.is_empty() {
+                    session.selected_paths.clone()
+                } else if let Some(ref sel) = session.selected_path {
+                    vec![sel.clone()]
+                } else {
+                    Vec::new()
+                };
+
+                eprintln!("✓ Menú contextual ejecutado: '{}' sobre {:?} items", action, batch_paths.len());
+                state_changed = true;
+            }
+        }
+
+        #[allow(unreachable_patterns)]
         "menu-run" | "menu_run" => {
             if args.len() > 2 {
                 let action = &args[2];

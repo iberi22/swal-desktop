@@ -7,6 +7,7 @@ use tempfile::tempdir;
 
 /// Manifiesto de portapapeles aislado por test (evita carreras entre tests en paralelo:
 /// el manifiesto real es global en ~/.config/swal/files/).
+#[allow(dead_code)]
 fn isolated_clipboard(dir: &std::path::Path) -> std::path::PathBuf {
     dir.join("clipboard.json")
 }
