@@ -382,13 +382,13 @@ mod tests {
     #[test]
     fn test_dot_notation_get_value() {
         let mut settings = SwalSystemSettings::default();
-        settings.appearance.wallpaper_path = Some("/home/bela/wallpaper.png".to_string());
+        settings.appearance.wallpaper_path = Some("/home/user/wallpaper.png".to_string());
 
         assert_eq!(settings.get_value("appearance.theme"), Some("hive-dark".to_string()));
         assert_eq!(settings.get_value("appearance.accent_color"), Some("#0078D4".to_string()));
         assert_eq!(settings.get_value("appearance.corner_radius"), Some("8".to_string()));
         assert_eq!(settings.get_value("appearance.acrylic_opacity"), Some("0.8".to_string()));
-        assert_eq!(settings.get_value("appearance.wallpaper_path"), Some("/home/bela/wallpaper.png".to_string()));
+        assert_eq!(settings.get_value("appearance.wallpaper_path"), Some("/home/user/wallpaper.png".to_string()));
 
         assert_eq!(settings.get_value("agent.default_agent"), Some("hermes".to_string()));
         assert_eq!(settings.get_value("agent.model_routing"), Some("auto".to_string()));
