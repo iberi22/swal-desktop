@@ -6,12 +6,23 @@ and saves visual artifacts into Antigravity brain for multimodal visual inspecti
 """
 
 import os
+import shutil
 import subprocess
 import time
 import unittest
 
 ARTIFACT_DIR = os.environ.get("SWAL_VISUAL_ARTIFACT_DIR", os.environ.get("TMPDIR", "/tmp") + "/swal_visual_artifacts")
 TMP_DIR = os.environ.get("TMPDIR", "/tmp") + "/swal_visual_tests"
+
+
+def require_bin(name):
+    """Skip the calling test when an external desktop binary is missing.
+
+    The visual suite needs a live Wayland desktop (eww, grim, hyprctl, ...)
+    which CI runners don't have — skip cleanly instead of erroring.
+    """
+    if shutil.which(name) is None:
+        raise unittest.SkipTest(f"visual E2E needs '{name}' binary (not present in CI)")
 
 
 def run_cmd(cmd_list):
@@ -36,7 +47,10 @@ def get_layer_geometry(namespace_name="gtk-layer-shell"):
 
 
 def capture_and_crop(window_name, crop_geometry, output_filename):
+    require_bin("grim")
+    require_bin("magick")
     os.makedirs(TMP_DIR, exist_ok=True)
+    os.makedirs(ARTIFACT_DIR, exist_ok=True)
     raw_path = os.path.join(TMP_DIR, f"{window_name}_raw.png")
     cropped_path = os.path.join(TMP_DIR, output_filename)
     artifact_path = os.path.join(ARTIFACT_DIR, output_filename)
@@ -60,12 +74,19 @@ def safe_close_all():
 class TestSWALVisualE2E(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        require_bin("eww")
+        if not os.environ.get("WAYLAND_DISPLAY") and not os.environ.get("DISPLAY"):
+            raise unittest.SkipTest("visual E2E needs a running Wayland/X display (none in CI)")
         os.makedirs(TMP_DIR, exist_ok=True)
-        # Ensure eww is alive
+        # Ensure eww is alive; skip cleanly if no daemon can answer
+        # (headless shell, CI runner, or eww installed but no compositor).
         out, _, code = run_cmd(["eww", "ping"])
         if code != 0 or "pong" not in out:
             run_cmd(["eww", "daemon"])
             time.sleep(1)
+            out, _, code = run_cmd(["eww", "ping"])
+        if code != 0 or "pong" not in out:
+            raise unittest.SkipTest("eww daemon not responding (no live desktop session)")
 
     def tearDown(self):
         safe_close_all()
@@ -85,6 +106,7 @@ class TestSWALVisualE2E(unittest.TestCase):
 
     def test_02_settings_modal_theme_switching(self):
         """Verify settings modal renders and maintains layout across theme changes."""
+        require_bin("swal-theme")
         self.tearDown()
         run_cmd(["eww", "open", "swal_settings"])
         time.sleep(0.8)
@@ -147,6 +169,7 @@ class TestSWALVisualE2E(unittest.TestCase):
 
     def test_05_system_stability_after_visual_runs(self):
         """Run swal-doctor after visual test suite to verify 0 errors in logs."""
+        require_bin("swal-doctor")
         out, _, code = run_cmd(["swal-doctor"])
         self.assertEqual(code, 0, f"swal-doctor reported issues: {out}")
         self.assertIn("SYSTEM HEALTHY", out, "Doctor did not report healthy state")

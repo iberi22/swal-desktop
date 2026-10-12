@@ -7,7 +7,10 @@
 # std::env::temp_dir(), or the paths helpers instead.
 set -euo pipefail
 
-HITS=$(grep -rn "/home/" crates/*/src/ crates/*/tests/ || true)
+# Allowlist (narrow): /home/user/... is the conventional SYNTHETIC fixture
+# placeholder (like example.com) used in #[cfg(test)] sample data — never a
+# real login. Any other /home/<name>/... is a personal path and must fail.
+HITS=$(grep -rn "/home/" crates/*/src/ crates/*/tests/ | grep -v "/home/user/" || true)
 if [ -n "$HITS" ]; then
   echo "❌ Paths hardcodeados detectados:"
   echo "$HITS"
