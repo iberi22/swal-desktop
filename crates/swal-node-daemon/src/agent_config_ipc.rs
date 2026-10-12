@@ -242,7 +242,7 @@ pub enum SettingsIpcResponse {
     Value { key: String, value: String },
     Ok { message: String },
     Error { error: String },
-    AllSettings(SwalSystemSettings),
+    AllSettings(Box<SwalSystemSettings>),
 }
 
 /// Event broadcast when a setting mutation occurs.
@@ -319,7 +319,7 @@ impl SettingsIpcServer {
             }
             SettingsIpcRequest::ListAll => {
                 let settings = settings_lock.read().await;
-                SettingsIpcResponse::AllSettings(settings.clone())
+                SettingsIpcResponse::AllSettings(Box::new(settings.clone()))
             }
             SettingsIpcRequest::SubscribeChanges => SettingsIpcResponse::Ok {
                 message: "Subscribed to live configuration changes".to_string(),
@@ -573,7 +573,7 @@ mod tests {
         let err_deser: SettingsIpcResponse = serde_json::from_str(&err_json).unwrap();
         assert_eq!(err_deser, err_resp);
 
-        let all_resp = SettingsIpcResponse::AllSettings(SwalSystemSettings::default());
+        let all_resp = SettingsIpcResponse::AllSettings(Box::default());
         let all_json = serde_json::to_string(&all_resp).unwrap();
         let all_deser: SettingsIpcResponse = serde_json::from_str(&all_json).unwrap();
         assert_eq!(all_deser, all_resp);

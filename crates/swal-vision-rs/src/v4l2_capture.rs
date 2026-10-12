@@ -123,7 +123,7 @@ mod tests {
     fn test_mock_frame_has_skin_pixels() {
         let capture = FrameCapture::new("/dev/video0", 100, 100);
         let frame = capture.capture_mock_frame();
-        let skin_count = frame.data.iter().filter(|&&v| v >= 80 && v <= 200).count();
+        let skin_count = frame.data.iter().filter(|&&v| (80..=200).contains(&v)).count();
         assert!(skin_count > 0);
     }
 

@@ -5,12 +5,6 @@ use std::io::Write;
 use std::process::Command;
 use tempfile::tempdir;
 
-/// Manifiesto de portapapeles aislado por test (evita carreras entre tests en paralelo:
-/// el manifiesto real es global en ~/.config/swal/files/).
-fn isolated_clipboard(dir: &std::path::Path) -> std::path::PathBuf {
-    dir.join("clipboard.json")
-}
-
 
 #[test]
 fn test_menu_json_actions_and_paste_state() {

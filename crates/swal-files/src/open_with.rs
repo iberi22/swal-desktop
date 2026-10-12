@@ -24,7 +24,7 @@ pub fn clean_exec(exec_str: &str) -> String {
         let unquoted = token.trim_matches('"').trim_matches('\'');
         if unquoted.starts_with('%')
             && unquoted.len() == 2
-            && unquoted.chars().nth(1).map_or(false, |c| c.is_ascii_alphabetic())
+            && unquoted.chars().nth(1).is_some_and(|c| c.is_ascii_alphabetic())
         {
             continue;
         }
@@ -83,10 +83,8 @@ pub fn parse_desktop_file_content(content: &str, file_id: &str) -> Option<AppEnt
                 "Name" if name.is_none() => name = Some(value.to_string()),
                 "Exec" if exec.is_none() => exec = Some(value.to_string()),
                 "Icon" if icon.is_none() => icon = Some(value.to_string()),
-                "NoDisplay" => {
-                    if value.eq_ignore_ascii_case("true") || value == "1" {
-                        no_display = true;
-                    }
+                "NoDisplay" if value.eq_ignore_ascii_case("true") || value == "1" => {
+                    no_display = true;
                 }
                 _ => {}
             }
@@ -222,10 +220,7 @@ pub fn open_with(path: &Path, app_id: &str) -> io::Result<()> {
 
     match cmd.spawn() {
         Ok(_) => Ok(()),
-        Err(e) => Err(io::Error::new(
-            io::ErrorKind::Other,
-            format!("Failed to spawn {}: {}", bin, e),
-        )),
+        Err(e) => Err(io::Error::other(format!("Failed to spawn {}: {}", bin, e))),
     }
 }
 
@@ -258,10 +253,7 @@ pub fn terminal_here(dir: &Path) -> io::Result<()> {
 
     match status {
         Ok(_) => Ok(()),
-        Err(e) => Err(io::Error::new(
-            io::ErrorKind::Other,
-            format!("Failed to launch ghostty: {}", e),
-        )),
+        Err(e) => Err(io::Error::other(format!("Failed to launch ghostty: {}", e))),
     }
 }
 

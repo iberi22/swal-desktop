@@ -234,7 +234,7 @@ mod tests {
         let _ = fs::remove_file(test_file);
 
         let bin_file = temp_dir.join("swal_test_text_viewer_bin.bin");
-        fs::write(&bin_file, &[0u8, 15u8, 0u8, 255u8]).unwrap();
+        fs::write(&bin_file, [0u8, 15u8, 0u8, 255u8]).unwrap();
         assert!(copy_line(&bin_file, 1).is_err());
         let _ = fs::remove_file(bin_file);
     }

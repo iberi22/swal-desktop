@@ -81,7 +81,7 @@ impl FilePluginRegistry {
 
         for entry in read_dir.flatten() {
             let path = entry.path();
-            if path.is_file() && path.extension().map_or(false, |ext| ext == "json") {
+            if path.is_file() && path.extension().is_some_and(|ext| ext == "json") {
                 if let Ok(manifest) = Self::load_manifest_file(&path) {
                     self.register_plugin(manifest);
                     loaded_count += 1;
@@ -165,15 +165,9 @@ impl FilePluginRegistry {
             // 2. Check target_types match
             let target_matched = manifest.target_types.iter().any(|tt| {
                 let clean_tt = tt.trim().trim_start_matches('.').to_lowercase();
-                if clean_tt == "*" || clean_tt == "any" || clean_tt == "all" {
-                    true
-                } else if is_dir && (clean_tt == "dir" || clean_tt == "directory") {
-                    true
-                } else if !is_dir && !extension.is_empty() && clean_tt == extension {
-                    true
-                } else {
-                    false
-                }
+                clean_tt == "*" || clean_tt == "any" || clean_tt == "all"
+                    || is_dir && (clean_tt == "dir" || clean_tt == "directory")
+                    || !is_dir && !extension.is_empty() && clean_tt == extension
             });
 
             if target_matched {

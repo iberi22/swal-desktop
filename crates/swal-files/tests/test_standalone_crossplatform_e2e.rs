@@ -186,7 +186,7 @@ impl StandaloneWindowFrame {
     }
 
     pub fn caption_hit_test(&self, x: f32, y: f32) -> &'static str {
-        if y >= 0.0 && y <= 32.0 {
+        if (0.0..=32.0).contains(&y) {
             if x >= (self.width as f32 - 40.0) && x <= self.width as f32 {
                 "close"
             } else if x >= (self.width as f32 - 80.0) && x < (self.width as f32 - 40.0) {
@@ -238,6 +238,12 @@ impl PluginEngine {
 
     pub fn execute_plugin(&self, plugin: &PluginManifest, file_path: &Path) -> String {
         format!("Executed {} plugin '{}' on {:?}", plugin.name, plugin.executable, file_path)
+    }
+}
+
+impl Default for PluginEngine {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

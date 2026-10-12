@@ -101,31 +101,35 @@ pub struct ArchiveEntry {
     pub crc32: Option<u32>,
 }
 
+/// Parameter bundle for [`ArchiveEntry::new`].
+/// Groups the eight entry fields so the constructor stays under the clippy arity limit.
+pub struct ArchiveEntryParams {
+    pub name: String,
+    pub path: String,
+    pub size_bytes: u64,
+    pub is_dir: bool,
+    pub modified_timestamp: u64,
+    pub comment: Option<String>,
+    pub compression_method: Option<String>,
+    pub crc32: Option<u32>,
+}
+
 impl ArchiveEntry {
-    pub fn new(
-        name: String,
-        path: String,
-        size_bytes: u64,
-        is_dir: bool,
-        modified_timestamp: u64,
-        comment: Option<String>,
-        compression_method: Option<String>,
-        crc32: Option<u32>,
-    ) -> Self {
-        let formatted_size = format_archive_size(size_bytes, is_dir);
-        let formatted_date = format_timestamp(modified_timestamp);
+    pub fn new(params: ArchiveEntryParams) -> Self {
+        let formatted_size = format_archive_size(params.size_bytes, params.is_dir);
+        let formatted_date = format_timestamp(params.modified_timestamp);
 
         Self {
-            name,
-            path,
-            size_bytes,
+            name: params.name,
+            path: params.path,
+            size_bytes: params.size_bytes,
             formatted_size,
-            is_dir,
-            modified_timestamp,
+            is_dir: params.is_dir,
+            modified_timestamp: params.modified_timestamp,
             formatted_date,
-            comment,
-            compression_method,
-            crc32,
+            comment: params.comment,
+            compression_method: params.compression_method,
+            crc32: params.crc32,
         }
     }
 }
@@ -276,16 +280,16 @@ impl ArchiveInspector {
 
             let comp_method = format!("{:?}", zip_file.compression());
 
-            entries.push(ArchiveEntry::new(
+            entries.push(ArchiveEntry::new(ArchiveEntryParams {
                 name,
-                raw_name.to_string(),
-                size,
+                path: raw_name.to_string(),
+                size_bytes: size,
                 is_dir,
-                mtime_secs,
+                modified_timestamp: mtime_secs,
                 comment,
-                Some(comp_method),
-                Some(zip_file.crc32()),
-            ));
+                compression_method: Some(comp_method),
+                crc32: Some(zip_file.crc32()),
+            }));
         }
 
         let ratio = if compressed_size > 0 {
@@ -345,16 +349,16 @@ impl ArchiveInspector {
                 .unwrap_or(&path_str)
                 .to_string();
 
-            entries.push(ArchiveEntry::new(
+            entries.push(ArchiveEntry::new(ArchiveEntryParams {
                 name,
-                path_str,
-                size,
+                path: path_str,
+                size_bytes: size,
                 is_dir,
-                mtime,
-                None,
-                Some("tar-uncompressed".to_string()),
-                None,
-            ));
+                modified_timestamp: mtime,
+                comment: None,
+                compression_method: Some("tar-uncompressed".to_string()),
+                crc32: None,
+            }));
         }
 
         let total_entries = entries.len();
@@ -1036,7 +1040,7 @@ mod tests {
         assert!(!manager.has_tag(&path2, "project-x"));
 
         // Remove tag batch
-        let removed = manager.remove_tags_batch(&[path2.clone()], &["work"]);
+        let removed = manager.remove_tags_batch(std::slice::from_ref(&path2), &["work"]);
         assert_eq!(removed, 1);
         assert!(!manager.has_tag(&path2, "work"));
 
@@ -1053,7 +1057,7 @@ mod tests {
 
         let mut manager = BatchTagManager::with_store_path(&store_file);
         let path = PathBuf::from("/tmp/file.pdf");
-        manager.add_tags_batch(&[path.clone()], &["finance", "receipts", "2026"]);
+        manager.add_tags_batch(std::slice::from_ref(&path), &["finance", "receipts", "2026"]);
 
         // Save
         manager.save().unwrap();

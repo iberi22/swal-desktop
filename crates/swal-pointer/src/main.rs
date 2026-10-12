@@ -285,7 +285,7 @@ fn run_daemon() {
                             Err(_) => break,
                         }
                     }
-                    let parts: Vec<&str> = line.trim().split_whitespace().collect();
+                    let parts: Vec<&str> = line.split_whitespace().collect();
                     let reply = match parts.as_slice() {
                         ["down", d] => {
                             if let Some(dir) = Dir::parse(d) {

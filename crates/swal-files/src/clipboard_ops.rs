@@ -327,7 +327,7 @@ mod tests {
         let src_file = dir.path().join("source.txt");
         fs::write(&src_file, "hello world").unwrap();
 
-        set_clipboard(&[src_file.clone()], false).unwrap();
+        set_clipboard(std::slice::from_ref(&src_file), false).unwrap();
         let manifest = load_manifest().unwrap();
         assert_eq!(manifest.op, "copy");
         assert_eq!(manifest.paths.len(), 1);
@@ -350,7 +350,7 @@ mod tests {
         fs::write(src_folder.join("file1.txt"), "content 1").unwrap();
         fs::write(src_folder.join("nested").join("file2.txt"), "content 2").unwrap();
 
-        set_clipboard(&[src_folder.clone()], false).unwrap();
+        set_clipboard(std::slice::from_ref(&src_folder), false).unwrap();
 
         let dst_dir = dir.path().join("target");
         let pasted = paste_into(&dst_dir).unwrap();
@@ -387,7 +387,7 @@ mod tests {
         let src_file = dir.path().join("cut_me.txt");
         fs::write(&src_file, "cut payload").unwrap();
 
-        set_clipboard(&[src_file.clone()], true).unwrap();
+        set_clipboard(std::slice::from_ref(&src_file), true).unwrap();
         let manifest = load_manifest().unwrap();
         assert_eq!(manifest.op, "cut");
 

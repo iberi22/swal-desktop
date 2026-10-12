@@ -96,7 +96,7 @@ fn scan_drives_unix() -> Vec<DriveInfo> {
 
     if let Ok(file) = File::open("/proc/mounts") {
         let reader = BufReader::new(file);
-        for line in reader.lines().flatten() {
+        for line in reader.lines().map_while(Result::ok) {
             let parts: Vec<&str> = line.split_whitespace().collect();
             if parts.len() < 3 {
                 continue;

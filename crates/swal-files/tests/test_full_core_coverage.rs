@@ -579,9 +579,11 @@ fn test_session_state_io_and_cli_aliases() {
     let session_file = dir.path().join("session_test.json");
 
     // 1. Session load / save from path
-    let mut session = SessionState::default();
-    session.view_mode = "grid".to_string();
-    session.sort_by = "size".to_string();
+    let mut session = SessionState {
+        view_mode: "grid".to_string(),
+        sort_by: "size".to_string(),
+        ..SessionState::default()
+    };
     save_session_to_path(&session, &session_file);
 
     let loaded = load_session_from_path(&session_file);

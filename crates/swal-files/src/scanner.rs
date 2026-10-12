@@ -5,33 +5,30 @@ use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::time::SystemTime;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SortBy {
+    #[default]
     Name,
     Size,
     Modified,
     Type,
 }
 
-impl Default for SortBy {
-    fn default() -> Self {
-        SortBy::Name
-    }
-}
-
-impl SortBy {
-    pub fn from_str(s: &str) -> Self {
-        match s.to_lowercase().as_str() {
+impl std::str::FromStr for SortBy {
+    type Err = std::convert::Infallible;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s.to_lowercase().as_str() {
             "size" | "tamano" => SortBy::Size,
             "modified" | "date" | "fecha" => SortBy::Modified,
             "type" | "tipo" => SortBy::Type,
             _ => SortBy::Name,
-        }
+        })
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub enum GroupBy {
+    #[default]
     None,
     Type,
     Date,
@@ -39,21 +36,16 @@ pub enum GroupBy {
     Alphabetical,
 }
 
-impl Default for GroupBy {
-    fn default() -> Self {
-        GroupBy::None
-    }
-}
-
-impl GroupBy {
-    pub fn from_str(s: &str) -> Self {
-        match s.to_lowercase().as_str() {
+impl std::str::FromStr for GroupBy {
+    type Err = std::convert::Infallible;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s.to_lowercase().as_str() {
             "type" | "tipo" => GroupBy::Type,
             "date" | "modified" | "fecha" => GroupBy::Date,
             "size" | "tamano" => GroupBy::Size,
             "alpha" | "alphabetical" | "alfabetico" => GroupBy::Alphabetical,
             _ => GroupBy::None,
-        }
+        })
     }
 }
 

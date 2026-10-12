@@ -263,7 +263,7 @@ mod tests {
         fs::write(&file_path, "hello trash").expect("write file failed");
 
         assert!(file_path.exists());
-        let report = trash_items(&[file_path.clone()]);
+        let report = trash_items(std::slice::from_ref(&file_path));
 
         assert_eq!(report.items_count, 1);
         assert_eq!(report.ok.len(), 1);
@@ -280,7 +280,7 @@ mod tests {
         fs::write(&inner, "inner content").expect("write inner failed");
 
         assert!(sub_dir.exists());
-        let report = trash_items(&[sub_dir.clone()]);
+        let report = trash_items(std::slice::from_ref(&sub_dir));
 
         assert_eq!(report.items_count, 1);
         assert_eq!(report.ok.len(), 1);
@@ -294,13 +294,13 @@ mod tests {
         let file_path = temp.path().join("permanent_file.txt");
         fs::write(&file_path, "do not delete me without token").expect("write failed");
 
-        let report_no = delete_permanently(&[file_path.clone()], "NO");
+        let report_no = delete_permanently(std::slice::from_ref(&file_path), "NO");
         assert_eq!(report_no.items_count, 0);
         assert_eq!(report_no.ok.len(), 0);
         assert_eq!(report_no.failed.len(), 1);
         assert!(file_path.exists());
 
-        let report_invalid = delete_permanently(&[file_path.clone()], "CONFIRM");
+        let report_invalid = delete_permanently(std::slice::from_ref(&file_path), "CONFIRM");
         assert_eq!(report_invalid.items_count, 0);
         assert!(file_path.exists());
     }
@@ -361,7 +361,7 @@ mod tests {
         #[cfg(unix)]
         {
             assert!(symlink_path.exists());
-            let report = delete_permanently(&[symlink_path.clone()], "BORRAR");
+            let report = delete_permanently(std::slice::from_ref(&symlink_path), "BORRAR");
             assert_eq!(report.items_count, 1);
             assert!(!symlink_path.exists(), "Symlink itself should be deleted");
             assert!(target_dir.exists(), "Target directory must NOT be deleted");
