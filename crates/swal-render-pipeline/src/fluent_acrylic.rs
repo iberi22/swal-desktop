@@ -123,29 +123,34 @@ pub struct FluentAcrylicUniforms {
     pub _padding: [f32; 2],
 }
 
+/// Parameter bundle for [`FluentAcrylicUniforms::new`].
+/// Groups the nine uniform fields so the constructor stays under the clippy arity limit.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct FluentAcrylicParams {
+    pub rect_bounds: [f32; 4],
+    pub tint_color: [f32; 4],
+    pub border_color: [f32; 4],
+    pub tint_opacity: f32,
+    pub blur_radius: f32,
+    pub noise_factor: f32,
+    pub corner_radius: f32,
+    pub border_width: f32,
+    pub luminosity_factor: f32,
+}
+
 impl FluentAcrylicUniforms {
     /// Creates a new `FluentAcrylicUniforms` with custom parameters.
-    pub fn new(
-        rect_bounds: [f32; 4],
-        tint_color: [f32; 4],
-        border_color: [f32; 4],
-        tint_opacity: f32,
-        blur_radius: f32,
-        noise_factor: f32,
-        corner_radius: f32,
-        border_width: f32,
-        luminosity_factor: f32,
-    ) -> Self {
+    pub fn new(params: FluentAcrylicParams) -> Self {
         Self {
-            rect_bounds,
-            tint_color,
-            border_color,
-            tint_opacity,
-            blur_radius,
-            noise_factor,
-            corner_radius,
-            border_width,
-            luminosity_factor,
+            rect_bounds: params.rect_bounds,
+            tint_color: params.tint_color,
+            border_color: params.border_color,
+            tint_opacity: params.tint_opacity,
+            blur_radius: params.blur_radius,
+            noise_factor: params.noise_factor,
+            corner_radius: params.corner_radius,
+            border_width: params.border_width,
+            luminosity_factor: params.luminosity_factor,
             _padding: [0.0, 0.0],
         }
     }
@@ -160,17 +165,17 @@ impl FluentAcrylicUniforms {
     /// - Border width: `1.0`
     /// - Luminosity factor: `0.85`
     pub fn fluent_dark() -> Self {
-        Self::new(
-            [0.0, 0.0, 100.0, 100.0],
-            [0.12, 0.12, 0.12, 1.0],
-            [1.0, 1.0, 1.0, 0.10],
-            0.70,
-            30.0,
-            0.02,
-            8.0,
-            1.0,
-            0.85,
-        )
+        Self::new(FluentAcrylicParams {
+            rect_bounds: [0.0, 0.0, 100.0, 100.0],
+            tint_color: [0.12, 0.12, 0.12, 1.0],
+            border_color: [1.0, 1.0, 1.0, 0.10],
+            tint_opacity: 0.70,
+            blur_radius: 30.0,
+            noise_factor: 0.02,
+            corner_radius: 8.0,
+            border_width: 1.0,
+            luminosity_factor: 0.85,
+        })
     }
 
     /// Windows Fluent Light mode acrylic presets:
@@ -183,17 +188,17 @@ impl FluentAcrylicUniforms {
     /// - Border width: `1.0`
     /// - Luminosity factor: `1.0`
     pub fn fluent_light() -> Self {
-        Self::new(
-            [0.0, 0.0, 100.0, 100.0],
-            [0.95, 0.95, 0.95, 1.0],
-            [0.0, 0.0, 0.0, 0.08],
-            0.85,
-            30.0,
-            0.02,
-            8.0,
-            1.0,
-            1.0,
-        )
+        Self::new(FluentAcrylicParams {
+            rect_bounds: [0.0, 0.0, 100.0, 100.0],
+            tint_color: [0.95, 0.95, 0.95, 1.0],
+            border_color: [0.0, 0.0, 0.0, 0.08],
+            tint_opacity: 0.85,
+            blur_radius: 30.0,
+            noise_factor: 0.02,
+            corner_radius: 8.0,
+            border_width: 1.0,
+            luminosity_factor: 1.0,
+        })
     }
 
     /// Converts the uniform structure directly to a byte slice for GPU buffer writes

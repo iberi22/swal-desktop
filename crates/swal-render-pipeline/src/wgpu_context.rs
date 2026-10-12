@@ -155,9 +155,9 @@ mod tests {
         assert_eq!(config.format, TextureFormat::Bgra8UnormSrgb);
         assert_eq!(config.present_mode, PresentMode::Fifo);
 
-        // Verify minimum dimension clamp math (width/height = 0 should clamp to 1)
-        config.width = 0u32.max(1);
-        config.height = 0u32.max(1);
+        // Verify minimum dimension clamp (width/height = 0 should clamp to 1)
+        config.width = 1;
+        config.height = 1;
         assert_eq!(config.width, 1);
         assert_eq!(config.height, 1);
     }

@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::str::FromStr;
 use crate::config::FileManagerConfig;
 use crate::git::{detect_git_status_for_dir, GitRepoSummary};
 use crate::preview::{generate_preview_for_path, sanitize_preview_text, PreviewState};
@@ -208,8 +209,8 @@ pub fn build_gui_payload(session: &SessionState) -> GuiPayload {
         current_path = home.clone();
     }
 
-    let sort_by = SortBy::from_str(&session.sort_by);
-    let group_by = GroupBy::from_str(&session.group_by);
+    let sort_by = SortBy::from_str(&session.sort_by).unwrap_or_default();
+    let group_by = GroupBy::from_str(&session.group_by).unwrap_or_default();
     let ascending = session.sort_order.to_lowercase() != "desc";
 
     let scan_opts = ScanOptions {

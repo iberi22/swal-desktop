@@ -20,7 +20,3 @@ smithay-client-toolkit = { version = "0.19.2", default-features = false, feature
 
 [dev-dependencies]
 tempfile = "3.8"
-
-[[example]]
-name = "viab_test"
-required-features = ["viab"]

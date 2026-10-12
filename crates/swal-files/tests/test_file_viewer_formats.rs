@@ -165,11 +165,13 @@ fn test_config_persistence_and_theme_roundtrip() {
     let dir = tempdir().unwrap();
     let cfg_path = dir.path().join("config.json");
 
-    let mut cfg = FileManagerConfig::default();
-    cfg.theme_id = "cyber-neon".to_string();
-    cfg.group_by = "type".to_string();
-    cfg.filter_type = "code".to_string();
-    cfg.preview_mode = "sidebar".to_string();
+    let cfg = FileManagerConfig {
+        theme_id: "cyber-neon".to_string(),
+        group_by: "type".to_string(),
+        filter_type: "code".to_string(),
+        preview_mode: "sidebar".to_string(),
+        ..FileManagerConfig::default()
+    };
 
     cfg.save_to_path(&cfg_path).unwrap();
 

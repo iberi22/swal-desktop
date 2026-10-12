@@ -2,8 +2,7 @@
 //! Provides spatial hit-testing, layer resolution, pointer events, window focus,
 //! and keyboard shortcut matching.
 
-#[path = "settings_controller.rs"]
-pub mod settings_controller;
+pub use crate::settings_controller;
 
 use serde::{Deserialize, Serialize};
 

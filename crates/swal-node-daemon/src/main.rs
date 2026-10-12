@@ -267,9 +267,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Graceful cleanup
     supervisor.shutdown().await;
-    let _ = ctl_handle.abort();
-    let _ = telemetry_handle.abort();
-    let _ = supervisor_mesh_handle.abort();
+    ctl_handle.abort();
+    telemetry_handle.abort();
+    supervisor_mesh_handle.abort();
     let _ = supervisor_ipc.await;
     let _ = std::fs::remove_file(ctl_socket_path());
 

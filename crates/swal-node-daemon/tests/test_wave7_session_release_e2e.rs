@@ -11,8 +11,10 @@ fn test_session_orchestrator_boot_flow_e2e() {
     let dir = tempdir().expect("failed to create temp dir");
     let socket_path = dir.path().join("swal_orchestrator.sock");
 
-    let mut config = SessionConfig::default();
-    config.runtime_dir = dir.path().to_path_buf();
+    let config = SessionConfig {
+        runtime_dir: dir.path().to_path_buf(),
+        ..SessionConfig::default()
+    };
 
     let mut orchestrator = SessionOrchestrator::new(config);
     assert_eq!(orchestrator.phase(), SessionPhase::Initializing);

@@ -7,19 +7,14 @@ use serde::{Deserialize, Serialize};
 use std::env;
 
 /// Application runtime mode variants for standalone & integrated operation
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub enum AppRuntimeMode {
     WaylandLayerShell,
+    #[default]
     StandaloneWindow,
     TuiTerminal,
     HeadlessDaemon,
     WebCanvas,
-}
-
-impl Default for AppRuntimeMode {
-    fn default() -> Self {
-        Self::StandaloneWindow
-    }
 }
 
 /// Window configuration settings for GUI window instances

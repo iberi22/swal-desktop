@@ -181,8 +181,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_supervisor_loop_max_ticks() {
-        let mut config = DaemonConfig::default();
-        config.poll_interval_secs = 1;
+        let config = DaemonConfig { poll_interval_secs: 1, ..DaemonConfig::default() };
         let daemon = SwalNodeDaemon::new(config);
 
         // Run for 1 tick max

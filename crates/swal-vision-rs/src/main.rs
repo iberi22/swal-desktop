@@ -54,7 +54,7 @@ async fn main() {
 
             // 2. Process Presence / Walk-Away Detection every ~1.5s (45 frames) for 0% CPU footprint
             tick_count = tick_count.wrapping_add(1);
-            if tick_count % 45 == 0 {
+            if tick_count.is_multiple_of(45) {
                 let _ = presence.evaluate_presence(&frame);
             }
 

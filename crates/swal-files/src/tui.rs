@@ -79,8 +79,7 @@ impl TuiRenderBuffer {
         if row >= self.height as usize {
             return;
         }
-        let mut curr_col = col;
-        for ch in text.chars() {
+        for (curr_col, ch) in (col..).zip(text.chars()) {
             if curr_col >= self.width as usize {
                 break;
             }
@@ -90,7 +89,6 @@ impl TuiRenderBuffer {
                 bg_ansi: bg,
                 bold,
             };
-            curr_col += 1;
         }
     }
 

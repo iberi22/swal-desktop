@@ -4,6 +4,7 @@
 //! directly into a declarative A2UI component tree (`ComponentNode`) for high-refresh GPU rendering.
 
 use std::path::PathBuf;
+use std::str::FromStr;
 use swal_a2ui_engine::{ComponentNode, TabItem};
 use crate::config::FileManagerConfig;
 use crate::gui::get_breadcrumbs;
@@ -106,7 +107,7 @@ impl NativeFilesWindowBuilder {
         // 4. Content Area: Scanned directory entries
         let scan_opts = ScanOptions {
             show_hidden: session.show_hidden,
-            sort_by: SortBy::from_str(&session.sort_by),
+            sort_by: SortBy::from_str(&session.sort_by).unwrap_or_default(),
             ascending: session.sort_order.to_lowercase() != "desc",
             filter_query: if session.search_query.is_empty() { None } else { Some(session.search_query.clone()) },
             filter_category: session.filter_type.clone(),

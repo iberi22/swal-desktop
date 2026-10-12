@@ -238,7 +238,7 @@ impl SettingsCliRunner {
         });
 
         if let Ok(mut stream) = UnixStream::connect(&self.socket_path) {
-            let _ = writeln!(stream, "{}", payload.to_string());
+            let _ = writeln!(stream, "{}", payload);
             let _ = stream.flush();
         }
     }

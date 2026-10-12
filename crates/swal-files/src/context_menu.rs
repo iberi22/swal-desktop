@@ -3,7 +3,7 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
-use crate::session::{load_session, SessionState};
+use crate::session::SessionState;
 
 /// Context menu action item
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -68,7 +68,6 @@ pub fn build_context_menu_with(
     let target_exists = resolved_target.as_ref().map(|p| p.exists()).unwrap_or(false);
     let is_file = resolved_target.as_ref().map(|p| p.is_file()).unwrap_or(false);
     let is_dir = resolved_target.as_ref().map(|p| p.is_dir()).unwrap_or(false);
-    let clipboard_manifest = has_clipboard_manifest();
 
     vec![
         ContextAction {

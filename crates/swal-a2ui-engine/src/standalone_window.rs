@@ -193,11 +193,11 @@ impl StandaloneWindowFrame {
         match &self.style {
             TitlebarStyle::MacOSTrafficLights => {
                 // Left-aligned macOS traffic lights: Close @ 12..24, Minimize @ 28..40, Max/Restore @ 44..56
-                if x >= 12.0 && x <= 24.0 {
+                if (12.0..=24.0).contains(&x) {
                     Some(WindowButtonKind::Close)
-                } else if x >= 28.0 && x <= 40.0 {
+                } else if (28.0..=40.0).contains(&x) {
                     Some(WindowButtonKind::Minimize)
-                } else if x >= 44.0 && x <= 56.0 {
+                } else if (44.0..=56.0).contains(&x) {
                     Some(if self.is_maximized { WindowButtonKind::Restore } else { WindowButtonKind::Maximize })
                 } else {
                     None
