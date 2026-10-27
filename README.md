@@ -18,7 +18,14 @@
   <a href="LICENSE">
     <img src="https://img.shields.io/github/license/iberi22/swal-desktop?style=for-the-badge&color=f97316" alt="License"/>
   </a>
+  <a href="https://github.com/iberi22/swal-desktop/actions/workflows/ci.yml">
+    <img src="https://github.com/iberi22/swal-desktop/actions/workflows/ci.yml/badge.svg" alt="CI Status"/>
+  </a>
 </p>
+
+## Security
+
+Please refer to our [Security Policy](SECURITY.md) for information on supported versions and how to report vulnerabilities.
 
 ---
 
